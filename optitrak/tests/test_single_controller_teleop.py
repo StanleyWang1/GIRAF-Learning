@@ -75,12 +75,16 @@ class SingleControllerTeleopTest(unittest.TestCase):
         np.testing.assert_allclose(position_error, np.zeros(3), atol=1e-12)
         np.testing.assert_allclose(rotation_error, np.zeros(3), atol=1e-12)
 
-    def test_kinematic_model_receives_unmodified_sim_joint_positions(self) -> None:
+    def test_kinematic_model_applies_required_joint_offsets(self) -> None:
         joint_positions = np.array([0.1, -0.2, 0.35, 0.4, -0.5, 0.6])
 
         model_coordinates = teleop.kinematic_joint_coordinates(joint_positions)
 
-        np.testing.assert_array_equal(model_coordinates, joint_positions)
+        expected = joint_positions.copy()
+        expected[1] += np.pi / 2.0
+        expected[3] += np.pi / 2.0
+        expected[4] -= np.pi / 2.0
+        np.testing.assert_allclose(model_coordinates, expected)
 
     def test_pseudoinverse_reconstructs_reachable_twist(self) -> None:
         jacobian = np.asarray(
