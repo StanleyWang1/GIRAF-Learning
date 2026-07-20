@@ -84,9 +84,12 @@
             <site name="boom_end" pos="0 0 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
 
             <body name="wrist" pos="0 0 0">
-              <joint name="R4" type="hinge" axis="0.866025 0 0.5" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <!-- <joint name="R4" type="hinge" axis="0.866025 0 0.5" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
               <joint name="R5" type="hinge" axis="0 -1 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
-              <joint name="R6" type="hinge" axis="1 0 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <joint name="R6" type="hinge" axis="1 0 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/> -->
+              <joint name="R4" type="hinge" axis="0 -1 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <joint name="R5" type="hinge" axis="0 0 -1" pos="0.0597 0 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <joint name="R6" type="hinge" axis="1 0 0" pos="0.0597 0 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
               <geom name="wrist_link" type="cylinder" fromto="0 0 0 0.1 0 0" size="0.02" rgba="0.2 0.2 0.2 1"/>
               <site name="wrist_base" pos="0.1 0 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
               
