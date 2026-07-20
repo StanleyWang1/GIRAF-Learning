@@ -71,6 +71,11 @@ MAX_JOINT_SPEED = np.array([1.5, 1.5, 0.5, 2.0, 2.0, 2.0])
 KINEMATIC_JOINT_OFFSETS = np.array(
     [0.0, np.pi / 2.0, 0.0, np.pi / 2.0, -np.pi / 2.0, 0.0]
 )
+# Fixed pose of the physical control frame expressed in the MDH terminal frame.
+KINEMATIC_TO_CONTROL_ROTATION = np.array(
+    [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]
+)
+KINEMATIC_TO_CONTROL_POSITION = np.array([0.0, 0.0, -0.02])
 
 STATUS_PERIOD_S = 0.25
 KEY_DEBOUNCE_S = 0.2
@@ -243,8 +248,8 @@ class RelativePoseMapper:
         self.target_pose = Pose(
             position=self.robot_anchor_pose.position + relative_position,
             rotation=project_to_rotation_matrix(
-                quaternion_to_matrix(scaled_relative_quaternion)
-                @ self.robot_anchor_pose.rotation
+                self.robot_anchor_pose.rotation
+                @ quaternion_to_matrix(scaled_relative_quaternion)
             ),
         )
         return copy_pose(self.target_pose)
@@ -440,13 +445,19 @@ def kinematic_joint_coordinates(sim_joint_positions: np.ndarray) -> np.ndarray:
 
 
 def end_effector_pose(sim_joint_positions: np.ndarray) -> Pose:
-    transform = np.asarray(
+    kinematic_terminal_transform = np.asarray(
         num_forward_transform(kinematic_joint_coordinates(sim_joint_positions)),
         dtype=float,
     )
+    kinematic_terminal_rotation = kinematic_terminal_transform[:3, :3]
     return Pose(
-        position=transform[:3, 3].copy(),
-        rotation=project_to_rotation_matrix(transform[:3, :3]),
+        position=(
+            kinematic_terminal_transform[:3, 3]
+            + kinematic_terminal_rotation @ KINEMATIC_TO_CONTROL_POSITION
+        ),
+        rotation=project_to_rotation_matrix(
+            kinematic_terminal_rotation @ KINEMATIC_TO_CONTROL_ROTATION
+        ),
     )
 
 
@@ -468,18 +479,27 @@ def task_space_velocity(
 def joint_velocity_from_twist(
     sim_joint_positions: np.ndarray, twist: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    jacobian = np.asarray(
-        num_jacobian(kinematic_joint_coordinates(sim_joint_positions)),
-        dtype=float,
+    kinematic_coordinates = kinematic_joint_coordinates(sim_joint_positions)
+    kinematic_terminal_transform = np.asarray(
+        num_forward_transform(kinematic_coordinates), dtype=float
     )
-    joint_velocity = np.linalg.pinv(jacobian, rcond=JACOBIAN_RCOND) @ twist
+    kinematic_jacobian = np.asarray(num_jacobian(kinematic_coordinates), dtype=float)
+    control_point_offset_world = (
+        kinematic_terminal_transform[:3, :3]
+        @ KINEMATIC_TO_CONTROL_POSITION
+    )
+    control_jacobian = kinematic_jacobian.copy()
+    control_jacobian[:3] += np.cross(
+        kinematic_jacobian[3:].T, control_point_offset_world
+    ).T
+    joint_velocity = np.linalg.pinv(control_jacobian, rcond=JACOBIAN_RCOND) @ twist
     if not np.all(np.isfinite(joint_velocity)):
         raise FloatingPointError("Jacobian pseudoinverse produced non-finite qdot")
 
     speed_ratio = float(np.max(np.abs(joint_velocity) / MAX_JOINT_SPEED))
     if speed_ratio > 1.0:
         joint_velocity = joint_velocity / speed_ratio
-    return joint_velocity, jacobian
+    return joint_velocity, control_jacobian
 
 
 def arm_control_limits(simulation: GirafSimulation) -> tuple[np.ndarray, np.ndarray]:
