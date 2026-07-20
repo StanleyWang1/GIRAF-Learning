@@ -485,8 +485,7 @@ def joint_velocity_from_twist(
     )
     kinematic_jacobian = np.asarray(num_jacobian(kinematic_coordinates), dtype=float)
     control_point_offset_world = (
-        kinematic_terminal_transform[:3, :3]
-        @ KINEMATIC_TO_CONTROL_POSITION
+        kinematic_terminal_transform[:3, :3] @ KINEMATIC_TO_CONTROL_POSITION
     )
     control_jacobian = kinematic_jacobian.copy()
     control_jacobian[:3] += np.cross(
