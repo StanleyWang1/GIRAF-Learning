@@ -59,13 +59,10 @@ robot definition with scene-specific objects.
 
 | File | Scene key | Contents | Compiled `nq` / `nv` | Robot variant |
 | --- | --- | --- | ---: | --- |
-| `GIRAF_stiffness_test.xml` | `arm` | Arm only | 8 / 8 | Large-jaw variant |
+| `GIRAF.xml` | `arm` | Arm only | 8 / 8 | Base robot variant |
 | `GIRAF_banana.xml` | `banana` | Arm, one banana, bin | 15 / 14 | Narrow-jaw variant |
 | `GIRAF_bananas.xml` | `bananas` | Arm, ten bananas, bin | 78 / 68 | Narrow-jaw variant |
-| `GIRAF.xml` | `ycb` | Arm, eleven YCB objects, bin | 85 / 74 | Large-jaw variant |
-
-The file names are historical. In particular, `GIRAF.xml` is not the arm-only
-model, and `GIRAF_stiffness_test.xml` is currently serving as the arm-only scene.
+| `GIRAF_ycb.xml` | `ycb` | Arm, eleven YCB objects, bin | 85 / 74 | Base robot variant |
 
 ### Settings shared by all four files
 
@@ -82,22 +79,23 @@ model, and `GIRAF_stiffness_test.xml` is currently serving as the arm-only scene
 | Actuator gains | Identical, including gripper `kp=200` |
 | Floor, lights, and contact defaults | Identical |
 
-The compiler configuration, global defaults, six arm joints, arm link geometry,
-joint damping, arm actuator ranges, and actuator gains are structurally
-identical. They should be defined once.
+The compiler configuration, global defaults, joint names, non-wrist arm geometry,
+joint damping, arm actuator ranges, and actuator gains are shared. They should be
+defined once. Wrist axes and anchors currently differ between variants.
 
 ## Robot variant differences
 
 There are two internally consistent variants:
 
-- `GIRAF_stiffness_test.xml` and `GIRAF.xml` are structurally identical for the
+- `GIRAF.xml` and `GIRAF_ycb.xml` are structurally identical for the
   robot, visual settings, tendons, actuators, and contact section.
 - `GIRAF_banana.xml` and `GIRAF_bananas.xml` are structurally identical for those
   same sections.
 
 | Property | Large-jaw variant | Narrow-jaw variant | Consequence |
 | --- | --- | --- | --- |
-| Files | `GIRAF_stiffness_test.xml`, `GIRAF.xml` | `GIRAF_banana.xml`, `GIRAF_bananas.xml` | The selected scene currently changes the robot itself |
+| Files | `GIRAF.xml`, `GIRAF_ycb.xml` | `GIRAF_banana.xml`, `GIRAF_bananas.xml` | The selected scene currently changes the robot itself |
+| Wrist axes and anchors | R4: `0 -1 0` at origin; R5: `0 0 -1` and R6: `1 0 0` at `x=0.0597` | R4: `0.866025 0 0.5`; R5: `0 -1 0`; R6: `1 0 0`, all at origin | Wrist kinematics differ by scene |
 | Wrist camera `fovy` | 55 degrees | 63 degrees | Policies receive different camera intrinsics by scene |
 | Default offscreen size | Unspecified | 1280 x 720 | Render defaults differ, although the Python renderer can override size |
 | Jaw geom `size` | `0.05 0.01 0.025` | `0.04 0.005 0.02` | Full boxes are 100 x 20 x 50 mm versus 80 x 10 x 40 mm |
@@ -121,8 +119,8 @@ chosen together.
 
 ### Arm
 
-`GIRAF_stiffness_test.xml` contains no free objects, object meshes, or bin. Despite
-its name, it is the current empty-workspace model.
+`GIRAF.xml` is the canonical arm-only entry scene. It contains no free objects,
+object meshes, or bin.
 
 ### Single banana
 
@@ -138,7 +136,7 @@ be named consistently if callers need stable joint-level access.
 
 ### YCB collection
 
-`GIRAF.xml` adds eleven YCB bodies, eleven mesh/texture/material sets, and a bin
+`GIRAF_ycb.xml` adds eleven YCB bodies, eleven mesh/texture/material sets, and a bin
 centered at `1.0 0.4 0`. The free joints are unnamed. It is the only scene that
 loads all 134 MB of current YCB assets.
 
@@ -151,12 +149,13 @@ definitions or validated against a single physical-data source.
 Before merging the robot definitions, the following physical choices need an
 authoritative answer:
 
-1. Which jaw dimensions and jaw-site locations match the current GIRAF hardware?
-2. Is the usable per-jaw travel 40 mm or 50 mm?
-3. Should the camera represent 95-degree horizontal FOV at 1280 x 720? If so,
+1. Confirm the updated R4 axis and the 59.7 mm R4-to-R5/R6 offset from CAD.
+2. Which jaw dimensions and jaw-site locations match the current GIRAF hardware?
+3. Is the usable per-jaw travel 40 mm or 50 mm?
+4. Should the camera represent 95-degree horizontal FOV at 1280 x 720? If so,
    `fovy=63` is the consistent current option.
-4. Should jaw contact with floor/world geometry be enabled or excluded?
-5. Are the tendon widths purely visual, and which display dimensions are desired?
+5. Should jaw contact with floor/world geometry be enabled or excluded?
+6. Are the tendon widths purely visual, and which display dimensions are desired?
 
 These should be answered from CAD, measured travel, and camera calibration rather
 than inferred from whichever task script was edited most recently.

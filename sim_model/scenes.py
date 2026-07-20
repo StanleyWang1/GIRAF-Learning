@@ -24,7 +24,7 @@ SceneInput = str | Path | SceneSpec
 _SCENES = {
     "arm": SceneSpec(
         name="arm",
-        path=MODELS_DIR / "GIRAF_stiffness_test.xml",
+        path=MODELS_DIR / "GIRAF.xml",
         description="GIRAF arm in an empty workspace",
     ),
     "banana": SceneSpec(
@@ -39,7 +39,7 @@ _SCENES = {
     ),
     "ycb": SceneSpec(
         name="ycb",
-        path=MODELS_DIR / "GIRAF.xml",
+        path=MODELS_DIR / "GIRAF_ycb.xml",
         description="GIRAF arm with the current YCB object collection",
     ),
 }

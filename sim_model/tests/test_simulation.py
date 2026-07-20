@@ -8,6 +8,27 @@ from sim_model import GirafSimulation, available_scenes
 
 
 class GirafSimulationTest(unittest.TestCase):
+    def test_default_scene_is_arm_only_giraf_model(self) -> None:
+        with GirafSimulation() as sim:
+            self.assertEqual(sim.scene.name, "arm")
+            self.assertEqual(sim.scene.path.name, "GIRAF.xml")
+            self.assertEqual(sim.model.nq, 8)
+
+    def test_base_model_uses_updated_wrist_axes_and_offsets(self) -> None:
+        with GirafSimulation() as sim:
+            joint_ids = [
+                sim.model.joint(name).id for name in ("R4", "R5", "R6")
+            ]
+
+            np.testing.assert_allclose(
+                sim.model.jnt_axis[joint_ids],
+                [[0.0, -1.0, 0.0], [0.0, 0.0, -1.0], [1.0, 0.0, 0.0]],
+            )
+            np.testing.assert_allclose(
+                sim.model.jnt_pos[joint_ids],
+                [[0.0, 0.0, 0.0], [0.0597, 0.0, 0.0], [0.0597, 0.0, 0.0]],
+            )
+
     def test_all_builtin_scenes_load_and_step(self) -> None:
         for scene in available_scenes():
             with self.subTest(scene=scene.name), GirafSimulation(scene) as sim:

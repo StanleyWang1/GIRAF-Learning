@@ -1,6 +1,6 @@
 """
 Generate MuJoCo XML snippet for YCB objects
-Run this after downloading YCB objects to generate the XML to paste into GIRAF.xml
+Run this after downloading YCB objects to generate XML for GIRAF_ycb.xml.
 """
 
 import random
@@ -79,5 +79,5 @@ for obj_id in available_objects:
     print(f"    </body>")
 
 print("\n" + "=" * 80)
-print("Copy the sections above into your GIRAF.xml file")
+print("Copy the sections above into your GIRAF_ycb.xml file")
 print("=" * 80)
