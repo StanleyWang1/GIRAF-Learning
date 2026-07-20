@@ -75,14 +75,30 @@ class SingleControllerTeleopTest(unittest.TestCase):
         np.testing.assert_allclose(position_error, np.zeros(3), atol=1e-12)
         np.testing.assert_allclose(rotation_error, np.zeros(3), atol=1e-12)
 
-    def test_pseudoinverse_reconstructs_reachable_twist(self) -> None:
-        twist = np.array([0.02, -0.03, 0.01, 0.05, -0.04, 0.03])
+    def test_kinematic_model_receives_unmodified_sim_joint_positions(self) -> None:
+        joint_positions = np.array([0.1, -0.2, 0.35, 0.4, -0.5, 0.6])
 
-        joint_velocity, jacobian = teleop.joint_velocity_from_twist(
+        model_coordinates = teleop.kinematic_joint_coordinates(joint_positions)
+
+        np.testing.assert_array_equal(model_coordinates, joint_positions)
+
+    def test_pseudoinverse_reconstructs_reachable_twist(self) -> None:
+        jacobian = np.asarray(
+            teleop.num_jacobian(
+                teleop.kinematic_joint_coordinates(self.initial_joints)
+            ),
+            dtype=float,
+        )
+        twist = jacobian @ np.array([0.02, -0.03, 0.01, 0.05, -0.04, 0.03])
+
+        joint_velocity, computed_jacobian = teleop.joint_velocity_from_twist(
             self.initial_joints, twist
         )
 
-        np.testing.assert_allclose(jacobian @ joint_velocity, twist, atol=1e-10)
+        np.testing.assert_allclose(computed_jacobian, jacobian)
+        np.testing.assert_allclose(
+            computed_jacobian @ joint_velocity, twist, atol=1e-10
+        )
 
 
 if __name__ == "__main__":

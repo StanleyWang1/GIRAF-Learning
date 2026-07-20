@@ -68,9 +68,6 @@ MAX_ANGULAR_SPEED_RAD_S = 2.0
 
 JACOBIAN_RCOND = 1e-4
 MAX_JOINT_SPEED = np.array([1.5, 1.5, 0.5, 2.0, 2.0, 2.0])
-KINEMATIC_JOINT_OFFSETS = np.array(
-    [0.0, np.pi / 2.0, 0.0, np.pi / 2.0, 5.0 * np.pi / 6.0, 0.0]
-)
 
 STATUS_PERIOD_S = 0.25
 KEY_DEBOUNCE_S = 0.2
@@ -436,7 +433,7 @@ def kinematic_joint_coordinates(sim_joint_positions: np.ndarray) -> np.ndarray:
     positions = np.asarray(sim_joint_positions, dtype=float)
     if positions.shape != (6,):
         raise ValueError(f"expected six arm joints, got shape {positions.shape}")
-    return positions + KINEMATIC_JOINT_OFFSETS
+    return positions.copy()
 
 
 def end_effector_pose(sim_joint_positions: np.ndarray) -> Pose:
