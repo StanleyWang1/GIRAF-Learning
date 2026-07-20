@@ -498,7 +498,6 @@ def arm_control_limits(simulation: GirafSimulation) -> tuple[np.ndarray, np.ndar
 
 
 def apply_arm_targets(simulation: GirafSimulation, joint_targets: np.ndarray) -> None:
-    joint_targets -= KINEMATIC_JOINT_OFFSETS
     for actuator_name, target in zip(ROBOT_ACTUATORS[:6], joint_targets):
         simulation.set_actuator_target(actuator_name, float(target))
 
