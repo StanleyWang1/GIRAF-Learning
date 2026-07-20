@@ -436,7 +436,7 @@ def kinematic_joint_coordinates(sim_joint_positions: np.ndarray) -> np.ndarray:
     positions = np.asarray(sim_joint_positions, dtype=float)
     if positions.shape != (6,):
         raise ValueError(f"expected six arm joints, got shape {positions.shape}")
-    return positions + KINEMATIC_JOINT_OFFSETS
+    return positions
 
 
 def end_effector_pose(sim_joint_positions: np.ndarray) -> Pose:
@@ -472,27 +472,7 @@ def joint_velocity_from_twist(
         num_jacobian(kinematic_joint_coordinates(sim_joint_positions)),
         dtype=float,
     )
-    linear_jacobian = jacobian[:3, :]
-    angular_jacobian = jacobian[3:, :]
-
-    linear_twist = np.asarray(twist[:3], dtype=float)
-    angular_twist = np.asarray(twist[3:], dtype=float)
-
-    linear_pseudoinverse = np.linalg.pinv(linear_jacobian, rcond=JACOBIAN_RCOND)
-    joint_velocity_linear = linear_pseudoinverse @ linear_twist
-
-    nullspace_projector = np.eye(jacobian.shape[1]) - (
-        linear_pseudoinverse @ linear_jacobian
-    )
-    angular_residual = angular_twist - angular_jacobian @ joint_velocity_linear
-    angular_nullspace_jacobian = angular_jacobian @ nullspace_projector
-    joint_velocity_angular = np.linalg.pinv(
-        angular_nullspace_jacobian, rcond=JACOBIAN_RCOND
-    ) @ angular_residual
-
-    joint_velocity = (
-        joint_velocity_linear + nullspace_projector @ joint_velocity_angular
-    )
+    joint_velocity = np.linalg.pinv(jacobian, rcond=JACOBIAN_RCOND) @ twist
     if not np.all(np.isfinite(joint_velocity)):
         raise FloatingPointError("Jacobian pseudoinverse produced non-finite qdot")
 
@@ -518,6 +498,7 @@ def arm_control_limits(simulation: GirafSimulation) -> tuple[np.ndarray, np.ndar
 
 
 def apply_arm_targets(simulation: GirafSimulation, joint_targets: np.ndarray) -> None:
+    joint_targets -= KINEMATIC_JOINT_OFFSETS
     for actuator_name, target in zip(ROBOT_ACTUATORS[:6], joint_targets):
         simulation.set_actuator_target(actuator_name, float(target))
 
