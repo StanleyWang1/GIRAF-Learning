@@ -243,8 +243,8 @@ class RelativePoseMapper:
         self.target_pose = Pose(
             position=self.robot_anchor_pose.position + relative_position,
             rotation=project_to_rotation_matrix(
-                self.robot_anchor_pose.rotation
-                @ quaternion_to_matrix(scaled_relative_quaternion)
+                quaternion_to_matrix(scaled_relative_quaternion)
+                @ self.robot_anchor_pose.rotation
             ),
         )
         return copy_pose(self.target_pose)
