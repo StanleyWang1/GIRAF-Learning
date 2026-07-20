@@ -104,6 +104,17 @@ class SingleControllerTeleopTest(unittest.TestCase):
             computed_jacobian @ joint_velocity, twist, atol=1e-10
         )
 
+    def test_orientation_only_twist_preserves_zero_linear_velocity(self) -> None:
+        twist = np.array([0.0, 0.0, 0.0, 0.12, -0.08, 0.05])
+
+        joint_velocity, jacobian = teleop.joint_velocity_from_twist(
+            self.initial_joints, twist
+        )
+
+        achieved_twist = jacobian @ joint_velocity
+        np.testing.assert_allclose(achieved_twist[:3], np.zeros(3), atol=1e-10)
+        np.testing.assert_allclose(achieved_twist[3:], twist[3:], atol=1e-10)
+
 
 if __name__ == "__main__":
     unittest.main()

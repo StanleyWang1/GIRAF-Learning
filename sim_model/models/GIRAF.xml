@@ -54,6 +54,7 @@
               <joint name="R6" type="hinge" axis="1 0 0" pos="0.04325 0 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
               <geom name="wrist_link" type="cylinder" fromto="0 0 0 0.085 0 0" size="0.02" rgba="0.2 0.2 0.2 1"/>
               <site name="wrist_base" pos="0.085 0 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
+              <site name="end_effector" pos="0.16325 0 0" size="0.012" rgba="0 1 0 1"/>
               
               <!-- Wrist-mounted camera: points in +x (forward), VFOV=55 degrees -->
               <camera name="wrist_cam" pos="0.05 0 0.0475" xyaxes="0 -1 0 0 0 1" fovy="55" mode="fixed"/>

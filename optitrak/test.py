@@ -4,7 +4,7 @@
 Space acts as a clutch. While tracking is enabled, the controller pose is
 mapped relative to the pose captured at enable time using the same convention
 as stream_and_visualize_ONE_controller.py. Cartesian pose error is converted
-to a base-frame twist, mapped through the provided kinematic Jacobian
+to a world-frame twist, mapped through the MuJoCo end-effector site Jacobian
 pseudoinverse, and integrated into MuJoCo position-actuator targets.
 """
 
@@ -29,13 +29,12 @@ import numpy as np
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CONTROL_DIR = REPO_ROOT / "control"
-for import_path in (REPO_ROOT, CONTROL_DIR):
+ARM_MODEL_PATH = REPO_ROOT / "sim_model" / "models" / "GIRAF.xml"
+for import_path in (REPO_ROOT,):
     path_string = str(import_path)
     if path_string not in sys.path:
         sys.path.insert(0, path_string)
 
-from RRPRRR_kinematic_model import num_forward_transform, num_jacobian
 from sim_model import GirafSimulation
 from sim_model.simulation import ROBOT_ACTUATORS, ROBOT_JOINTS
 
@@ -68,12 +67,14 @@ MAX_ANGULAR_SPEED_RAD_S = 2.0
 
 JACOBIAN_RCOND = 1e-4
 MAX_JOINT_SPEED = np.array([1.5, 1.5, 0.5, 2.0, 2.0, 2.0])
-KINEMATIC_JOINT_OFFSETS = np.array(
-    [0.0, np.pi / 2.0, 0.0, np.pi / 2.0, -np.pi / 2.0, 0.0]
-)
+END_EFFECTOR_SITE = "end_effector"
+END_EFFECTOR_BODY = "wrist"
+END_EFFECTOR_LOCAL_POSITION = np.array([0.16325, 0.0, 0.0])
 
 STATUS_PERIOD_S = 0.25
 KEY_DEBOUNCE_S = 0.2
+GRIPPER_ACTUATORS = ROBOT_ACTUATORS[6:]
+ENTER_KEYCODES = (257, 335)
 
 
 @dataclass(frozen=True)
@@ -241,7 +242,10 @@ class RelativePoseMapper:
         )
 
         self.target_pose = Pose(
-            position=self.robot_anchor_pose.position + relative_position,
+            position=(
+                self.robot_anchor_pose.position
+                + self.robot_anchor_pose.rotation @ relative_position
+            ),
             rotation=project_to_rotation_matrix(
                 self.robot_anchor_pose.rotation
                 @ quaternion_to_matrix(scaled_relative_quaternion)
@@ -432,21 +436,45 @@ def sample_status(
     return sample, age_ms, "fresh"
 
 
-def kinematic_joint_coordinates(sim_joint_positions: np.ndarray) -> np.ndarray:
-    positions = np.asarray(sim_joint_positions, dtype=float)
-    if positions.shape != (6,):
-        raise ValueError(f"expected six arm joints, got shape {positions.shape}")
-    return positions + KINEMATIC_JOINT_OFFSETS
+def end_effector_frame(
+    simulation: GirafSimulation,
+) -> tuple[np.ndarray, np.ndarray, int, int, str]:
+    """Resolve the tool frame from a site or the equivalent wrist-body point."""
+
+    site_id = mujoco.mj_name2id(
+        simulation.model, mujoco.mjtObj.mjOBJ_SITE, END_EFFECTOR_SITE
+    )
+    if site_id >= 0:
+        return (
+            simulation.data.site_xpos[site_id].copy(),
+            simulation.data.site_xmat[site_id].reshape(3, 3).copy(),
+            site_id,
+            -1,
+            END_EFFECTOR_SITE,
+        )
+
+    body_id = mujoco.mj_name2id(
+        simulation.model, mujoco.mjtObj.mjOBJ_BODY, END_EFFECTOR_BODY
+    )
+    if body_id < 0:
+        raise KeyError(f"Unknown end-effector body: {END_EFFECTOR_BODY}")
+    rotation = simulation.data.xmat[body_id].reshape(3, 3).copy()
+    position = (
+        simulation.data.xpos[body_id]
+        + rotation @ END_EFFECTOR_LOCAL_POSITION
+    )
+    return position, rotation, -1, body_id, f"{END_EFFECTOR_BODY} endpoint"
 
 
-def end_effector_pose(sim_joint_positions: np.ndarray) -> Pose:
-    transform = np.asarray(
-        num_forward_transform(kinematic_joint_coordinates(sim_joint_positions)),
-        dtype=float,
+def end_effector_pose(simulation: GirafSimulation) -> Pose:
+    """Return the controlled MuJoCo site's current world-frame pose."""
+
+    position, rotation, _site_id, _body_id, _frame_name = end_effector_frame(
+        simulation
     )
     return Pose(
-        position=transform[:3, 3].copy(),
-        rotation=project_to_rotation_matrix(transform[:3, :3]),
+        position=position,
+        rotation=project_to_rotation_matrix(rotation),
     )
 
 
@@ -466,33 +494,41 @@ def task_space_velocity(
 
 
 def joint_velocity_from_twist(
-    sim_joint_positions: np.ndarray, twist: np.ndarray
+    simulation: GirafSimulation, twist: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    jacobian = np.asarray(
-        num_jacobian(kinematic_joint_coordinates(sim_joint_positions)),
-        dtype=float,
+    """Map a world-frame site twist to the six GIRAF arm joint velocities."""
+
+    position, _rotation, site_id, body_id, _frame_name = end_effector_frame(
+        simulation
     )
-    linear_jacobian = jacobian[:3, :]
-    angular_jacobian = jacobian[3:, :]
 
-    linear_twist = np.asarray(twist[:3], dtype=float)
-    angular_twist = np.asarray(twist[3:], dtype=float)
-
-    linear_pseudoinverse = np.linalg.pinv(linear_jacobian, rcond=JACOBIAN_RCOND)
-    joint_velocity_linear = linear_pseudoinverse @ linear_twist
-
-    nullspace_projector = np.eye(jacobian.shape[1]) - (
-        linear_pseudoinverse @ linear_jacobian
+    position_jacobian = np.zeros((3, simulation.model.nv))
+    rotation_jacobian = np.zeros((3, simulation.model.nv))
+    if site_id >= 0:
+        mujoco.mj_jacSite(
+            simulation.model,
+            simulation.data,
+            position_jacobian,
+            rotation_jacobian,
+            site_id,
+        )
+    else:
+        mujoco.mj_jac(
+            simulation.model,
+            simulation.data,
+            position_jacobian,
+            rotation_jacobian,
+            position,
+            body_id,
+        )
+    arm_dofs = [
+        int(simulation.model.jnt_dofadr[simulation.model.joint(name).id])
+        for name in ROBOT_JOINTS
+    ]
+    jacobian = np.vstack(
+        (position_jacobian[:, arm_dofs], rotation_jacobian[:, arm_dofs])
     )
-    angular_residual = angular_twist - angular_jacobian @ joint_velocity_linear
-    angular_nullspace_jacobian = angular_jacobian @ nullspace_projector
-    joint_velocity_angular = np.linalg.pinv(
-        angular_nullspace_jacobian, rcond=JACOBIAN_RCOND
-    ) @ angular_residual
-
-    joint_velocity = (
-        joint_velocity_linear + nullspace_projector @ joint_velocity_angular
-    )
+    joint_velocity = np.linalg.pinv(jacobian, rcond=JACOBIAN_RCOND) @ twist
     if not np.all(np.isfinite(joint_velocity)):
         raise FloatingPointError("Jacobian pseudoinverse produced non-finite qdot")
 
@@ -520,6 +556,25 @@ def arm_control_limits(simulation: GirafSimulation) -> tuple[np.ndarray, np.ndar
 def apply_arm_targets(simulation: GirafSimulation, joint_targets: np.ndarray) -> None:
     for actuator_name, target in zip(ROBOT_ACTUATORS[:6], joint_targets):
         simulation.set_actuator_target(actuator_name, float(target))
+
+
+def gripper_control_limits(simulation: GirafSimulation) -> tuple[float, float]:
+    lower = -math.inf
+    upper = math.inf
+    for actuator_name in GRIPPER_ACTUATORS:
+        actuator_id = simulation.actuator_id(actuator_name)
+        if simulation.model.actuator_ctrllimited[actuator_id]:
+            actuator_lower, actuator_upper = simulation.model.actuator_ctrlrange[
+                actuator_id
+            ]
+            lower = max(lower, float(actuator_lower))
+            upper = min(upper, float(actuator_upper))
+    return lower, upper
+
+
+def apply_gripper_target(simulation: GirafSimulation, gripper_target: float) -> None:
+    for actuator_name in GRIPPER_ACTUATORS:
+        simulation.set_actuator_target(actuator_name, gripper_target)
 
 
 def parse_args() -> argparse.Namespace:
@@ -573,8 +628,10 @@ def main() -> int:
 
     def on_key(keycode: int) -> None:
         action = None
-        if keycode == ord(" "):
+        if keycode in ENTER_KEYCODES:
             action = "toggle"
+        elif keycode == ord(" "):
+            action = "gripper_toggle"
         elif keycode in (ord("R"), ord("r")):
             action = "reset"
         if action is None:
@@ -590,14 +647,27 @@ def main() -> int:
     print(f"Streaming OptiTrack rigid body ID {args.rigid_id}")
     print(f"OptiTrack server/client: {args.server_ip} / {client_ip}")
     print("Loading arm-only GIRAF simulation.")
-    print("Controls: Space toggles tracking, R resets the simulation.")
+    print(
+        "Controls: Enter toggles tracking, Space opens/closes the gripper, "
+        "R resets the simulation."
+    )
 
     viewer_context = nullcontext(None)
     try:
-        with GirafSimulation("arm") as simulation:
+        if not ARM_MODEL_PATH.is_file():
+            raise FileNotFoundError(f"MuJoCo model not found: {ARM_MODEL_PATH}")
+        with GirafSimulation(ARM_MODEL_PATH) as simulation:
+            _position, _rotation, _site_id, _body_id, frame_name = (
+                end_effector_frame(simulation)
+            )
+            print(f"Loaded MuJoCo XML: {simulation.scene.path}")
+            print(f"Task-space control frame: {frame_name}")
             joint_targets = simulation.joint_positions(ROBOT_JOINTS)
             control_lower, control_upper = arm_control_limits(simulation)
+            gripper_closed, gripper_open = gripper_control_limits(simulation)
+            gripper_target = gripper_closed
             apply_arm_targets(simulation, joint_targets)
+            apply_gripper_target(simulation, gripper_target)
             receiver.start()
 
             if not args.headless:
@@ -615,7 +685,7 @@ def main() -> int:
                 ):
                     loop_started = time.perf_counter()
                     actual_joints = simulation.joint_positions(ROBOT_JOINTS)
-                    current_pose = end_effector_pose(actual_joints)
+                    current_pose = end_effector_pose(simulation)
 
                     while True:
                         try:
@@ -648,10 +718,24 @@ def main() -> int:
                         elif action == "reset":
                             simulation.reset()
                             actual_joints = simulation.joint_positions(ROBOT_JOINTS)
-                            current_pose = end_effector_pose(actual_joints)
+                            current_pose = end_effector_pose(simulation)
                             joint_targets = actual_joints.copy()
+                            gripper_target = gripper_closed
+                            apply_gripper_target(simulation, gripper_target)
                             mapper.disable()
                             print("Simulation reset; tracking is OFF.")
+                        elif action == "gripper_toggle":
+                            if math.isclose(gripper_target, gripper_closed):
+                                gripper_target = gripper_open
+                                state_text = "opened"
+                            else:
+                                gripper_target = gripper_closed
+                                state_text = "closed"
+                            apply_gripper_target(simulation, gripper_target)
+                            print(
+                                f"Gripper {state_text} to target "
+                                f"{gripper_target:.4f}."
+                            )
 
                     sample, age_ms, stream_state = sample_status(
                         receiver, MAX_OPTI_AGE_MS
@@ -669,7 +753,7 @@ def main() -> int:
                             target_pose, current_pose
                         )
                         joint_velocity, _jacobian = joint_velocity_from_twist(
-                            actual_joints, twist
+                            simulation, twist
                         )
                         joint_targets = joint_targets + (
                             simulation.step_dt * joint_velocity
@@ -679,6 +763,7 @@ def main() -> int:
                         )
 
                     apply_arm_targets(simulation, joint_targets)
+                    apply_gripper_target(simulation, gripper_target)
                     simulation.step()
                     if viewer is not None:
                         viewer.sync()
@@ -695,6 +780,7 @@ def main() -> int:
                             f"stream={stream_state} age={age_text}ms "
                             f"|ep|={np.linalg.norm(position_error):.4f}m "
                             f"|er|={np.linalg.norm(rotation_error):.4f}rad "
+                            f"grip={gripper_target:.4f} "
                             f"|twist|={np.linalg.norm(twist):.4f} "
                             f"|qdot|={np.linalg.norm(joint_velocity):.4f}",
                             flush=True,
