@@ -60,13 +60,13 @@
 
               <body name="left_gripper" pos="0.16325 0 0">
                 <joint name="left_grip_joint" type="slide" axis="0 1 0" limited="true" range="0 0.05" damping="1" armature="0.001" frictionloss="0.1"/>
-                <geom name="left_jaw" class="gripper" type="box" size="0.07 0.01 0.025" pos="0 0.0125 0" rgba="1.0 0.196 0.196 1"/>
+                <geom name="left_jaw" class="gripper" type="box" size="0.035 0.01 0.025" pos="0 0.0125 0" rgba="1.0 0.196 0.196 1"/>
                 <site name="left_jaw_base" pos="-0.035 0.0125 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
               </body> 
               
               <body name="right_gripper" pos="0.16325 0 0">
                 <joint name="right_grip_joint" type="slide" axis="0 -1 0" limited="true" range="0 0.05" damping="1" armature="0.001" frictionloss="0.1"/>
-                <geom name="right_jaw" class="gripper" type="box" size="0.07 0.01 0.025" pos="0 -0.0125 0" rgba="1.0 0.196 0.196 1"/>
+                <geom name="right_jaw" class="gripper" type="box" size="0.035 0.01 0.025" pos="0 -0.0125 0" rgba="1.0 0.196 0.196 1"/>
                 <site name="right_jaw_base" pos="-0.035 -0.0125 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
               </body> 
             </body>
