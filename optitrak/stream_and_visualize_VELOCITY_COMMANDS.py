@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Stream one OptiTrack rigid body and visualize derived velocity commands.
 
-The translucent prism is the desired pose accumulated from incremental
-OptiTrack motion. The solid prism moves only by integrating the generated
-base-frame linear and angular velocity commands.
+The translucent prism uses the same anchor-relative OptiTrack mapping as
+stream_and_visualize_ONE_controller.py. The solid prism moves only by
+integrating the generated base-frame linear and angular velocity commands.
 """
 
 from __future__ import annotations
@@ -80,10 +80,6 @@ VIEW_ELEV_DEG = 22.0
 VIEW_AZIM_DEG = -55.0
 VELOCITY_ARROW_TIME_S = 0.25
 ANGULAR_ARROW_SCALE_M_PER_RAD_S = 0.06
-
-# Maps OptiTrack displacement coordinates into robot-base command coordinates.
-# Replace this identity matrix after the controller-to-robot axes are calibrated.
-COMMAND_FROM_OPTITRACK = np.eye(3, dtype=float)
 
 STOP = False
 
@@ -241,10 +237,11 @@ class Pose:
 @dataclass
 class TrackingState:
     enabled: bool = False
-    needs_resync: bool = True
-    previous_sample_ns: int | None = None
-    previous_position: np.ndarray | None = None
-    previous_quaternion: np.ndarray | None = None
+    controller_anchor_position: np.ndarray | None = None
+    controller_anchor_quaternion: np.ndarray | None = None
+    controller_anchor_rotation: np.ndarray | None = None
+    target_anchor_position: np.ndarray | None = None
+    target_anchor_rotation: np.ndarray | None = None
 
 
 def normalize_quaternion(quaternion: np.ndarray) -> np.ndarray:
@@ -571,19 +568,19 @@ def main() -> int:
     fig.subplots_adjust(bottom=0.24)
     ax.legend(loc="upper left")
 
-    def set_previous_controller_pose(sample: OptiSample) -> None:
+    def set_tracking_anchors(sample: OptiSample) -> None:
         position, quaternion = sample_pose(sample)
-        tracking.previous_sample_ns = sample.local_ns
-        tracking.previous_position = position
-        tracking.previous_quaternion = quaternion
-        tracking.needs_resync = False
+        tracking.controller_anchor_position = position
+        tracking.controller_anchor_quaternion = quaternion
+        tracking.controller_anchor_rotation = quaternion_to_matrix(quaternion)
+        tracking.target_anchor_position = target_pose.position.copy()
+        tracking.target_anchor_rotation = target_pose.rotation.copy()
 
     def toggle_tracking() -> None:
         nonlocal velocity_linear, velocity_angular
 
         if tracking.enabled:
             tracking.enabled = False
-            tracking.needs_resync = True
             velocity_linear = np.zeros(3)
             velocity_angular = np.zeros(3)
             print("Tracking disabled: velocity command forced to zero.")
@@ -598,17 +595,28 @@ def main() -> int:
             print("Tracking not enabled: OptiTrack tracking is invalid.")
             return
 
-        set_previous_controller_pose(sample)
-        target_pose.position = command_pose.position.copy()
-        target_pose.rotation = command_pose.rotation.copy()
+        set_tracking_anchors(sample)
         tracking.enabled = True
         print(
             f"Tracking enabled at frame={sample.frame}, age={age_ms:.1f} ms. "
-            "Target initialized from the integrated command pose."
+            "Controller and target poses anchored."
         )
 
     def reset_poses() -> None:
         nonlocal velocity_linear, velocity_angular
+
+        if not tracking.enabled:
+            print("Reset ignored while tracking is OFF.")
+            return
+
+        fresh = fresh_sample(receiver, MAX_OPTI_AGE_MS)
+        if fresh is None:
+            print("Reset ignored: no fresh OptiTrack sample available.")
+            return
+        sample, age_ms = fresh
+        if sample.seen is False:
+            print("Reset ignored: OptiTrack tracking is invalid.")
+            return
 
         target_pose.position = np.zeros(3)
         target_pose.rotation = np.eye(3)
@@ -616,12 +624,11 @@ def main() -> int:
         command_pose.rotation = np.eye(3)
         velocity_linear = np.zeros(3)
         velocity_angular = np.zeros(3)
-        fresh = fresh_sample(receiver, MAX_OPTI_AGE_MS)
-        if tracking.enabled and fresh is not None and fresh[0].seen is not False:
-            set_previous_controller_pose(fresh[0])
-        else:
-            tracking.needs_resync = True
-        print("Target and velocity-integrated poses reset to the origin.")
+        set_tracking_anchors(sample)
+        print(
+            f"Target and velocity-integrated poses reset at frame={sample.frame}, "
+            f"age={age_ms:.1f} ms."
+        )
 
     def on_key_press(event) -> None:
         nonlocal position_scale, orientation_scale
@@ -668,53 +675,31 @@ def main() -> int:
 
     def update_target_from_new_sample(sample: OptiSample) -> None:
         current_position, current_quaternion = sample_pose(sample)
-        if tracking.needs_resync:
-            set_previous_controller_pose(sample)
-            return
-        if sample.local_ns == tracking.previous_sample_ns:
-            return
+        assert tracking.controller_anchor_position is not None
+        assert tracking.controller_anchor_quaternion is not None
+        assert tracking.controller_anchor_rotation is not None
+        assert tracking.target_anchor_position is not None
+        assert tracking.target_anchor_rotation is not None
 
-        assert tracking.previous_position is not None
-        assert tracking.previous_quaternion is not None
-
-        if np.dot(current_quaternion, tracking.previous_quaternion) < 0.0:
-            current_quaternion = -current_quaternion
-
-        controller_delta_position = (
-            current_position - tracking.previous_position
+        world_delta = current_position - tracking.controller_anchor_position
+        relative_position = (
+            position_scale * tracking.controller_anchor_rotation.T @ world_delta
         )
-        mapped_delta_position = (
-            position_scale
-            * COMMAND_FROM_OPTITRACK
-            @ controller_delta_position
-        )
-
-        controller_delta_quaternion = normalize_quaternion(
+        relative_quaternion = normalize_quaternion(
             quaternion_multiply(
-                quaternion_conjugate(tracking.previous_quaternion),
+                quaternion_conjugate(tracking.controller_anchor_quaternion),
                 current_quaternion,
             )
         )
-        controller_delta_rotation_vector = quaternion_to_rotation_vector(
-            controller_delta_quaternion
-        )
-        scaled_controller_delta_rotation = rotation_vector_to_matrix(
-            orientation_scale * controller_delta_rotation_vector
-        )
-        mapped_delta_rotation = (
-            COMMAND_FROM_OPTITRACK
-            @ scaled_controller_delta_rotation
-            @ COMMAND_FROM_OPTITRACK.T
+        scaled_relative_rotation = rotation_vector_to_matrix(
+            orientation_scale
+            * quaternion_to_rotation_vector(relative_quaternion)
         )
 
-        target_pose.position = target_pose.position + mapped_delta_position
+        target_pose.position = tracking.target_anchor_position + relative_position
         target_pose.rotation = project_to_rotation_matrix(
-            target_pose.rotation @ mapped_delta_rotation
+            tracking.target_anchor_rotation @ scaled_relative_rotation
         )
-
-        tracking.previous_sample_ns = sample.local_ns
-        tracking.previous_position = current_position
-        tracking.previous_quaternion = current_quaternion
 
     def update(_frame_index):
         nonlocal last_update_time, last_status_print
@@ -741,9 +726,6 @@ def main() -> int:
                 if tracking.enabled:
                     update_target_from_new_sample(sample)
                     command_enabled = True
-
-        if tracking.enabled and not command_enabled:
-            tracking.needs_resync = True
 
         if command_enabled:
             position_error = target_pose.position - command_pose.position
