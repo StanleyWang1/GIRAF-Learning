@@ -1,0 +1,209 @@
+<mujoco model="GIRAF">
+  <compiler angle="radian" autolimits="true"/>
+  
+  <option gravity="0 0 -9.81" timestep="0.001" iterations="200" solver="Newton" tolerance="1e-10" noslip_iterations="10"/>
+  
+  <default>
+    <geom density="10"/>
+    
+    <default class="gripper">
+      <geom friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </default>
+  </default>
+  
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+  
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+    <texture name="groundplane" type="2d" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" width="512" height="512" mark="edge" markrgb="0.8 0.8 0.8"/>
+    <material name="groundplane" texture="groundplane" texrepeat="5 5" texuniform="true" reflectance="0.2"/>
+    
+    <!-- YCB Object meshes and textures -->
+    <mesh name="011_banana_mesh" file="ycb/011_banana/google_16k/textured.obj"/>
+    <texture name="011_banana_tex" type="2d" file="ycb/011_banana/google_16k/texture_map.png"/>
+    <material name="011_banana_mat" texture="011_banana_tex" specular="0.3" shininess="0.5"/> 
+    <mesh name="002_master_chef_can_mesh" file="ycb/002_master_chef_can/google_16k/textured.obj"/>
+    <texture name="002_master_chef_can_tex" type="2d" file="ycb/002_master_chef_can/google_16k/texture_map.png"/>
+    <material name="002_master_chef_can_mat" texture="002_master_chef_can_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="003_cracker_box_mesh" file="ycb/003_cracker_box/google_16k/textured.obj"/>    
+    <texture name="003_cracker_box_tex" type="2d" file="ycb/003_cracker_box/google_16k/texture_map.png"/>
+    <material name="003_cracker_box_mat" texture="003_cracker_box_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="005_tomato_soup_can_mesh" file="ycb/005_tomato_soup_can/google_16k/textured.obj"/>
+    <texture name="005_tomato_soup_can_tex" type="2d" file="ycb/005_tomato_soup_can/google_16k/texture_map.png"/>
+    <material name="005_tomato_soup_can_mat" texture="005_tomato_soup_can_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="006_mustard_bottle_mesh" file="ycb/006_mustard_bottle/google_16k/textured.obj"/>
+    <texture name="006_mustard_bottle_tex" type="2d" file="ycb/006_mustard_bottle/google_16k/texture_map.png"/>
+    <material name="006_mustard_bottle_mat" texture="006_mustard_bottle_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="024_bowl_mesh" file="ycb/024_bowl/google_16k/textured.obj"/>
+    <texture name="024_bowl_tex" type="2d" file="ycb/024_bowl/google_16k/texture_map.png"/>   
+    <material name="024_bowl_mat" texture="024_bowl_tex" specular="0.3" shininess="0.5"/>     
+    <mesh name="025_mug_mesh" file="ycb/025_mug/google_16k/textured.obj"/>
+    <texture name="025_mug_tex" type="2d" file="ycb/025_mug/google_16k/texture_map.png"/>     
+    <material name="025_mug_mat" texture="025_mug_tex" specular="0.3" shininess="0.5"/>       
+    <mesh name="035_power_drill_mesh" file="ycb/035_power_drill/google_16k/textured.obj"/>    
+    <texture name="035_power_drill_tex" type="2d" file="ycb/035_power_drill/google_16k/texture_map.png"/>
+    <material name="035_power_drill_mat" texture="035_power_drill_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="037_scissors_mesh" file="ycb/037_scissors/google_16k/textured.obj"/>
+    <texture name="037_scissors_tex" type="2d" file="ycb/037_scissors/google_16k/texture_map.png"/>
+    <material name="037_scissors_mat" texture="037_scissors_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="040_large_marker_mesh" file="ycb/040_large_marker/google_16k/textured.obj"/>  
+    <texture name="040_large_marker_tex" type="2d" file="ycb/040_large_marker/google_16k/texture_map.png"/>
+    <material name="040_large_marker_mat" texture="040_large_marker_tex" specular="0.3" shininess="0.5"/>
+    <mesh name="021_bleach_cleanser_mesh" file="ycb/021_bleach_cleanser/google_16k/textured.obj"/>
+    <texture name="021_bleach_cleanser_tex" type="2d" file="ycb/021_bleach_cleanser/google_16k/texture_map.png"/>
+    <material name="021_bleach_cleanser_mat" texture="021_bleach_cleanser_tex" specular="0.3" shininess="0.5"/>
+  </asset>
+  
+  <worldbody>
+    <light pos="0 0 3" dir="0 0 -1" directional="false" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2"/>
+    <light pos="2 2 3" dir="-1 -1 -1" directional="false" diffuse="0.4 0.4 0.4" specular="0.1 0.1 0.1"/>
+    <light pos="-2 2 3" dir="1 -1 -1" directional="false" diffuse="0.4 0.4 0.4" specular="0.1 0.1 0.1"/>
+    
+    <geom name="floor" pos="0 0 0" size="5 5 0.1" type="plane" material="groundplane" 
+          friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    
+    <body name="base" pos="0 0 0">
+      <geom name="cylinder1" type="cylinder" fromto="0 0 0 0 0 0.1" size="0.075" rgba="1.0 0.196 0.196 1"/>
+
+      <body name="spool_bracket" pos="0 0 0.1">
+        <joint name="R1" type="hinge" axis="0 0 1" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+        <geom name="box1" type="box" size="0.05 0.1 0.075" pos="0 0 0.075" rgba="0.5 0.5 0.5 1"/>
+
+        <body name="spool" pos="0 0 0.11">
+          <joint name="R2" type="hinge" axis="0 -1 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+          <geom name="cylinder2" type="cylinder" fromto="0 -0.075 0 0 0.075 0" size="0.075" rgba="0.1 0.1 0.1 1"/>
+          <site name="boom_base" pos="0 0 -0.055" size="0.01" rgba="0.1 0.1 0.1 1"/>
+
+          <body name="boom" pos="0 0 -0.055">
+            <joint name="P3" type="slide" axis="1 0 0" limited="true" range="0.2 3.0" damping="20.0" armature="0.01" frictionloss="1"/>
+            <geom name="sphere1" type="sphere" size="0.05" pos="0 0 0" rgba="0.1 0.1 0.1 1"/>
+            <site name="boom_end" pos="0 0 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
+
+            <body name="wrist" pos="0 0 0">
+              <joint name="R4" type="hinge" axis="0.866025 0 0.5" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <joint name="R5" type="hinge" axis="0 -1 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <joint name="R6" type="hinge" axis="1 0 0" range="-3.14159 3.14159" damping="0.5" armature="0.005" frictionloss="0.3"/>
+              <geom name="wrist_link" type="cylinder" fromto="0 0 0 0.1 0 0" size="0.02" rgba="0.2 0.2 0.2 1"/>
+              <site name="wrist_base" pos="0.1 0 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
+              
+              <!-- Wrist-mounted camera: points in +x (forward), VFOV=55° -->
+              <camera name="wrist_cam" pos="0.05 0 0.0475" xyaxes="0 -1 0 0 0 1" fovy="55" mode="fixed"/>
+
+              <body name="left_gripper" pos="0.133 0 0">
+                <joint name="left_grip_joint" type="slide" axis="0 1 0" limited="true" range="0 0.05" damping="1" armature="0.001" frictionloss="0.1"/>
+                <geom name="left_jaw" class="gripper" type="box" size="0.05 0.01 0.025" pos="0 0.0125 0" rgba="1.0 0.196 0.196 1"/>
+                <site name="left_jaw_base" pos="-0.025 0.0125 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
+              </body> 
+              
+              <body name="right_gripper" pos="0.133 0 0">
+                <joint name="right_grip_joint" type="slide" axis="0 -1 0" limited="true" range="0 0.05" damping="1" armature="0.001" frictionloss="0.1"/>
+                <geom name="right_jaw" class="gripper" type="box" size="0.05 0.01 0.025" pos="0 -0.0125 0" rgba="1.0 0.196 0.196 1"/>
+                <site name="right_jaw_base" pos="-0.025 -0.0125 0" size="0.01" rgba="0.1 0.1 0.1 1"/>
+              </body> 
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    
+    <!-- YCB Objects -->
+    <body name="011_banana" pos="0.820 -0.237 0.128" euler="0 0 1.40">
+      <freejoint/>
+      <geom name="011_banana_geom" type="mesh" mesh="011_banana_mesh" material="011_banana_mat"
+            density="60" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="002_master_chef_can" pos="0.868 0.088 0.189" euler="0 0 0.55">
+      <freejoint/>
+      <geom name="002_master_chef_can_geom" type="mesh" mesh="002_master_chef_can_mesh" material="002_master_chef_can_mat"
+            density="20" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="003_cracker_box" pos="0.711 -0.235 0.122" euler="0 0 3.17">
+      <freejoint/>
+      <geom name="003_cracker_box_geom" type="mesh" mesh="003_cracker_box_mesh" material="003_cracker_box_mat"
+            density="10" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="005_tomato_soup_can" pos="0.513 -0.151 0.165" euler="0 0 3.42">
+      <freejoint/>
+      <geom name="005_tomato_soup_can_geom" type="mesh" mesh="005_tomato_soup_can_mesh" material="005_tomato_soup_can_mat"
+            density="30" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="006_mustard_bottle" pos="0.610 0.045 0.181" euler="0 0 0.04">
+      <freejoint/>
+      <geom name="006_mustard_bottle_geom" type="mesh" mesh="006_mustard_bottle_mesh" material="006_mustard_bottle_mat"
+            density="40" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="024_bowl" pos="0.903 0.099 0.134" euler="0 0 0.98">
+      <freejoint/>
+      <geom name="024_bowl_geom" type="mesh" mesh="024_bowl_mesh" material="024_bowl_mat"     
+            density="50" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="025_mug" pos="0.979 -0.082 0.109" euler="0 0 0.61">
+      <freejoint/>
+      <geom name="025_mug_geom" type="mesh" mesh="025_mug_mesh" material="025_mug_mat"        
+            density="60" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="035_power_drill" pos="0.924 0.052 0.181" euler="0 0 4.58">
+      <freejoint/>
+      <geom name="035_power_drill_geom" type="mesh" mesh="035_power_drill_mesh" material="035_power_drill_mat"
+            density="80" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="037_scissors" pos="0.768 0.237 0.138" euler="0 0 3.47">
+      <freejoint/>
+      <geom name="037_scissors_geom" type="mesh" mesh="037_scissors_mesh" material="037_scissors_mat"
+            density="70" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="040_large_marker" pos="0.915 0.059 0.186" euler="0 0 3.63">
+      <freejoint/>
+      <geom name="040_large_marker_geom" type="mesh" mesh="040_large_marker_mesh" material="040_large_marker_mat"
+            density="20" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    <body name="021_bleach_cleanser" pos="0.852 -0.227 0.123" euler="0 0 1.82">
+      <freejoint/>
+      <geom name="021_bleach_cleanser_geom" type="mesh" mesh="021_bleach_cleanser_mesh" material="021_bleach_cleanser_mat"
+            density="40" friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    
+    <!-- Collection Bin -->
+    <body name="bin" pos="1.0 0.4 0">
+      <geom name="bin_bottom" type="box" size="0.15 0.15 0.005" pos="0 0 0.005" rgba="0.3 0.3 0.35 1" 
+            friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+      <geom name="bin_wall_front" type="box" size="0.15 0.005 0.08" pos="0 -0.145 0.08" rgba="0.3 0.3 0.35 0.7"
+            friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+      <geom name="bin_wall_back" type="box" size="0.15 0.005 0.08" pos="0 0.145 0.08" rgba="0.3 0.3 0.35 0.7"
+            friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+      <geom name="bin_wall_left" type="box" size="0.005 0.14 0.08" pos="-0.145 0 0.08" rgba="0.3 0.3 0.35 0.7"
+            friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+      <geom name="bin_wall_right" type="box" size="0.005 0.14 0.08" pos="0.145 0 0.08" rgba="0.3 0.3 0.35 0.7"
+            friction="1.5 0.5 0.1" solref="0.01 1" solimp="0.95 0.98 0.0001" condim="4" margin="0.001"/>
+    </body>
+    
+  </worldbody>
+  
+  <tendon>
+    <spatial name="boom" width="0.04" rgba="0.2 0.2 0.2 1">
+      <site site="boom_base"/>
+      <site site="boom_end"/>
+    </spatial>
+    <spatial name="wrist" width="0.02" rgba="0.2 0.2 0.2 1">
+      <site site="left_jaw_base"/>
+      <site site="wrist_base"/>
+      <site site="right_jaw_base"/>
+    </spatial>
+  </tendon>
+  
+  <actuator>
+    <position name="actuator_R1" joint="R1" kp="100" ctrlrange="-3.14159 3.14159"/>
+    <position name="actuator_R2" joint="R2" kp="100" ctrlrange="-3.14159 3.14159"/>
+    <position name="actuator_P3" joint="P3" kp="500" ctrlrange="0.2 3.0"/>
+    <position name="actuator_R4" joint="R4" kp="100" ctrlrange="-3.14159 3.14159"/>
+    <position name="actuator_R5" joint="R5" kp="100" ctrlrange="-3.14159 3.14159"/>
+    <position name="actuator_R6" joint="R6" kp="100" ctrlrange="-3.14159 3.14159"/>
+    <position name="actuator_left_grip" joint="left_grip_joint" kp="200" ctrlrange="0 0.05"/>
+    <position name="actuator_right_grip" joint="right_grip_joint" kp="200" ctrlrange="0 0.05"/>
+  </actuator>
+  
+</mujoco>
