@@ -436,7 +436,7 @@ def kinematic_joint_coordinates(sim_joint_positions: np.ndarray) -> np.ndarray:
     positions = np.asarray(sim_joint_positions, dtype=float)
     if positions.shape != (6,):
         raise ValueError(f"expected six arm joints, got shape {positions.shape}")
-    return positions
+    return positions + KINEMATIC_JOINT_OFFSETS
 
 
 def end_effector_pose(sim_joint_positions: np.ndarray) -> Pose:
