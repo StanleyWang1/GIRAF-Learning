@@ -1,0 +1,4 @@
+# Pure-Python NatNet client used by the existing OptiTrack scripts. The hash is
+# for the PyPI py3-none-any wheel published with v0.2.0.
+natnet==0.2.0 \
+    --hash=sha256:babeba88c41df3b001658b5994bf1c15c3b12fa1110f7fb9a86e393444efb14e

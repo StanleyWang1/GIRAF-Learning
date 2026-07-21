@@ -1,0 +1,34 @@
+<launch>
+  <arg name="optitrack_server_ip" default="172.24.68.77" />
+  <arg name="optitrack_client_ip" default="" />
+  <arg name="optitrack_rigid_id" default="33" />
+  <arg name="keyboard_device" default="/dev/input/deadman_keyboard" />
+
+  <node pkg="giraf_optitrak_teleop"
+        type="giraf_optitrak_teleop_node"
+        name="giraf_optitrak_teleop"
+        output="screen"
+        required="true">
+    <param name="optitrack_server_ip" value="$(arg optitrack_server_ip)" />
+    <param name="optitrack_client_ip" value="$(arg optitrack_client_ip)" />
+    <param name="optitrack_rigid_id" value="$(arg optitrack_rigid_id)" />
+    <param name="optitrack_command_port" value="1510" />
+    <param name="optitrack_data_port" value="1511" />
+    <param name="optitrack_multicast" value="false" />
+    <param name="keyboard_device" value="$(arg keyboard_device)" />
+
+    <param name="publish_hz" value="100.0" />
+    <param name="status_hz" value="5.0" />
+    <param name="position_gain" value="1.0" />
+    <param name="rotation_gain" value="1.0" />
+    <rosparam param="linear_velocity_limits">[0.05, 0.05, 0.025]</rosparam>
+    <rosparam param="angular_velocity_limits">[0.125, 0.125, 0.125]</rosparam>
+    <param name="position_scale" value="1.0" />
+    <param name="orientation_scale" value="1.0" />
+    <param name="opti_timeout_ms" value="100.0" />
+    <param name="state_timeout_ms" value="300.0" />
+    <param name="md80_timeout_ms" value="300.0" />
+    <rosparam param="expected_md80_joint_names">['Joint 11', 'Joint 12', 'Joint 13']</rosparam>
+  </node>
+</launch>
+

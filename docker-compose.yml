@@ -1,0 +1,27 @@
+services:
+  giraf-teleop:
+    build:
+      context: .
+    image: giraf-optitrak-teleop:noetic
+    container_name: giraf_optitrak_teleop
+    network_mode: host
+    init: true
+    restart: "no"
+    stop_grace_period: 2s
+    environment:
+      ROS_MASTER_URI: ${ROS_MASTER_URI:?set ROS_MASTER_URI in .env}
+      ROS_IP: ${ROS_IP:?set ROS_IP in .env}
+      PYTHONUNBUFFERED: "1"
+    devices:
+      - ${DEADMAN_KEYBOARD_DEVICE:?set DEADMAN_KEYBOARD_DEVICE in .env}:/dev/input/deadman_keyboard:r
+    volumes:
+      # Match the existing development workflow: dependencies/build products
+      # are baked in, while current Python/launch source is mounted read-only.
+      - .:/catkin_ws/src/giraf_optitrak_teleop:ro
+    command:
+      - roslaunch
+      - giraf_optitrak_teleop
+      - giraf_optitrak_teleop.launch
+      - optitrack_server_ip:=${OPTITRACK_SERVER_IP:-172.24.68.77}
+      - optitrack_client_ip:=${OPTITRACK_CLIENT_IP:-}
+      - optitrack_rigid_id:=${OPTITRACK_RIGID_ID:-33}
