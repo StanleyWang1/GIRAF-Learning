@@ -10,14 +10,15 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>python3-setuptools</build_depend>
 
-  <exec_depend>geometry_msgs</exec_depend>
+  <depend>geometry_msgs</depend>
+  <depend>rosgraph</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+
   <exec_depend>python3-evdev</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-sympy</exec_depend>
-  <exec_depend>rosgraph</exec_depend>
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
 
   <export />
 </package>
