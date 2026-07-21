@@ -3,6 +3,22 @@ Teleop, Data Collection, Model Training, and Deployment of Learned Policies for 
 
 ## ROS1 real-arm OptiTrack teleoperation
 
+### TL;DR
+
+This repository now includes a Dockerized ROS Noetic operator console for the
+real GIRAF arm. It reads OptiTrack rigid body 33 and a physical keyboard, then
+publishes bounded Cartesian velocity commands to the robot's existing
+`/giraf_arm_controller`.
+
+- **Hold Space to command motion; release it to command zero velocity.** Space
+  is a momentary clutch, not a toggle.
+- Start against the robot-side **motor-disabled dry-run backend** first.
+- The console never opens motor devices, commands the gripper, changes the
+  command source, or starts its own ROS master.
+- After startup or any fault, completely release Space and press it again.
+- Read the full [ROS1 real-arm teleoperation runbook](docs/ROS1_REAL_ARM_TELEOP.md)
+  before enabling motors.
+
 This repository is also a ROS Noetic catkin package containing a headless,
 hold-to-run teleoperation node. It connects to the existing robot-side
 `/giraf_arm_controller`; it does **not** own motor devices or start a ROS master.
@@ -36,7 +52,7 @@ forces zero and requires a complete release followed by a fresh press.
   receipt time for its 150 ms watchdog.
 - A physical estop and supervised dry-run commissioning remain required.
 
-### Configuration and startup
+### How to run
 
 Run this only from a Linux control PC with routes to both the robot and Motive.
 Docker Desktop networking is not the deployment target.
@@ -48,6 +64,18 @@ ls -l /dev/input/by-id/*event-kbd
 docker compose build
 docker compose up
 ```
+
+Keep Space released while the stack starts. In another terminal, watch the
+operator status:
+
+```bash
+docker compose exec giraf-teleop bash -lc \
+  'source /catkin_ws/devel/setup.bash && rostopic echo /giraf_optitrak_teleop/status'
+```
+
+Only hold Space once the status reports `space_released` with an empty
+`interlocks` list. See the runbook for the complete dry-run and hardware
+commissioning sequence.
 
 The service uses host networking because ROS1 peers must connect directly back
 to the control PC and NatNet uses UDP. Only the selected keyboard device is
