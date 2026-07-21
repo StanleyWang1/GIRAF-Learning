@@ -29,7 +29,7 @@ import numpy as np
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-ARM_MODEL_PATH = REPO_ROOT / "sim_model" / "models" / "GIRAF.xml"
+ARM_MODEL_PATH = REPO_ROOT / "sim_model" / "models" / "GIRAF_bananas.xml"
 for import_path in (REPO_ROOT,):
     path_string = str(import_path)
     if path_string not in sys.path:
