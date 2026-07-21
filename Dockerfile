@@ -1,6 +1,6 @@
 # ROS Noetic is EOL. Pin the final official multi-architecture Focal image index
 # so a future tag change cannot silently alter the control environment.
-FROM ros:noetic-ros-base-focal@sha256:2ac33a5793a5005c62e093f7aeec60692818465e7c306e70df92a62b147cf1f0
+FROM ros:noetic-ros-base-focal@sha256:72b8bc59035dc0a5b8e07aae28c16caa84192971d72d207c72ed734fb1d5e97d
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
