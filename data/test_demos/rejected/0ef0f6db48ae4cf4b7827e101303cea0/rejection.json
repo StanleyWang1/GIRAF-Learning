@@ -1,0 +1,6 @@
+{
+  "num_steps": 224,
+  "reason": "aligned stream: TimeoutError: producer exceeded configured shared-memory copy budget",
+  "start_monotonic_ns": 27118614393567,
+  "start_wall_time_ns": 1788322765700822767
+}

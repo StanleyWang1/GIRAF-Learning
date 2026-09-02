@@ -4,6 +4,10 @@ depthai==3.9.0
 natnet==0.2.0
 evdev==2.0.0
 opencv-python==4.14.0.94
+PyYAML==6.0.2
+zarr==2.18.7
+numcodecs==0.15.1
+av==15.1.0
 
 numpy==2.5.2
 matplotlib==3.11.1

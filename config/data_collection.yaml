@@ -1,0 +1,38 @@
+camera:
+  width: 640
+  height: 480
+  fps: 30.0
+  color_mode: rgb
+  include_depth: false
+
+streams:
+  action_hz: 100.0
+  state_hz: 100.0
+  grasp_hz: 100.0
+  motor_hz: 100.0
+
+dataset:
+  output_dir: data/test_demos
+  zarr_name: screwdriver_pick_1.zarr
+  episode_dir_name: videos
+  aligned_hz: 30.0
+  resize_dim: [224, 224]
+  resize_mode: stretch
+  normalization: none
+  save_raw_video: true
+  raw_video_codec: libx264
+  raw_video_crf: 21
+  zarr_chunk_length: 16
+  saver_batch_size: 16
+
+alignment:
+  max_control_age_ms: 50.0
+  max_motor_age_ms: 50.0
+
+shared_memory:
+  get_time_budget_s: 0.10
+  safety_margin: 1.5
+  camera_history: 64
+  control_history: 256
+  motor_history: 256
+  aligned_history: 128

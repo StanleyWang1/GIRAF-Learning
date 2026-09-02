@@ -1,0 +1,10 @@
+shape_meta:
+  obs:
+    camera_rgb:
+      shape: [3, 224, 224]
+      type: rgb
+    state:
+      shape: [15]
+      type: low_dim
+  action:
+    shape: [7]

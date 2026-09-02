@@ -9,6 +9,7 @@ import signal
 import threading
 import time
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -39,6 +40,9 @@ from keyboard_driver import (
 from kinematic_model import num_forward_transform, num_jacobian
 from mab_worker import MabWorker
 from optitrack_driver import DEFAULT_RIGID_BODY_ID, DEFAULT_SERVER_IP, OptiTrackDriver
+
+if TYPE_CHECKING:
+    from data_collection.pipeline import DataCollectionPipeline
 
 
 CONTROL_HZ = 100.0
@@ -188,7 +192,10 @@ def optitrack_loop(server_ip: str, client_ip: str | None, rigid_id: int) -> None
             driver.close()
 
 
-def control_loop(keyboard) -> None:
+def control_loop(
+    keyboard,
+    recorder: DataCollectionPipeline | None = None,
+) -> None:
     tracking = False
     armed = False
     controller_anchor_position = controller_anchor_quaternion = controller_anchor_rotation = None
@@ -209,6 +216,10 @@ def control_loop(keyboard) -> None:
                 pose_quaternion = STATE.pose_quaternion.copy()
                 pose_time = STATE.pose_time
                 motors_ready = STATE.motors_ready
+
+            linear = np.zeros(3)
+            angular = np.zeros(3)
+            qdot = np.zeros(6)
 
             fresh = pose_time > 0.0 and start - pose_time <= POSE_TIMEOUT
             if not keys["clutch"]:
@@ -256,12 +267,27 @@ def control_loop(keyboard) -> None:
                 STATE.tracking = tracking
                 STATE.grasp = keys["grasp"]
 
+            if recorder is not None:
+                from data_collection.schema import state_vector
+
+                eef_position, eef_rotation = end_effector_pose(joints)
+                recorder.publish_control(
+                    timestamp_ns=time.monotonic_ns(),
+                    task_twist=np.concatenate((linear, angular)),
+                    joint_velocity_command=qdot,
+                    joint_position_command=joints,
+                    state=state_vector(joints, eef_position, eef_rotation),
+                    grasp=keys["grasp"],
+                    clutch=keys["clutch"],
+                    tracking=tracking,
+                )
+
             STOP.wait(max(0.0, period - (time.monotonic() - start)))
     except Exception as exc:
         fail("control", exc)
 
 
-def motor_loop() -> None:
+def motor_loop(recorder: DataCollectionPipeline | None = None) -> None:
     mab = dxl = sync_write = None
     period = 1.0 / CONTROL_HZ
     try:
@@ -285,9 +311,22 @@ def motor_loop() -> None:
                 joints = STATE.joints.copy()
                 grasp = STATE.grasp
             boom = float(np.clip(boom_motor_position(joints[2]), BOOM_MIN, BOOM_MAX))
-            mab.command(joints[0], joints[1], boom)
             gripper = MOTOR24_CLOSED if grasp else MOTOR24_OPEN
-            if not dynamixel_drive(dxl, sync_write, wrist_ticks(joints) + [gripper]):
+            dynamixel_targets = wrist_ticks(joints) + [gripper]
+            command_accepted = False
+            try:
+                mab.command(joints[0], joints[1], boom)
+                command_accepted = dynamixel_drive(dxl, sync_write, dynamixel_targets)
+            finally:
+                if recorder is not None:
+                    recorder.publish_motor(
+                        timestamp_ns=time.monotonic_ns(),
+                        can_position_target=(joints[0], joints[1], boom),
+                        dynamixel_target_ticks=dynamixel_targets,
+                        grasp=grasp,
+                        command_accepted=command_accepted,
+                    )
+            if not command_accepted:
                 raise RuntimeError("Dynamixel command failed")
             STOP.wait(max(0.0, period - (time.monotonic() - start)))
     except Exception as exc:
@@ -305,7 +344,11 @@ def motor_loop() -> None:
             mab.stop()
 
 
-def status_loop(keyboard, workers: list[threading.Thread]) -> None:
+def status_loop(
+    keyboard,
+    workers: list[threading.Thread],
+    recorder: DataCollectionPipeline | None = None,
+) -> None:
     while not STOP.wait(0.25):
         for thread in workers:
             if not thread.is_alive():
@@ -324,6 +367,7 @@ def status_loop(keyboard, workers: list[threading.Thread]) -> None:
         age_text = "n/a" if not math.isfinite(age) else f"{age * 1000:.0f}ms"
         print(
             f"\rtracking={status[0]} pedal={keys['clutch']} grasp={status[3]} "
+            f"recording={recorder.is_recording if recorder is not None else False} "
             f"opti={status[1]} motors={status[2]} pose={age_text} "
             f"q={np.round(status[4], 3)}   ",
             end="",
@@ -337,11 +381,17 @@ def main() -> int:
     parser.add_argument("--client-ip", default=None)
     parser.add_argument("--rigid-id", type=int, default=DEFAULT_RIGID_BODY_ID)
     parser.add_argument("--hardware", action="store_true", help="enable and command the physical motors")
+    parser.add_argument(
+        "--collect-config",
+        default=None,
+        help="enable episode recording using this data-collection YAML file",
+    )
     args = parser.parse_args()
 
     keyboard = None
     workers: list[threading.Thread] = []
     status = None
+    recorder = None
     signal.signal(signal.SIGINT, lambda *_: STOP.set())
     signal.signal(signal.SIGTERM, lambda *_: STOP.set())
 
@@ -349,9 +399,25 @@ def main() -> int:
         print("[INIT][KEYBOARD] Opening input devices...", flush=True)
         keyboard = keyboard_connect()
         print(f"[INIT][KEYBOARD] Opened {len(keyboard.devices)} input devices.", flush=True)
+        if args.collect_config is not None:
+            from data_collection.pipeline import DataCollectionPipeline
+
+            print("[INIT][DATA] Starting camera and dataset saver...", flush=True)
+            recorder = DataCollectionPipeline.from_path(
+                args.collect_config,
+                hardware_enabled=args.hardware,
+            )
+            recorder.start(lambda: keyboard_status(keyboard))
+            print("[INIT][DATA] Ready; press R to start or stop an episode.", flush=True)
         workers.append(threading.Thread(target=keyboard_control, args=(keyboard, STOP), name="keyboard"))
         workers.append(threading.Thread(target=optitrack_loop, args=(args.server_ip, args.client_ip, args.rigid_id), name="optitrack"))
-        workers.append(threading.Thread(target=control_loop, args=(keyboard,), name="control"))
+        workers.append(
+            threading.Thread(
+                target=control_loop,
+                args=(keyboard, recorder),
+                name="control",
+            )
+        )
 
         if args.hardware:
             print("HARDWARE MODE: stage MD80 joints at home and begin with the pedal released.")
@@ -364,11 +430,15 @@ def main() -> int:
         for thread in workers:
             thread.start()
         print("[INIT] Worker threads started.", flush=True)
-        status = threading.Thread(target=status_loop, args=(keyboard, workers), name="status")
+        status = threading.Thread(
+            target=status_loop,
+            args=(keyboard, workers, recorder),
+            name="status",
+        )
         status.start()
 
         if args.hardware:
-            motor_loop()
+            motor_loop(recorder)
         else:
             STOP.wait()
     except Exception as exc:
@@ -380,6 +450,8 @@ def main() -> int:
                 thread.join(timeout=3.0)
         if status is not None and status.is_alive():
             status.join(timeout=1.0)
+        if recorder is not None:
+            recorder.stop()
         if keyboard is not None:
             keyboard_disconnect(keyboard)
         with LOCK:

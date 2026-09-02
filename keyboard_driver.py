@@ -7,7 +7,6 @@ import time
 
 from evdev import InputDevice, ecodes, list_devices
 
-
 DEFAULT_CONTROL_HZ = 30.0
 DEFAULT_PRINT_HZ = 10.0
 
@@ -19,6 +18,8 @@ class KeyboardState:
         self.devices = devices
         self.clutch = False
         self.grasp = False
+        self.record_toggle_count = 0
+        self.record_event_timestamp_ns = 0
         self._space_down = {device.path: False for device in devices}
         self._lock = threading.Lock()
 
@@ -31,10 +32,11 @@ def keyboard_connect() -> KeyboardState:
     return KeyboardState(devices)
 
 
-def keyboard_read(state: KeyboardState) -> dict[str, bool]:
+def keyboard_read(state: KeyboardState) -> dict[str, bool | int]:
     """Process queued key events and return the updated controls."""
     space_events: list[tuple[str, bool]] = []
     b_presses = 0
+    record_presses = 0
 
     for device in state.devices:
         try:
@@ -45,6 +47,8 @@ def keyboard_read(state: KeyboardState) -> dict[str, bool]:
                     space_events.append((device.path, event.value != 0))
                 elif event.code == ecodes.KEY_B and event.value == 1:
                     b_presses += 1
+                elif event.code == ecodes.KEY_R and event.value == 1:
+                    record_presses += 1
         except BlockingIOError:
             continue
 
@@ -55,14 +59,27 @@ def keyboard_read(state: KeyboardState) -> dict[str, bool]:
         state.clutch = any(state._space_down.values())
         if b_presses % 2 == 1:
             state.grasp = not state.grasp
+        if record_presses:
+            state.record_toggle_count += record_presses
+            state.record_event_timestamp_ns = time.monotonic_ns()
 
-        return {"clutch": state.clutch, "grasp": state.grasp}
+        return {
+            "clutch": state.clutch,
+            "grasp": state.grasp,
+            "record_toggle_count": state.record_toggle_count,
+            "record_event_timestamp_ns": state.record_event_timestamp_ns,
+        }
 
 
-def keyboard_status(state: KeyboardState) -> dict[str, bool]:
+def keyboard_status(state: KeyboardState) -> dict[str, bool | int]:
     """Return the most recently processed control state."""
     with state._lock:
-        return {"clutch": state.clutch, "grasp": state.grasp}
+        return {
+            "clutch": state.clutch,
+            "grasp": state.grasp,
+            "record_toggle_count": state.record_toggle_count,
+            "record_event_timestamp_ns": state.record_event_timestamp_ns,
+        }
 
 
 def keyboard_control(
@@ -99,13 +116,15 @@ def main() -> None:
     )
     control_thread.start()
 
-    print("Hold SPACE for clutch; press B to toggle grasp; Ctrl+C to exit.")
+    print(
+        "Hold SPACE for clutch; press B to toggle grasp; "
+        "press R to toggle recording; Ctrl+C to exit."
+    )
     try:
         while not stop_event.wait(1.0 / DEFAULT_PRINT_HZ):
             status = keyboard_status(state)
             print(
-                f"\rclutch={str(status['clutch']):<5} "
-                f"grasp={str(status['grasp']):<5}",
+                f"\rclutch={status['clutch']!s:<5} grasp={status['grasp']!s:<5}",
                 end="",
                 flush=True,
             )

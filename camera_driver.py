@@ -3,7 +3,6 @@
 import cv2
 import depthai as dai
 
-
 FRAME_SIZE = (640, 480)
 FRAME_RATE = 30
 WINDOW_NAME = "GIRAF Camera"
@@ -28,7 +27,12 @@ def camera_connect(
 
 def camera_read(frame_queue):
     """Wait for and return the next OpenCV color frame."""
-    return frame_queue.get().getCvFrame()
+    return camera_read_message(frame_queue).getCvFrame()
+
+
+def camera_read_message(frame_queue):
+    """Wait for the next frame message, preserving its capture metadata."""
+    return frame_queue.get()
 
 
 def camera_disconnect(pipeline):
