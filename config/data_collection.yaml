@@ -2,23 +2,14 @@ camera:
   width: 640
   height: 480
   fps: 30.0
-  color_mode: rgb
-  include_depth: false
-
-streams:
-  action_hz: 100.0
-  state_hz: 100.0
-  grasp_hz: 100.0
-  motor_hz: 100.0
 
 dataset:
-  output_dir: data/test_demos
-  zarr_name: screwdriver_pick_1.zarr
+  output_dir: data/demos
+  zarr_name: replay_buffer.zarr
   episode_dir_name: videos
   aligned_hz: 30.0
   resize_dim: [224, 224]
   resize_mode: stretch
-  normalization: none
   save_raw_video: true
   raw_video_codec: libx264
   raw_video_crf: 21
