@@ -9,16 +9,18 @@ from pathlib import Path
 import numpy as np
 import zarr
 
-from data_collection.config import (
+from giraf.data.config import (
     CameraConfig,
     CollectorConfig,
     DatasetConfig,
     SharedMemoryConfig,
 )
-from data_collection.pipeline import DataCollectionPipeline, _sample_at_or_before
-from data_collection.saver import EpisodeStage, ReplayBufferWriter, SaverProcess
-from data_collection.schema import aligned_example, state_vector
-from data_collection.shared_memory import RingBufferOverrun, SharedMemoryRingBuffer
+from giraf.data.episode_stage import EpisodeStage
+from giraf.data.pipeline import DataCollectionPipeline, _sample_at_or_before
+from giraf.data.replay_buffer import ReplayBufferWriter
+from giraf.data.saver import SaverProcess
+from giraf.data.schema import aligned_example, state_vector
+from giraf.data.shared_memory import RingBufferOverrun, SharedMemoryRingBuffer
 
 
 def test_config(output_dir: Path, *, raw_video: bool = False) -> CollectorConfig:
