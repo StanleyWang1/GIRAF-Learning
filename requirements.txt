@@ -1,0 +1,9 @@
+pycandlemab==1.6.2
+dynamixel-sdk==4.0.5
+depthai==3.9.0
+natnet==0.2.0
+evdev==2.0.0
+
+numpy==2.5.2
+matplotlib==3.11.1
+sympy==1.14.0

@@ -1,0 +1,63 @@
+# CONNECTION PARAMETERS
+PORT = '/dev/ttyACM1'
+BAUDRATE = 1000000
+
+# XL-430-W250-T, Protocol 2.0
+TICKS_PER_REV = 4096
+
+# 3 DoF metal wrist + gripper
+WRIST_IDS = (21, 22, 23)
+GRIPPER_ID = 24
+ALL_IDS = (21, 22, 23, 24)
+
+# Reference/home positions
+MOTOR21_HOME = 3075
+MOTOR22_HOME = 3075
+MOTOR23_HOME = 2050
+
+# Software safety limits
+MOTOR21_LIMITS = (2000, 3700)
+MOTOR22_LIMITS = (2000, 4000)
+MOTOR23_LIMITS = (100, 4100)
+
+# Gripper
+MOTOR24_OPEN = 2200
+MOTOR24_CLOSED = -200
+MOTOR24_LIMITS = (-200, 2200)
+GRIPPER_STROKE = 2400
+
+# XH-430-W250-T Serial Addresses
+MODEL_NUMBER       = (0, 2)
+ID_ADDR            = (7, 1)
+BAUD_RATE          = (8, 1)
+RETURN_DELAY_TIME  = (9, 1)
+DRIVE_MODE         = (10, 1)
+OPERATING_MODE     = (11, 1)
+HOMING_OFFSET      = (20, 4)
+
+PWM_LIMIT          = (36, 2)
+CURRENT_LIMIT      = (38, 2)
+VELOCITY_LIMIT     = (44, 4)
+MAX_POSITION_LIMIT = (48, 4)
+MIN_POSITION_LIMIT = (52, 4)
+
+TORQUE_ENABLE         = (64, 1)
+LED_ENABLE            = (65, 1)
+POSITION_D_GAIN       = (80, 2)
+POSITION_I_GAIN       = (82, 2)
+POSITION_P_GAIN       = (84, 2)
+
+GOAL_PWM              = (100, 2)
+GOAL_CURRENT          = (102, 2)
+GOAL_VELOCITY         = (104, 4)
+PROFILE_ACCELERATION  = (108, 4)
+PROFILE_VELOCITY      = (112, 4)
+GOAL_POSITION         = (116, 4)
+
+MOVING                = (122, 1)
+PRESENT_PWM           = (124, 2)
+PRESENT_LOAD          = (126, 2)
+PRESENT_VELOCITY      = (128, 4)
+PRESENT_POSITION      = (132, 4)
+PRESENT_INPUT_VOLTAGE = (144, 2)
+PRESENT_TEMPERATURE   = (146, 1)

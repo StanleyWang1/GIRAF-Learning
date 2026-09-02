@@ -1,0 +1,102 @@
+"""DYNAMIXEL configuration and XL430-W250-T control-table registers.
+
+Registers are represented as ``(address, byte_length)`` tuples for Protocol 2.0.
+The position limits in this module are software limits: the XL430 hardware
+Min/Max Position Limit registers are ignored in extended-position mode.
+"""
+
+from typing import Final, TypeAlias
+
+Register: TypeAlias = tuple[int, int]
+
+# Connection parameters
+PORT: Final = "/dev/ttyACM1"
+BAUDRATE: Final = 1_000_000
+PROTOCOL_VERSION: Final = 2.0
+
+# XL430-W250-T, Protocol 2.0
+TICKS_PER_REV: Final = 4096
+EXTENDED_POSITION_MODE: Final = 4
+TORQUE_OFF: Final = 0
+TORQUE_ON: Final = 1
+
+# Conservative velocity-based motion profile. Tune these for the mechanism
+# after testing unloaded at low speed.
+PROFILE_VELOCITY_VALUE: Final = 50
+PROFILE_ACCELERATION_VALUE: Final = 10
+
+# 3-DoF metal wrist + gripper
+WRIST_IDS: Final = (21, 22, 23)
+GRIPPER_ID: Final = 24
+ALL_IDS: Final = (*WRIST_IDS, GRIPPER_ID)
+
+# Reference/home positions
+MOTOR21_HOME: Final = 3075
+MOTOR22_HOME: Final = 3075
+MOTOR23_HOME: Final = 2050
+
+# Gripper positions
+MOTOR24_OPEN: Final = 2200
+MOTOR24_CLOSED: Final = -200
+GRIPPER_STROKE: Final = MOTOR24_OPEN - MOTOR24_CLOSED
+
+# Software safety limits, inclusive
+MOTOR21_LIMITS: Final = (2000, 3700)
+MOTOR22_LIMITS: Final = (2000, 4000)
+MOTOR23_LIMITS: Final = (100, 4100)
+MOTOR24_LIMITS: Final = (MOTOR24_CLOSED, MOTOR24_OPEN)
+
+HOME_POSITIONS: Final = {
+    21: MOTOR21_HOME,
+    22: MOTOR22_HOME,
+    23: MOTOR23_HOME,
+    24: MOTOR24_OPEN,
+}
+
+POSITION_LIMITS: Final = {
+    21: MOTOR21_LIMITS,
+    22: MOTOR22_LIMITS,
+    23: MOTOR23_LIMITS,
+    24: MOTOR24_LIMITS,
+}
+
+# XL430-W250-T control table
+MODEL_NUMBER: Register = (0, 2)
+ID_ADDR: Register = (7, 1)
+BAUD_RATE: Register = (8, 1)
+RETURN_DELAY_TIME: Register = (9, 1)
+DRIVE_MODE: Register = (10, 1)
+OPERATING_MODE: Register = (11, 1)
+HOMING_OFFSET: Register = (20, 4)
+
+PWM_LIMIT: Register = (36, 2)
+VELOCITY_LIMIT: Register = (44, 4)
+MAX_POSITION_LIMIT: Register = (48, 4)
+MIN_POSITION_LIMIT: Register = (52, 4)
+
+TORQUE_ENABLE: Register = (64, 1)
+LED_ENABLE: Register = (65, 1)
+HARDWARE_ERROR_STATUS: Register = (70, 1)
+POSITION_D_GAIN: Register = (80, 2)
+POSITION_I_GAIN: Register = (82, 2)
+POSITION_P_GAIN: Register = (84, 2)
+BUS_WATCHDOG: Register = (98, 1)
+
+GOAL_PWM: Register = (100, 2)
+GOAL_VELOCITY: Register = (104, 4)
+PROFILE_ACCELERATION: Register = (108, 4)
+PROFILE_VELOCITY: Register = (112, 4)
+GOAL_POSITION: Register = (116, 4)
+
+MOVING: Register = (122, 1)
+MOVING_STATUS: Register = (123, 1)
+PRESENT_PWM: Register = (124, 2)
+PRESENT_LOAD: Register = (126, 2)
+PRESENT_VELOCITY: Register = (128, 4)
+PRESENT_POSITION: Register = (132, 4)
+PRESENT_INPUT_VOLTAGE: Register = (144, 2)
+PRESENT_TEMPERATURE: Register = (146, 1)
+
+# Address 126 is Present Current rather than Present Load on current-sensing
+# X-series models such as XH430. Current Limit (38) and Goal Current (102) are
+# likewise model-specific and intentionally omitted from this XL430 table.
