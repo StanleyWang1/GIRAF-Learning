@@ -40,10 +40,9 @@ without activating it. To activate it for an interactive shell:
 source .venv/bin/activate
 ```
 
-Linux and Windows use the official CPU-only PyTorch index by default. This
-keeps local setup small and makes all non-hardware checks runnable without a
-GPU. Change the explicit `pytorch-cpu` source in `pyproject.toml` when a CUDA
-training environment is introduced.
+Linux and Windows install PyTorch from the CUDA 13.0 index (about 3 GB of
+wheels). Tests and all tooling also run on CPU. Add `--extra train` for
+Weights & Biases logging.
 
 Install the device libraries on a machine connected to the robot:
 
@@ -217,42 +216,49 @@ The initial policy is a conditional DDPM implemented with PyTorch:
 - checkpoints contain model state, optimizer state, configuration, and format
   version and are written atomically.
 
-The default training batch contract is:
+Batches carry raw physical units straight from the ReplayBuffer:
 
 ```text
 observations["camera_rgb"]  uint8 [B, 2, H, W, 3] or float32 [B, 2, 3, H, W]
 observations["state"]       float32 [B, 2, 15]
-actions                     float32 [B, 16, 7], values in [-1, 1]
+actions                     float32 [B, 16, 7]  (m/s, rad/s, grasp in {0, 1})
 ```
 
-RGB normalization happens inside the policy. `act()` accepts one current RGB
-image and one 15D state, maintains its own two-frame observation history, and
-returns the existing action vector `[vx, vy, vz, wx, wy, wz, grasp]`.
-`DiffusionPolicy.reset()` clears its optional inference history at an episode
-boundary; `rollout()` calls it when a policy provides it. The required policy
-contract remains `act`, `train_step`, and `save`.
+A `Normalizer` fitted on the dataset maps actions and states to `[-1, 1]`
+inside the policy and is stored in the checkpoint, so `act()` returns
+denormalized actions `[vx, vy, vz, wx, wy, wz, grasp]`. RGB scaling also
+happens inside the policy. `act()` keeps its own two-frame observation
+history; `DiffusionPolicy.reset()` clears it at an episode boundary and
+`rollout()` calls it when a policy provides it. The required policy contract
+remains `act`, `train_step`, and `save`.
+
+### Training
+
+```bash
+uv run giraf-train --dataset data/demos/replay_buffer_cleaned.zarr   --output-dir checkpoints/tape_grasping --epochs 200 --batch-size 64
+```
+
+The run directory receives `config.json`, `normalizer.json`, `metrics.jsonl`
+(one line per epoch), `policy.pt` after every epoch, and
+`policy_epoch_NNNN.pt` every `--checkpoint-every` epochs. Windows are anchored
+at every step whose `alignment_valid` flag is set; the first observation and
+the last action repeat at episode boundaries, matching what `act()` does with
+its history. Use `--preload-images` when the dataset fits in RAM.
+
+Add `--wandb` to mirror metrics to Weights & Biases. It runs offline by default
+and needs no account; set `WANDB_MODE=online` to upload. Install the client
+with `uv sync --extra train`.
 
 ```python
-from giraf.learning import Batch, DiffusionPolicy
+from giraf.learning import DiffusionPolicy, ReplayDataset, train
 
-policy = DiffusionPolicy()
-metrics = policy.train_step(Batch(observations=observations, actions=actions))
-policy.save("checkpoints/policy.pt")
-policy = DiffusionPolicy.load("checkpoints/policy.pt", device="cpu")
+dataset = ReplayDataset("data/demos/replay_buffer.zarr", batch_size=64)
+policy = DiffusionPolicy(normalizer=dataset.fit_normalizer())
+history = train(policy, dataset, epochs=1)
+policy = DiffusionPolicy.load("checkpoints/tape_grasping/policy.pt", device="cpu")
 ```
 
-`giraf.learning.train()` is the intentionally thin outer loop around an
-iterable of `Batch` objects. Dataset windowing and experiment tracking stay
-outside the model instead of being hidden in it.
-
-Not implemented yet (each is marked with a `TODO` at the relevant place):
-
-- a Zarr to `Batch` windowing loader for the collected ReplayBuffer;
-- action/state normalization; the policy requires actions in `[-1, 1]` but the
-  collector stores raw twists;
-- a training script with wandb logging, checkpoint cadence, and eval rollouts;
-- a CUDA PyTorch index in `pyproject.toml`;
-- the MuJoCo simulator backend.
+Still missing: evaluation rollouts, which need the MuJoCo simulator backend.
 
 ### MuJoCo drop-in
 
