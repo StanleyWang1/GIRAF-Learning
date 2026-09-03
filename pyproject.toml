@@ -21,6 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+train = ["wandb>=0.19"]
 hardware = [
     "depthai==3.9.0",
     "dynamixel-sdk==4.0.5",
@@ -35,21 +36,21 @@ giraf-diagnose = "giraf.diagnostics:main"
 giraf-prune = "giraf.data.prune:main"
 giraf-replay = "giraf.replay_cli:main"
 giraf-teleop = "giraf.teleop:main"
+giraf-train = "giraf.learning.train_cli:main"
 giraf-view = "giraf.viewer.main:main"
-# TODO: giraf-train once a training script (data loader, wandb, checkpoints) exists.
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/giraf"]
 
-# TODO: CPU-only torch keeps setup small; switch to a CUDA index for real training.
+# CUDA 13.0 wheels for the RTX 5070 Ti (sm_120). macOS falls back to PyPI.
 [tool.uv.sources]
 torch = [
-    { index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 
 [[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [tool.ruff]
