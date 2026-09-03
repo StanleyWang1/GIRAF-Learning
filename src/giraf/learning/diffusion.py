@@ -17,9 +17,10 @@ from giraf.data.schema import ACTION_DIM, GRASP_INDEX, STATE_DIM
 
 from .environment import Observation
 from .network import DiffusionNetwork
+from .normalize import Normalizer
 from .policy import Batch, Metrics, Tensor
 
-_CHECKPOINT_VERSION = 1
+_CHECKPOINT_VERSION = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,16 +87,22 @@ def _resolve_device(requested: str) -> torch.device:
 class DiffusionPolicy:
     """Predict action chunks with a conditional temporal U-Net and DDPM.
 
+    Batches carry raw physical units. With a ``normalizer`` the policy maps
+    actions and states to [-1, 1] internally and returns denormalized actions
+    from ``act()``. Without one, actions must already lie in [-1, 1].
+
     TODO: the observation/action contract (15D command-derived state, 7D twist
     plus grasp) is provisional and may change once real demonstrations exist.
-
-    TODO: actions are required to lie in [-1, 1] but the collector stores raw
-    twists in m/s and rad/s. A dataset normalizer (per-dimension bounds saved
-    in the checkpoint) is needed before training on collected data.
     """
 
-    def __init__(self, config: DiffusionPolicyConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: DiffusionPolicyConfig | None = None,
+        *,
+        normalizer: Normalizer | None = None,
+    ) -> None:
         self.config = config or DiffusionPolicyConfig()
+        self.normalizer = normalizer
         self.device = _resolve_device(self.config.device)
         self.model = DiffusionNetwork(
             observation_horizon=self.config.observation_horizon,
@@ -191,6 +198,9 @@ class DiffusionPolicy:
             "config": asdict(self.config),
             "model": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
+            "normalizer": None
+            if self.normalizer is None
+            else self.normalizer.to_dict(),
         }
         try:
             torch.save(payload, temporary)
@@ -212,7 +222,11 @@ class DiffusionPolicy:
         raw_config["down_dims"] = tuple(raw_config["down_dims"])
         config = DiffusionPolicyConfig(**raw_config)
         config = replace(config, device=str(resolved_device))
-        policy = cls(config)
+        normalizer = payload.get("normalizer")
+        policy = cls(
+            config,
+            normalizer=None if normalizer is None else Normalizer.from_dict(normalizer),
+        )
         policy.model.load_state_dict(payload["model"])
         policy.optimizer.load_state_dict(payload["optimizer"])
         return policy
@@ -262,6 +276,8 @@ class DiffusionPolicy:
             )
         if not torch.isfinite(states).all():
             raise ValueError("state values must be finite")
+        if self.normalizer is not None:
+            states = self.normalizer.normalize_states(states)
         return images.contiguous(), states
 
     def _prepare_actions(self, value: Tensor, batch_size: int) -> torch.Tensor:
@@ -273,8 +289,10 @@ class DiffusionPolicy:
             )
         if not torch.isfinite(actions).all():
             raise ValueError("action values must be finite")
+        if self.normalizer is not None:
+            actions = self.normalizer.normalize_actions(actions)
         if actions.min() < -1 or actions.max() > 1:
-            raise ValueError("action values must be in [-1, 1]")
+            raise ValueError("action values must be in [-1, 1] after normalization")
         return actions
 
     @staticmethod
@@ -328,6 +346,9 @@ class DiffusionPolicy:
 
         start = self.config.observation_horizon - 1
         stop = start + self.config.action_horizon
-        actions = np.clip(sample[0, start:stop].cpu().numpy(), -1, 1).astype(np.float32)
+        actions = sample[0, start:stop].clamp(-1, 1)
+        if self.normalizer is not None:
+            actions = self.normalizer.denormalize_actions(actions)
+        actions = actions.cpu().numpy().astype(np.float32)
         actions[:, GRASP_INDEX] = (actions[:, GRASP_INDEX] >= 0.5).astype(np.float32)
         return list(actions)

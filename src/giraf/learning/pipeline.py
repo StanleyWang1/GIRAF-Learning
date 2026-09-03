@@ -12,10 +12,8 @@ from .policy import Batch, Metrics, Policy
 def train(policy: Policy, batches: Iterable[Batch], *, epochs: int) -> list[Metrics]:
     """Run a minimal training loop and return step metrics.
 
-    TODO: no Zarr -> Batch windowing loader exists yet; callers must build
-    ``batches`` themselves from the collected ReplayBuffer.
-    TODO: experiment tracking (wandb), periodic checkpointing, and evaluation
-    rollouts belong in a training script around this loop; none exist yet.
+    ``giraf.learning.train_cli`` wraps this with checkpoints and logging.
+    TODO: evaluation rollouts once a simulator backend exists.
     """
 
     if epochs <= 0:

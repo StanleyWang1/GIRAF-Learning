@@ -1,7 +1,9 @@
 """Learning interfaces and implementations."""
 
+from .dataset import ReplayDataset, episode_windows
 from .diffusion import DiffusionPolicy, DiffusionPolicyConfig
 from .environment import Environment, GymEnvironment, SimEnvironment, StepResult
+from .normalize import Normalizer
 from .pipeline import RolloutSummary, rollout, train
 from .policy import Batch, Policy
 
@@ -11,10 +13,13 @@ __all__ = [
     "DiffusionPolicyConfig",
     "Environment",
     "GymEnvironment",
+    "Normalizer",
     "Policy",
+    "ReplayDataset",
     "RolloutSummary",
     "SimEnvironment",
     "StepResult",
+    "episode_windows",
     "rollout",
     "train",
 ]
