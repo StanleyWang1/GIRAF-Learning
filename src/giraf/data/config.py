@@ -16,6 +16,8 @@ class CameraConfig:
     fps: float = 30.0
 
 
+# TODO: IMU settings are validated and stored but no IMU producer, ring buffer,
+# alignment, or Zarr arrays exist yet. The DepthAI IMU feed is still to be built.
 @dataclass(frozen=True, slots=True)
 class ImuConfig:
     report_rate_hz: int = 100
@@ -77,18 +79,23 @@ class CollectorConfig:
             raise ValueError("camera dimensions and fps must be positive")
         if not 1 <= imu.report_rate_hz <= 100:
             raise ValueError("IMU report_rate_hz must be between 1 and 100")
-        if min(
-            imu.queue_size,
-            imu.batch_report_threshold,
-            imu.max_batch_reports,
-        ) <= 0:
+        if (
+            min(
+                imu.queue_size,
+                imu.batch_report_threshold,
+                imu.max_batch_reports,
+            )
+            <= 0
+        ):
             raise ValueError("IMU queue and batching settings must be positive")
         if imu.batch_report_threshold > imu.max_batch_reports:
             raise ValueError(
                 "IMU batch_report_threshold cannot exceed max_batch_reports"
             )
         if dataset.aligned_hz <= 0 or dataset.aligned_hz > camera.fps:
-            raise ValueError("aligned_hz must be positive and no greater than camera fps")
+            raise ValueError(
+                "aligned_hz must be positive and no greater than camera fps"
+            )
         if dataset.resize_mode != "stretch":
             # TODO: letterbox/crop resize modes if aspect ratio matters for training.
             raise ValueError("only resize_mode=stretch is implemented")
@@ -96,19 +103,25 @@ class CollectorConfig:
             raise ValueError("resize_dim must contain two positive integers")
         if not dataset.zarr_name.endswith(".zarr"):
             raise ValueError("zarr_name must end in .zarr")
-        if min(
-            dataset.zarr_chunk_length,
-            dataset.imu_zarr_chunk_length,
-            dataset.saver_batch_size,
-        ) <= 0:
+        if (
+            min(
+                dataset.zarr_chunk_length,
+                dataset.imu_zarr_chunk_length,
+                dataset.saver_batch_size,
+            )
+            <= 0
+        ):
             raise ValueError("Zarr chunk and saver batch sizes must be positive")
         if not 0 <= dataset.raw_video_crf <= 51:
             raise ValueError("raw_video_crf must be between 0 and 51")
-        if min(
-            self.alignment.max_control_age_ms,
-            self.alignment.max_motor_age_ms,
-            self.alignment.max_imu_age_ms,
-        ) <= 0:
+        if (
+            min(
+                self.alignment.max_control_age_ms,
+                self.alignment.max_motor_age_ms,
+                self.alignment.max_imu_age_ms,
+            )
+            <= 0
+        ):
             raise ValueError("alignment age limits must be positive")
         if shm.get_time_budget_s <= 0 or shm.safety_margin < 1.0:
             raise ValueError("invalid shared-memory timing configuration")
