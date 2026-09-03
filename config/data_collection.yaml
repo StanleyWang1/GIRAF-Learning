@@ -3,10 +3,16 @@ camera:
   height: 480
   fps: 30.0
 
+imu:
+  report_rate_hz: 100
+  queue_size: 200
+  batch_report_threshold: 1
+  max_batch_reports: 10
+
 dataset:
-  output_dir: data/demos
-  zarr_name: replay_buffer.zarr
-  episode_dir_name: videos
+  output_dir: data/tape_grasping/
+  zarr_name: clive_trials.zarr
+  episode_dir_name: clive_trials_videos
   aligned_hz: 30.0
   resize_dim: [224, 224]
   resize_mode: stretch
@@ -14,16 +20,19 @@ dataset:
   raw_video_codec: libx264
   raw_video_crf: 21
   zarr_chunk_length: 16
+  imu_zarr_chunk_length: 512
   saver_batch_size: 16
 
 alignment:
   max_control_age_ms: 50.0
   max_motor_age_ms: 50.0
+  max_imu_age_ms: 25.0
 
 shared_memory:
   get_time_budget_s: 0.10
   safety_margin: 1.5
   camera_history: 64
+  imu_history: 512
   control_history: 256
   motor_history: 256
   aligned_history: 128

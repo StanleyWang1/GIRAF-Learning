@@ -127,6 +127,56 @@ class SharedMemoryRingBufferTests(unittest.TestCase):
 
 
 class ConductorTests(unittest.TestCase):
+    def test_aligned_catch_up_paces_burst_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config = test_config(Path(directory))
+            pipeline = DataCollectionPipeline(config, hardware_enabled=True)
+            base = 1_000_000_000
+            try:
+                pipeline.publish_control(
+                    timestamp_ns=base,
+                    task_twist=np.zeros(6),
+                    joint_velocity_command=np.zeros(6),
+                    joint_position_command=np.zeros(6),
+                    state=np.zeros(15),
+                    grasp=False,
+                    clutch=True,
+                    tracking=True,
+                )
+                pipeline.publish_motor(
+                    timestamp_ns=base,
+                    can_position_target=np.zeros(3),
+                    dynamixel_target_ticks=np.zeros(4),
+                    grasp=False,
+                    command_accepted=True,
+                )
+                pipeline._recording = True
+                pipeline._episode_start_ns = base
+                pipeline._next_emit_ns = base
+
+                for index in range(3):
+                    timestamp = base + index * 33_333_333
+                    pipeline.camera_ring.put(
+                        {
+                            "camera_rgb_source": np.zeros(
+                                (config.camera.height, config.camera.width, 3),
+                                dtype=np.uint8,
+                            ),
+                            "timestamp_ns": np.int64(timestamp),
+                            "device_timestamp_ns": np.int64(timestamp),
+                            "receive_timestamp_ns": np.int64(timestamp),
+                            "sequence_num": np.int64(index),
+                        },
+                        wait=True,
+                    )
+
+                pipeline._process_camera_samples()
+
+                self.assertEqual(pipeline.aligned_ring.count, 3)
+                self.assertFalse(pipeline._hard_error.is_set())
+            finally:
+                pipeline.manager.shutdown()
+
     def test_alignment_is_causal_and_uses_dispatched_grasp(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             config = test_config(Path(directory))

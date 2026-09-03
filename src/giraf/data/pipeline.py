@@ -349,7 +349,10 @@ class DataCollectionPipeline:
             if aligned is None:
                 continue
             try:
-                self.aligned_ring.put(aligned, wait=False)
+                # Camera frames can accumulate while this thread is descheduled,
+                # particularly around an episode stop. Pace catch-up writes so a
+                # saver copy retains its configured shared-memory safety window.
+                self.aligned_ring.put(aligned, wait=True)
             except BaseException as exc:
                 self._set_hard_error(f"aligned stream: {type(exc).__name__}: {exc}")
                 return

@@ -30,7 +30,8 @@ hardware = [
 ]
 
 [project.scripts]
-giraf-replay = "giraf.data.replay:main"
+giraf-prune = "giraf.data.prune:main"
+giraf-replay = "giraf.replay_cli:main"
 giraf-teleop = "giraf.teleop:main"
 # TODO: giraf-train once a training script (data loader, wandb, checkpoints) exists.
 

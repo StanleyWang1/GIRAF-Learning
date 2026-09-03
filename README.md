@@ -163,6 +163,41 @@ uv run giraf-replay \
   --episode 0 --extract-dir /tmp/giraf-episode-0
 ```
 
+### Prune inactive samples
+
+Preview which samples would be removed without writing anything:
+
+```bash
+uv run giraf-prune --dataset data/demos/replay_buffer.zarr
+```
+
+Write the result to a new ReplayBuffer after reviewing the preview:
+
+```bash
+uv run giraf-prune \
+  --dataset data/demos/replay_buffer.zarr \
+  --output data/demos/replay_buffer_pruned.zarr
+```
+
+The pruner treats a sample as active when any of the six motion channels in
+`action` has an absolute value greater than `1e-6`; the clutch flag is not part
+of this decision. A grasp or ungrasp transition and the 2.5 seconds following
+it are also retained. Each contiguous active run becomes a separate output
+episode, preventing a training window from crossing an inactive interval that
+was removed. Fully inactive episodes are dropped.
+
+Useful options:
+
+- `--action-epsilon VALUE` changes the inactive-motion threshold.
+- `--grasp-cooldown-s SECONDS` changes the post-grasp retention window.
+- `--ignore-grasp-transitions` disables grasp-transition retention entirely.
+- `--padding-steps N` retains `N` extra samples before and after active samples.
+- `--min-segment-steps N` drops active runs shorter than `N` samples.
+
+The source dataset is never modified, and an existing output path is never
+overwritten. All time-aligned Zarr arrays, episode boundaries, attributes, and
+episode metadata are copied consistently. Episode video files are not rewritten.
+
 ## Learning
 
 The initial policy is a conditional DDPM implemented with PyTorch:

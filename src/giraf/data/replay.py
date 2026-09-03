@@ -6,13 +6,22 @@ import argparse
 from pathlib import Path
 
 import cv2
-import numpy as np
-import zarr
 
-from .schema import GRASP_INDEX
+PREVIEW_WINDOW = "GIRAF episode replay"
+
+
+def _open_preview_window() -> None:
+    cv2.namedWindow(PREVIEW_WINDOW, cv2.WINDOW_NORMAL)
+
+
+def _resize_preview_window(image_shape: tuple[int, ...]) -> None:
+    height, width = image_shape[:2]
+    cv2.resizeWindow(PREVIEW_WINDOW, width * 2, height * 2)
 
 
 def episode_slice(root, episode: int) -> slice:
+    import numpy as np
+
     ends = np.asarray(root["meta/episode_ends"][:], dtype=np.int64)
     if episode < 0:
         episode += len(ends)
@@ -37,6 +46,16 @@ def main() -> int:
     if args.fps <= 0:
         parser.error("--fps must be positive")
 
+    # This OpenCV Qt5 build can spin before mapping its XWayland window if
+    # NumPy/Zarr initialize their worker libraries first. Create the native
+    # window before importing the dataset stack.
+    if args.show:
+        _open_preview_window()
+
+    import zarr
+
+    from .schema import GRASP_INDEX
+
     root = zarr.open_group(args.dataset, mode="r")
     selection = episode_slice(root, args.episode)
     images = root["data/camera_rgb"][selection]
@@ -54,36 +73,42 @@ def main() -> int:
     if extract_dir is not None:
         extract_dir.mkdir(parents=True, exist_ok=True)
 
-    delay_ms = max(1, int(round(1000.0 / args.fps)))
-    for index, (rgb, action, timestamp_ns, is_valid) in enumerate(
-        zip(images, actions, timestamps, valid)
-    ):
-        bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-        if extract_dir is not None:
-            path = extract_dir / f"{index:06d}.png"
-            if not cv2.imwrite(str(path), bgr):
-                raise RuntimeError(f"could not write {path}")
-        if args.show:
-            preview = bgr.copy()
-            text = (
-                f"step={index} t={int(timestamp_ns)} valid={bool(is_valid)} "
-                f"grasp={int(action[GRASP_INDEX] >= 0.5)}"
-            )
-            cv2.putText(
-                preview,
-                text,
-                (5, 18),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (0, 255, 0) if is_valid else (0, 0, 255),
-                1,
-                cv2.LINE_AA,
-            )
-            cv2.imshow("GIRAF episode replay", preview)
-            if cv2.waitKey(delay_ms) & 0xFF in (ord("q"), 27):
-                break
+    delay_ms = max(1, round(1000.0 / args.fps))
     if args.show:
-        cv2.destroyAllWindows()
+        _resize_preview_window(images.shape[1:])
+    try:
+        for index, (rgb, action, timestamp_ns, is_valid) in enumerate(
+            zip(images, actions, timestamps, valid)
+        ):
+            bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+            if extract_dir is not None:
+                path = extract_dir / f"{index:06d}.png"
+                if not cv2.imwrite(str(path), bgr):
+                    raise RuntimeError(f"could not write {path}")
+            if args.show:
+                preview = bgr.copy()
+                text = (
+                    f"step={index} t={int(timestamp_ns)} valid={bool(is_valid)} "
+                    f"grasp={int(action[GRASP_INDEX] >= 0.5)}"
+                )
+                cv2.putText(
+                    preview,
+                    text,
+                    (5, 18),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    (0, 255, 0) if is_valid else (0, 0, 255),
+                    1,
+                    cv2.LINE_AA,
+                )
+                cv2.imshow(PREVIEW_WINDOW, preview)
+                if cv2.waitKey(delay_ms) & 0xFF in (ord("q"), 27):
+                    break
+                if cv2.getWindowProperty(PREVIEW_WINDOW, cv2.WND_PROP_VISIBLE) < 1:
+                    break
+    finally:
+        if args.show:
+            cv2.destroyAllWindows()
     return 0
 
 

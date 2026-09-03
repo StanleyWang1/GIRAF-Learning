@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dataset Visualization</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Dataset Visualization</h1>
+      <div id="summaryBadge" class="badge">Loading...</div>
+    </div>
+    <div class="topbar-right">
+      <label>Episode
+        <select id="episodeSelect"></select>
+      </label>
+      <button id="deleteEpisodeBtn" class="danger">Delete Episode</button>
+      <label>Frame
+        <input id="frameInput" type="number" min="0" step="1" value="0" />
+      </label>
+      <label>Time
+        <input id="timeInput" type="number" step="0.001" value="0" />
+      </label>
+      <button id="playBtn">Play</button>
+      <div id="perfBadge" class="badge">FPS --</div>
+      <label>Mode
+        <select id="playModeSelect">
+          <option value="timestamp">Timestamp</option>
+          <option value="fixed">Fixed FPS</option>
+        </select>
+      </label>
+      <label>FPS cap
+        <input id="fpsCapInput" type="number" min="1" step="1" value="30" />
+      </label>
+      <label>Speed
+        <input id="speedInput" type="number" min="0.1" step="0.1" value="1.0" />
+      </label>
+      <label>History
+        <input id="historyInput" type="number" min="1" value="180" />
+      </label>
+    </div>
+  </header>
+
+  <div id="unsupportedBanner" class="unsupported hidden"></div>
+
+  <main class="main-layout">
+    <section class="left-pane">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <label>Primary Stream
+              <select id="primaryStreamSelect"></select>
+            </label>
+          </div>
+          <div class="inline-controls">
+            <label>
+              <input id="depthToggle" type="checkbox" />
+              Depth
+            </label>
+            <label>Colormap
+              <select id="colormapSelect">
+                <option value="turbo">turbo</option>
+                <option value="inferno">inferno</option>
+                <option value="magma">magma</option>
+                <option value="viridis">viridis</option>
+                <option value="gray">gray</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="performance-controls">
+          <label>Preview Mode
+            <select id="previewModeSelect">
+              <option value="all">All</option>
+              <option value="hide-others">Hide Others</option>
+            </select>
+          </label>
+          <label>Image Mode
+            <select id="imageModeSelect">
+              <option value="full">Full</option>
+              <option value="dynamic">Dynamic</option>
+            </select>
+          </label>
+          <label>Plot Rate
+            <select id="plotRateSelect">
+              <option value="full">Full</option>
+              <option value="low">Low-rate</option>
+            </select>
+          </label>
+        </div>
+        <div class="camera-main">
+          <img id="mainFrame" alt="Frame" />
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Camera Streams</h3></div>
+        <div id="cameraGrid" class="camera-grid"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Timeline</h3></div>
+        <div class="timeline-controls">
+          <input id="timelineSlider" type="range" min="0" max="0" value="0" />
+          <div id="timelineInfo"></div>
+        </div>
+        <div id="eventMarkers" class="event-markers"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Progress Inference</h3></div>
+        <div class="inference-controls">
+          <label class="inference-wide">Progress YAML Path
+            <input id="progressYamlPath" type="text" placeholder="/path/to/progress_config.yaml" />
+          </label>
+          <label>Progress Server Host
+            <input id="progressServerHost" type="text" value="localhost" />
+          </label>
+          <label>Progress Server Port
+            <input id="progressServerPort" type="number" min="1" max="65535" step="1" value="8767" />
+          </label>
+          <label>Eval Every (frames)
+            <input id="progressEvalEvery" type="number" min="1" step="1" value="10" />
+          </label>
+          <div class="inference-actions">
+            <button id="runProgressBtn">Generate Graph</button>
+            <button id="clearProgressBtn" type="button">Clear</button>
+          </div>
+          <div id="progressStatus" class="inference-status" data-kind="idle">Progress graph idle.</div>
+        </div>
+        <div id="progressPlot" class="plot"></div>
+      </div>
+    </section>
+
+    <section class="right-pane">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Signals</h3>
+          <div class="preset-buttons">
+            <button data-preset="Core">Core</button>
+            <button data-preset="Forces">Forces</button>
+            <button data-preset="Action vs Follower">Action/Follower</button>
+            <button data-preset="Leader vs Follower">Leader/Follower</button>
+            <button data-preset="All">All</button>
+            <button id="uncheckSignalsBtn" type="button">Uncheck All</button>
+          </div>
+        </div>
+        <div id="keyList" class="key-list"></div>
+        <div id="signalsPlot" class="plot"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>3D Trajectory</h3></div>
+        <div class="trajectory-note">
+          World origin is centered at <code>(0,0,0)</code>. Robot origins are split on Y:
+          <code>robot0: +0.457 m</code>, <code>robot1: -0.457 m</code> (±1.5 ft).
+        </div>
+        <div class="inference-controls">
+          <label class="inference-wide">YAML Path
+            <input id="inferenceYamlPath" type="text" placeholder="/path/to/training_config.yaml" />
+          </label>
+          <label>Server Host
+            <input id="inferenceServerHost" type="text" value="localhost" />
+          </label>
+          <label>Server Port
+            <input id="inferenceServerPort" type="number" min="1" max="65535" step="1" value="8766" />
+          </label>
+          <label>Inference Mode
+            <select id="inferenceModeSelect">
+              <option value="train_time">Train-Time</option>
+            </select>
+          </label>
+          <label>Warm-up Steps (Long Context)
+            <input id="inferenceWarmupSteps" type="number" min="1" step="1" value="1" />
+          </label>
+          <label>Batch Size
+            <input id="inferenceBatchSize" type="number" min="1" max="32" step="1" value="1" />
+          </label>
+          <label class="inference-checkbox">No Gripper
+            <input id="inferenceNoGripper" type="checkbox" />
+          </label>
+          <div class="inference-actions">
+            <button id="runInferenceBtn">Run Inference</button>
+            <button id="clearInferenceBtn" type="button">Clear Saved</button>
+          </div>
+          <div id="inferenceStatus" class="inference-status" data-kind="idle">Inference overlay idle.</div>
+        </div>
+        <div id="trajectory3d" class="plot"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Events</h3></div>
+        <ul id="eventList" class="event-list"></ul>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Event Legend</h3></div>
+        <div class="event-legend">
+          <p><strong>contact</strong>: transition detected in <code>gripper_contact_L/R</code> (ON/OFF edge).</p>
+          <p><strong>dagger</strong>: <code>dagger</code> teleop transitions (ON/OFF). Timeline blocks show active dagger regions.</p>
+          <p><strong>spike</strong>: force/torque outlier where channel z-score is greater than 4.0.</p>
+          <p><strong>action_jump</strong>: jump in <code>action</code> or <code>action_follower</code> where delta norm is greater than mean + 4*std.</p>
+          <p><strong>warning</strong>: no camera streams were found for this episode.</p>
+          <p><strong>info</strong>: depth stream is missing for at least one camera stream.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
