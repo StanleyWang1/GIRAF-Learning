@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 """Probe Luxonis DepthAI devices visible inside the container.
 
-Usage:
-    python3 depthai_probe.py
+Usage (hardware machine):
+    uv run --extra hardware python -m giraf.drivers.camera_probe
 """
 
 import sys
@@ -18,7 +17,9 @@ def main():
 
     if not devices:
         print("No DepthAI devices found.")
-        print("Check USB passthrough, cable/power, and whether the container was restarted after plugging in the camera.")
+        print(
+            "Check USB passthrough, cable/power, and whether the container was restarted after plugging in the camera."
+        )
         return 1
 
     for idx, info in enumerate(devices):
@@ -26,7 +27,7 @@ def main():
         name = getattr(info, "name", "unknown")
         try:
             mxid = info.getMxId()
-        except Exception:
+        except Exception:  # noqa: BLE001 - diagnostic probe reports and continues
             mxid = "unknown"
         print(f"[{idx}] name={name} mxid={mxid} state={state}")
 
@@ -40,7 +41,7 @@ def main():
             print(f"USB speed: {device.getUsbSpeed()}")
             print(f"Connected cameras: {device.getConnectedCameras()}")
             print(f"Connected IMU: {device.getConnectedIMU()}")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - diagnostic probe reports and continues
         print(f"Failed to open DepthAI device: {exc}")
         return 2
 
@@ -49,4 +50,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-    
