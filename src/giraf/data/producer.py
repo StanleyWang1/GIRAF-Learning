@@ -69,6 +69,12 @@ class ProducerProcess(mp.Process, ABC):
         return None
 
 
+# TODO(IMU): Add the OAK-D BNO086 to this same device pipeline. Capture calibrated
+# accelerometer, calibrated gyroscope, and GAME_ROTATION_VECTOR reports at 100 Hz;
+# retain their generation timestamps and sequence numbers as an independent raw
+# stream; and derive a causal 30 Hz data/imu observation at camera capture times.
+# Keep IMU separate from the existing 15D robot state, and update the Zarr schema,
+# saver/recovery, pruning, dataset loader, normalization, policy, and tests together.
 class CameraProducer(ProducerProcess):
     """Own the DepthAI device and publish source-resolution RGB frames."""
 

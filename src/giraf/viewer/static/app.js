@@ -22,6 +22,7 @@ const state = {
   events: [],
   currentEpisode: 0,
   currentFrame: 0,
+  desiredFrame: 0,
   selectedKeys: new Set(),
   playing: false,
   playHandle: 0,
@@ -35,6 +36,7 @@ const state = {
   lastSignalPayload: null,
   framePending: null,
   frameRunning: false,
+  frameGeneration: 0,
   frameObjectUrl: '',
 };
 
@@ -329,23 +331,48 @@ function estimatedTimeForFrame(frame) {
   return Number(state.metrics.duration_sec || 0) * Number(frame) / (length - 1);
 }
 
-function updateTimelineLabels() {
+function updateTimelineLabels(frame = state.currentFrame) {
   const length = currentLength();
   el.timelineFrame.textContent =
-    `Frame ${state.currentFrame.toLocaleString()} / ${Math.max(0, length - 1).toLocaleString()}`;
-  el.timelineTime.textContent = `${estimatedTimeForFrame(state.currentFrame).toFixed(3)} s`;
+    `Frame ${frame.toLocaleString()} / ${Math.max(0, length - 1).toLocaleString()}`;
+  el.timelineTime.textContent = `${estimatedTimeForFrame(frame).toFixed(3)} s`;
 }
 
-function queueFrame(index, profile) {
+function queueFrame(index, profile, forceSignals = false) {
   state.framePending = {
     episode: state.currentEpisode,
     index,
     profile,
     token: state.loadToken,
+    generation: state.frameGeneration,
+    forceSignals,
   };
   if (!state.frameRunning) {
     pumpFrames();
   }
+}
+
+async function decodeFrame(blobUrl) {
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = blobUrl;
+  await image.decode();
+}
+
+function commitFrame(target, blobUrl) {
+  const previousUrl = state.frameObjectUrl;
+  state.frameObjectUrl = blobUrl;
+  state.currentFrame = target.index;
+  el.cameraFrame.src = blobUrl;
+  el.timeline.value = String(target.index);
+  el.frameInput.value = String(target.index);
+  updateTimelineLabels();
+  setStatusPill(el.frameStatus, `Frame ${target.index}`, 'neutral');
+  el.frameLoading.classList.add('hidden');
+  if (previousUrl) {
+    URL.revokeObjectURL(previousUrl);
+  }
+  scheduleSignals(target.forceSignals || !state.playing);
 }
 
 async function pumpFrames() {
@@ -353,6 +380,7 @@ async function pumpFrames() {
   while (state.framePending) {
     const target = state.framePending;
     state.framePending = null;
+    let blobUrl = '';
     try {
       const url =
         `/api/episode/${target.episode}/frame?idx=${target.index}` +
@@ -362,24 +390,35 @@ async function pumpFrames() {
         const body = await response.json().catch(() => ({}));
         throw new Error(body.detail || `Frame request failed (${response.status})`);
       }
-      const blobUrl = URL.createObjectURL(await response.blob());
-      const stillCurrent =
+      blobUrl = URL.createObjectURL(await response.blob());
+      const sameSession =
         target.token === state.loadToken &&
         target.episode === state.currentEpisode &&
-        target.index === state.currentFrame;
-      if (stillCurrent) {
-        const previousUrl = state.frameObjectUrl;
-        state.frameObjectUrl = blobUrl;
-        el.cameraFrame.src = blobUrl;
-        el.frameLoading.classList.add('hidden');
-        if (previousUrl) {
-          URL.revokeObjectURL(previousUrl);
-        }
+        target.generation === state.frameGeneration;
+      if (!sameSession) {
+        URL.revokeObjectURL(blobUrl);
+        continue;
+      }
+      await decodeFrame(blobUrl);
+      const stillCurrentSession =
+        target.token === state.loadToken &&
+        target.episode === state.currentEpisode &&
+        target.generation === state.frameGeneration;
+      if (stillCurrentSession) {
+        commitFrame(target, blobUrl);
+        blobUrl = '';
       } else {
         URL.revokeObjectURL(blobUrl);
+        blobUrl = '';
       }
     } catch (error) {
-      if (target.token === state.loadToken) {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+      if (
+        target.token === state.loadToken &&
+        target.generation === state.frameGeneration
+      ) {
         showError(error);
         el.frameLoading.textContent = 'Frame unavailable';
         el.frameLoading.classList.remove('hidden');
@@ -395,16 +434,23 @@ function setFrame(index, forceSignals = false) {
     return;
   }
   const next = clamp(Math.round(Number(index) || 0), 0, length - 1);
-  state.currentFrame = next;
+  state.desiredFrame = next;
+  state.frameGeneration += 1;
+  ++state.signalToken;
+  window.clearTimeout(state.signalTimer);
+  state.signalTimer = 0;
   el.timeline.value = String(next);
   el.frameInput.value = String(next);
-  updateTimelineLabels();
-  setStatusPill(el.frameStatus, `Frame ${next}`, 'neutral');
-  queueFrame(next, state.dragging || state.playing ? 'scrub' : 'full');
-  scheduleSignals(forceSignals || !state.playing);
+  updateTimelineLabels(next);
+  setStatusPill(el.frameStatus, `Frame ${next} · loading`, 'neutral');
+  if (state.playing) {
+    state.playAnchorTime = performance.now();
+    state.playAnchorFrame = next;
+  }
+  queueFrame(next, state.dragging || state.playing ? 'scrub' : 'full', forceSignals);
 }
 
-function stopPlayback() {
+function stopPlayback(finalFrame = state.currentFrame) {
   if (!state.playing) {
     return;
   }
@@ -415,8 +461,11 @@ function stopPlayback() {
   }
   el.playButton.textContent = 'Play';
   el.playButton.classList.remove('playing');
-  queueFrame(state.currentFrame, 'full');
-  scheduleSignals(true);
+  const target = clamp(finalFrame, 0, Math.max(0, currentLength() - 1));
+  state.desiredFrame = target;
+  state.frameGeneration += 1;
+  ++state.signalToken;
+  queueFrame(target, 'full', true);
 }
 
 function playbackTick(now) {
@@ -425,15 +474,15 @@ function playbackTick(now) {
   }
   const speed = Number(el.speedSelect.value || 1);
   const fps = Math.max(1, Number(state.metrics?.inferred_fps || state.summary?.aligned_hz || 30));
-  const elapsedSeconds = (now - state.playAnchorTime) / 1000;
+  const elapsedSeconds = Math.max(0, (now - state.playAnchorTime) / 1000);
   const target = state.playAnchorFrame + Math.floor(elapsedSeconds * fps * speed);
   if (target >= currentLength() - 1) {
-    setFrame(currentLength() - 1, true);
-    stopPlayback();
+    stopPlayback(currentLength() - 1);
     return;
   }
-  if (target !== state.currentFrame) {
-    setFrame(target, false);
+  if (target !== state.desiredFrame) {
+    state.desiredFrame = target;
+    queueFrame(target, 'scrub');
   }
   state.playHandle = requestAnimationFrame(playbackTick);
 }
@@ -443,14 +492,18 @@ function togglePlayback() {
     stopPlayback();
     return;
   }
-  if (state.currentFrame >= currentLength() - 1) {
-    setFrame(0, true);
-  }
+  const startFrame = state.currentFrame >= currentLength() - 1 ? 0 : state.currentFrame;
+  state.frameGeneration += 1;
+  ++state.signalToken;
+  state.desiredFrame = startFrame;
   state.playing = true;
   state.playAnchorTime = performance.now();
-  state.playAnchorFrame = state.currentFrame;
+  state.playAnchorFrame = startFrame;
   el.playButton.textContent = 'Pause';
   el.playButton.classList.add('playing');
+  if (startFrame !== state.currentFrame) {
+    queueFrame(startFrame, 'scrub');
+  }
   state.playHandle = requestAnimationFrame(playbackTick);
 }
 
@@ -732,6 +785,9 @@ async function loadEpisode(episodeIndex) {
   }
   state.currentEpisode = episode;
   state.currentFrame = 0;
+  state.desiredFrame = 0;
+  state.framePending = null;
+  state.frameGeneration += 1;
   state.schema = null;
   state.metrics = null;
   state.events = [];
@@ -784,6 +840,8 @@ function bindControls() {
   el.playButton.addEventListener('click', togglePlayback);
   el.speedSelect.addEventListener('change', () => {
     if (state.playing) {
+      state.frameGeneration += 1;
+      state.desiredFrame = state.currentFrame;
       state.playAnchorTime = performance.now();
       state.playAnchorFrame = state.currentFrame;
     }
