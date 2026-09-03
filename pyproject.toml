@@ -30,9 +30,12 @@ hardware = [
 ]
 
 [project.scripts]
+giraf-clean = "giraf.clean:main"
+giraf-diagnose = "giraf.diagnostics:main"
 giraf-prune = "giraf.data.prune:main"
 giraf-replay = "giraf.replay_cli:main"
 giraf-teleop = "giraf.teleop:main"
+giraf-view = "giraf.viewer.main:main"
 # TODO: giraf-train once a training script (data loader, wandb, checkpoints) exists.
 
 [tool.hatch.build.targets.wheel]

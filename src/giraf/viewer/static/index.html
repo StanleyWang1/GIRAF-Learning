@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GIRAF Dataset Viewer</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>GIRAF Dataset Viewer</h1>
+        <div id="datasetPath" class="dataset-path">Loading dataset…</div>
+      </div>
+      <span id="summaryBadge" class="badge">Loading</span>
+    </div>
+
+    <div class="episode-controls">
+      <button id="previousEpisode" class="icon-button" title="Previous episode">←</button>
+      <label>
+        Episode
+        <select id="episodeSelect"></select>
+      </label>
+      <button id="nextEpisode" class="icon-button" title="Next episode">→</button>
+      <label>
+        Frame
+        <input id="frameInput" type="number" min="0" value="0" />
+      </label>
+      <button id="playButton" class="primary">Play</button>
+      <label>
+        Speed
+        <select id="speedSelect">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <div id="errorBanner" class="error-banner hidden" role="alert"></div>
+
+  <main class="layout">
+    <section class="main-column">
+      <article class="panel camera-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Camera</h2>
+            <p id="episodeSubtitle">Episode —</p>
+          </div>
+          <div class="status-row">
+            <span id="frameStatus" class="status-pill neutral">Frame —</span>
+            <span id="fpsStatus" class="status-pill neutral">— FPS</span>
+          </div>
+        </div>
+
+        <div class="camera-stage">
+          <div id="frameLoading" class="frame-loading">Loading frame…</div>
+          <img id="cameraFrame" alt="GIRAF camera frame" />
+        </div>
+
+        <div class="timeline-wrap">
+          <div id="eventMarkers" class="event-markers" aria-hidden="true"></div>
+          <input id="timeline" type="range" min="0" max="0" value="0" />
+          <div class="timeline-labels">
+            <span id="timelineFrame">Frame 0 / 0</span>
+            <span id="timelineTime">0.000 s</span>
+          </div>
+        </div>
+        <div class="keyboard-hint">← / → step frames · Space play/pause</div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading compact">
+          <div>
+            <h2>Episode metrics</h2>
+            <p>Computed from the stored per-step arrays.</p>
+          </div>
+        </div>
+        <div id="metricsGrid" class="metrics-grid"></div>
+        <div id="metadataWarning" class="metadata-warning hidden"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading compact">
+          <div>
+            <h2>Current sample</h2>
+            <p>Collection and alignment flags at the selected frame.</p>
+          </div>
+        </div>
+        <div id="sampleGrid" class="sample-grid"></div>
+      </article>
+    </section>
+
+    <section class="side-column">
+      <article class="panel signals-panel">
+        <div class="panel-heading signal-heading">
+          <div>
+            <h2>Signals</h2>
+            <p>Each row is independently scaled.</p>
+          </div>
+          <label>
+            History
+            <select id="historySelect">
+              <option value="90">90 frames</option>
+              <option value="180" selected>180 frames</option>
+              <option value="360">360 frames</option>
+              <option value="720">720 frames</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="presetButtons" class="preset-buttons"></div>
+        <div id="keyList" class="key-list"></div>
+        <div class="plot-wrap">
+          <canvas id="signalPlot"></canvas>
+          <div id="emptyPlot" class="empty-plot">Select one or more signals.</div>
+        </div>
+        <div id="signalLegend" class="signal-legend"></div>
+      </article>
+
+      <article class="panel events-panel">
+        <div class="panel-heading compact">
+          <div>
+            <h2>Events</h2>
+            <p>Click an event to jump to its frame.</p>
+          </div>
+          <span id="eventCount" class="badge muted">0</span>
+        </div>
+        <div id="eventList" class="event-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

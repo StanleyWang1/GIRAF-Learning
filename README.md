@@ -13,6 +13,7 @@ data, and learning code are separate packages with explicit boundaries.
 │   ├── data/                     # capture, alignment, Zarr storage, replay
 │   ├── drivers/                  # camera, input, OptiTrack, and motor adapters
 │   ├── learning/                 # policy/environment contracts and loops
+│   ├── viewer/                   # read-only local dataset web viewer
 │   ├── kinematics.py             # GIRAF kinematic model
 │   ├── settings.py               # shared runtime constants
 │   └── teleop.py                 # teleoperation application
@@ -141,62 +142,70 @@ config = load_config("config/data_collection.yaml")
 shape_meta = diffusion_shape_meta(config)
 ```
 
-## Replay
+## Dataset cleaning
 
-Inspect an episode summary:
-
-```bash
-uv run giraf-replay \
-  --dataset data/demos/replay_buffer.zarr \
-  --episode 0
-```
-
-Display synchronized frames or extract them as PNG files:
+Diagnose one episode without loading video:
 
 ```bash
-uv run giraf-replay \
-  --dataset data/demos/replay_buffer.zarr \
-  --episode 0 --show
-
-uv run giraf-replay \
-  --dataset data/demos/replay_buffer.zarr \
-  --episode 0 --extract-dir /tmp/giraf-episode-0
+uv run giraf-diagnose --dataset data/demos/replay_buffer.zarr --episode 0
 ```
 
-### Prune inactive samples
+This reports physical Zarr chunk coverage, alignment-rule reconstruction,
+timing, metadata consistency, and stream health. Add `--json` for structured
+output.
 
-Preview which samples would be removed without writing anything:
+Audit every episode and preview the healthy subset:
+
+```bash
+uv run giraf-clean --dataset data/demos/replay_buffer.zarr --dry-run
+```
+
+Remove `--dry-run` to write `data/demos/replay_buffer_cleaned.zarr`. The cleaner
+rejects incomplete or inconsistent episodes, copies intact episodes without
+renumbering errors, and verifies the new Zarr before publishing it. It never
+changes the source or overwrites an existing output; use `--output` to choose a
+different destination.
+
+Inactive-action pruning is separate and opt-in because zero-motion holds may be
+intentional. Preview it with:
 
 ```bash
 uv run giraf-prune --dataset data/demos/replay_buffer.zarr
 ```
 
-Write the result to a new ReplayBuffer after reviewing the preview:
+Pass `--output PATH` to `giraf-prune` to write its result, or add
+`--prune-inactive` to `giraf-clean` to combine both operations. The shared
+controls are `--action-epsilon`, `--padding-steps`, `--min-segment-steps`,
+`--grasp-cooldown-s`, and `--ignore-grasp-transitions`. Active runs and the
+configured post-grasp window become separate output episodes.
+
+## Dataset viewer
+
+Open a GIRAF Zarr in the local read-only web viewer:
 
 ```bash
-uv run giraf-prune \
-  --dataset data/demos/replay_buffer.zarr \
-  --output data/demos/replay_buffer_pruned.zarr
+uv run giraf-view \
+  --dataset data/demos/replay_buffer_cleaned.zarr \
+  --episode 0
 ```
 
-The pruner treats a sample as active when any of the six motion channels in
-`action` has an absolute value greater than `1e-6`; the clutch flag is not part
-of this decision. A grasp or ungrasp transition and the 2.5 seconds following
-it are also retained. Each contiguous active run becomes a separate output
-episode, preventing a training window from crossing an inactive interval that
-was removed. Fully inactive episodes are dropped.
+Then visit the printed URL (normally `http://127.0.0.1:8080`), or add `--open`
+to open it automatically. `--episode` selects only the initial episode; use the
+episode dropdown or arrow buttons in the browser to move through the entire
+dataset. The viewer provides frame playback and scrubbing, action/state plots
+with schema field names, validity and collection metrics, and GIRAF-specific
+event markers. It never modifies the Zarr.
 
-Useful options:
+## Replay
 
-- `--action-epsilon VALUE` changes the inactive-motion threshold.
-- `--grasp-cooldown-s SECONDS` changes the post-grasp retention window.
-- `--ignore-grasp-transitions` disables grasp-transition retention entirely.
-- `--padding-steps N` retains `N` extra samples before and after active samples.
-- `--min-segment-steps N` drops active runs shorter than `N` samples.
+Inspect, display, or extract an episode:
 
-The source dataset is never modified, and an existing output path is never
-overwritten. All time-aligned Zarr arrays, episode boundaries, attributes, and
-episode metadata are copied consistently. Episode video files are not rewritten.
+```bash
+uv run giraf-replay --dataset data/demos/replay_buffer.zarr --episode 0
+uv run giraf-replay --dataset data/demos/replay_buffer.zarr --episode 0 --show
+uv run giraf-replay --dataset data/demos/replay_buffer.zarr --episode 0 \
+  --extract-dir /tmp/giraf-episode-0
+```
 
 ## Learning
 
