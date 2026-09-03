@@ -6,12 +6,14 @@ import argparse
 from pathlib import Path
 
 import cv2
+import numpy as np
+import zarr
 
+from .schema import GRASP_INDEX
+
+# Must match giraf.replay_cli, which creates this window before importing the
+# data package to work around an OpenCV Qt5/XWayland startup hang.
 PREVIEW_WINDOW = "GIRAF episode replay"
-
-
-def _open_preview_window() -> None:
-    cv2.namedWindow(PREVIEW_WINDOW, cv2.WINDOW_NORMAL)
 
 
 def _resize_preview_window(image_shape: tuple[int, ...]) -> None:
@@ -20,8 +22,6 @@ def _resize_preview_window(image_shape: tuple[int, ...]) -> None:
 
 
 def episode_slice(root, episode: int) -> slice:
-    import numpy as np
-
     ends = np.asarray(root["meta/episode_ends"][:], dtype=np.int64)
     if episode < 0:
         episode += len(ends)
@@ -45,16 +45,6 @@ def main() -> int:
     args = parser.parse_args()
     if args.fps <= 0:
         parser.error("--fps must be positive")
-
-    # This OpenCV Qt5 build can spin before mapping its XWayland window if
-    # NumPy/Zarr initialize their worker libraries first. Create the native
-    # window before importing the dataset stack.
-    if args.show:
-        _open_preview_window()
-
-    import zarr
-
-    from .schema import GRASP_INDEX
 
     root = zarr.open_group(args.dataset, mode="r")
     selection = episode_slice(root, args.episode)

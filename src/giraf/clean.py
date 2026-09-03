@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import zarr
 
+from .data.schema import GRASP_INDEX
 from .diagnostics import (
     array_missing_chunk_rows,
     diagnose_episode,
@@ -21,7 +22,6 @@ from .diagnostics import (
 
 CORE_DATA_KEYS = ("camera_rgb", "action", "state")
 REQUIRED_DATA_KEYS = CORE_DATA_KEYS + ("timestamp_ns", "alignment_valid")
-GRASP_INDEX = 6
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,9 +139,7 @@ def _diagnostic_reasons(report: dict[str, Any]) -> list[str]:
     if report["source_field_health"]["camera_sequence_constant"]:
         reasons.append("camera sequence numbers do not advance")
 
-    rules = [
-        rule for rule in report["validity_rules"].values() if rule is not None
-    ]
+    rules = [rule for rule in report["validity_rules"].values() if rule is not None]
     if rules and not any(rule["stored_mismatch_steps"] == 0 for rule in rules):
         reasons.append("alignment validity matches neither saved collection rule")
     return reasons

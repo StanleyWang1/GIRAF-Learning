@@ -3,22 +3,19 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from giraf.data.replay import (
-    PREVIEW_WINDOW,
-    _open_preview_window,
-    _resize_preview_window,
-)
+from giraf import replay_cli
+from giraf.data.replay import PREVIEW_WINDOW, _resize_preview_window
 
 
 class ReplayWindowTests(unittest.TestCase):
+    def test_window_name_matches_cli_wrapper(self) -> None:
+        # replay_cli creates the window before the data package is imported, so
+        # the two modules must agree on its name without importing each other.
+        self.assertEqual(PREVIEW_WINDOW, replay_cli.PREVIEW_WINDOW)
+
     @patch("giraf.data.replay.cv2")
-    def test_preview_window_is_explicitly_initialized(self, cv2) -> None:
-        cv2.WINDOW_NORMAL = 0
-
-        _open_preview_window()
+    def test_preview_window_is_resized_to_double_frame_size(self, cv2) -> None:
         _resize_preview_window((224, 320, 3))
-
-        cv2.namedWindow.assert_called_once_with(PREVIEW_WINDOW, cv2.WINDOW_NORMAL)
         cv2.resizeWindow.assert_called_once_with(PREVIEW_WINDOW, 640, 448)
 
 
