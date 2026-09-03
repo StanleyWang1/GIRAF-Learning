@@ -14,6 +14,7 @@ dist/
 # Local configuration and editor state
 .env
 .envrc
+wandb_key.txt
 .idea/
 .vscode/
 .DS_Store

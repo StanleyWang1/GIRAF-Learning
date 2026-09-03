@@ -1,0 +1,19 @@
+{
+  "checkpoint": "checkpoints/tape_grasping/policy.pt",
+  "reference_dataset": "data/tape_grasping/stanley_trials_cleaned.zarr",
+  "reference_episode": 12,
+  "collector_config": "config/tape_grasping.yaml",
+  "mode": "hardware",
+  "device": "cuda",
+  "action_scale": 1.0,
+  "inference_steps": 10,
+  "duration_s": 50.0,
+  "action_timeout_s": 0.5,
+  "max_frame_age_s": 0.15,
+  "state_margin_fraction": 0.05,
+  "allow_grasp": true,
+  "seed": 0,
+  "log_dir": "deployment_runs/20260903-152757",
+  "save_video": true,
+  "hardware_confirmed": true
+}
