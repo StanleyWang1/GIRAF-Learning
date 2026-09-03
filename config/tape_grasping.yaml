@@ -1,3 +1,4 @@
+# Tape-grasping trials. Same settings as data_collection.yaml, different output paths.
 camera:
   width: 640
   height: 480
@@ -10,9 +11,9 @@ imu:
   max_batch_reports: 10
 
 dataset:
-  output_dir: data/demos
-  zarr_name: replay_buffer.zarr
-  episode_dir_name: videos
+  output_dir: data/tape_grasping
+  zarr_name: clive_trials.zarr
+  episode_dir_name: clive_trials_videos
   aligned_hz: 30.0
   resize_dim: [224, 224]
   resize_mode: stretch
