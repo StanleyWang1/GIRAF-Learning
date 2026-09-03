@@ -8,7 +8,6 @@ from typing import Any
 import numpy as np
 import zarr
 
-
 TIMESTAMP_KEYS = {
     "timestamp",
     "timestamp_ns",
@@ -69,16 +68,14 @@ class GirafDataset:
         schema_version = self.attrs.get("schema_version")
         if schema_version != "giraf-replay-v1":
             raise DatasetFormatError(
-                "expected schema_version='giraf-replay-v1', "
-                f"found {schema_version!r}"
+                f"expected schema_version='giraf-replay-v1', found {schema_version!r}"
             )
 
         self.episode_ends = np.asarray(self.meta["episode_ends"][:], dtype=np.int64)
         if self.episode_ends.ndim != 1:
             raise DatasetFormatError("meta/episode_ends must be one-dimensional")
         if self.episode_ends.size and (
-            np.any(self.episode_ends <= 0)
-            or np.any(np.diff(self.episode_ends) <= 0)
+            np.any(self.episode_ends <= 0) or np.any(np.diff(self.episode_ends) <= 0)
         ):
             raise DatasetFormatError("meta/episode_ends must be strictly increasing")
 
@@ -261,7 +258,9 @@ class GirafDataset:
         active_steps: int | None = None
         if "action" in self.aligned_keys:
             action = np.asarray(self.data["action"][start:stop], dtype=np.float64)
-            motion = action[:, : min(6, action.shape[1])] if action.ndim == 2 else action
+            motion = (
+                action[:, : min(6, action.shape[1])] if action.ndim == 2 else action
+            )
             if motion.ndim == 1:
                 active_steps = int(np.count_nonzero(np.abs(motion) > 1e-5))
             else:
@@ -337,7 +336,9 @@ class GirafDataset:
         elif key in {"joint_velocity_command", "joint_position_command"}:
             configured = [str(value) for value in self.attrs.get("joint_fields", [])]
         elif key == "can_position_target":
-            configured = [str(value) for value in self.attrs.get("joint_fields", [])[:3]]
+            configured = [
+                str(value) for value in self.attrs.get("joint_fields", [])[:3]
+            ]
         elif key == "dynamixel_target_ticks":
             joint_fields = [str(value) for value in self.attrs.get("joint_fields", [])]
             configured = joint_fields[3:] + ["grasp_target"]
@@ -385,7 +386,9 @@ class GirafDataset:
             group = self._group_for_key(key)
             channel_names = self._channel_names(key, width)
             if key in MILLISECOND_KEYS:
-                channel_names = [name.removesuffix("_ns") + "_ms" for name in channel_names]
+                channel_names = [
+                    name.removesuffix("_ns") + "_ms" for name in channel_names
+                ]
             keys.append(
                 {
                     "key": key,
@@ -415,7 +418,9 @@ class GirafDataset:
                 {
                     "stream_id": "main",
                     "rgb_key": "camera_rgb",
-                    "rgb_shape": [int(value) for value in self.data["camera_rgb"].shape[1:]],
+                    "rgb_shape": [
+                        int(value) for value in self.data["camera_rgb"].shape[1:]
+                    ],
                 }
             ],
             "keys": keys,
@@ -489,13 +494,17 @@ class GirafDataset:
         timestamps = self.timestamps(episode)
         events: list[dict[str, Any]] = []
 
-        def add(index: int, event_type: str, label: str, details: dict[str, Any]) -> None:
+        def add(
+            index: int, event_type: str, label: str, details: dict[str, Any]
+        ) -> None:
             if len(events) >= max_events:
                 return
             events.append(
                 {
                     "idx": int(index),
-                    "time": float(timestamps[index]) if index < timestamps.size else 0.0,
+                    "time": float(timestamps[index])
+                    if index < timestamps.size
+                    else 0.0,
                     "type": event_type,
                     "label": label,
                     "details": details,

@@ -38,8 +38,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise SystemExit("dataset has no committed episodes")
     if args.episode < 0 or args.episode >= dataset.episode_count:
         raise SystemExit(
-            f"episode {args.episode} is outside "
-            f"[0, {dataset.episode_count - 1}]"
+            f"episode {args.episode} is outside [0, {dataset.episode_count - 1}]"
         )
     if args.port < 0 or args.port > 65535:
         raise SystemExit("port must be in [0, 65535]")

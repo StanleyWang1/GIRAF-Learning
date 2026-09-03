@@ -39,12 +39,8 @@ def create_test_replay(path: Path) -> None:
     meta.create_dataset(
         "episode_start_wall_time_ns", data=np.asarray([1000, 2000]), chunks=(2,)
     )
-    meta.create_dataset(
-        "episode_valid_steps", data=np.asarray([4, 3]), chunks=(2,)
-    )
-    meta.create_dataset(
-        "episode_invalid_steps", data=np.asarray([2, 1]), chunks=(2,)
-    )
+    meta.create_dataset("episode_valid_steps", data=np.asarray([4, 3]), chunks=(2,))
+    meta.create_dataset("episode_invalid_steps", data=np.asarray([2, 1]), chunks=(2,))
     meta.create_dataset("custom_episode_value", data=np.asarray([7, 8]), chunks=(2,))
 
 
@@ -105,9 +101,7 @@ class PruneReplayBufferTests(unittest.TestCase):
             source = Path(directory) / "source.zarr"
             create_test_replay(source)
             root = zarr.open_group(str(source), mode="r+")
-            root["data/timestamp_ns"][:] = (
-                np.arange(10, dtype=np.int64) * 2_000_000_000
-            )
+            root["data/timestamp_ns"][:] = np.arange(10, dtype=np.int64) * 2_000_000_000
 
             preview = prune_replay_buffer(source)
 

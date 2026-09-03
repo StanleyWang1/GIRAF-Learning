@@ -38,8 +38,7 @@ def array_missing_chunk_rows(array, start: int, stop: int) -> int:
     return sum(
         max(
             0,
-            min(stop, (chunk + 1) * chunk_length)
-            - max(start, chunk * chunk_length),
+            min(stop, (chunk + 1) * chunk_length) - max(start, chunk * chunk_length),
         )
         for chunk in missing_time_chunks
     )
@@ -179,9 +178,7 @@ def diagnose_episode(dataset: str | Path, episode: int) -> dict[str, Any]:
     control_timestamps = _load_episode_array(
         data, "control_timestamp_ns", selection, steps
     )
-    motor_timestamps = _load_episode_array(
-        data, "motor_timestamp_ns", selection, steps
-    )
+    motor_timestamps = _load_episode_array(data, "motor_timestamp_ns", selection, steps)
     camera_receive_timestamps = _load_episode_array(
         data, "camera_receive_timestamp_ns", selection, steps
     )
@@ -216,9 +213,7 @@ def diagnose_episode(dataset: str | Path, episode: int) -> dict[str, Any]:
         and np.any(timestamps)
     )
     motor_accepted = (
-        np.asarray(motor_accepted_raw) != 0
-        if motor_accepted_raw is not None
-        else None
+        np.asarray(motor_accepted_raw) != 0 if motor_accepted_raw is not None else None
     )
 
     attrs = dict(root.attrs)
@@ -249,9 +244,7 @@ def diagnose_episode(dataset: str | Path, episode: int) -> dict[str, Any]:
             return None
         return {
             "expected_valid_steps": int(np.count_nonzero(expected)),
-            "stored_mismatch_steps": int(
-                np.count_nonzero(expected != alignment_valid)
-            ),
+            "stored_mismatch_steps": int(np.count_nonzero(expected != alignment_valid)),
         }
 
     failure_signals: dict[str, int | None] = {
@@ -378,9 +371,7 @@ def diagnose_episode(dataset: str | Path, episode: int) -> dict[str, Any]:
         "invalid_without_hardware_failure_signal": unexplained_invalid,
         "timing_ms": {
             "camera_interval": _stats(intervals_ns, scale=NS_PER_MS),
-            "camera_receive_latency": _stats(
-                camera_receive_latency_ns, scale=NS_PER_MS
-            )
+            "camera_receive_latency": _stats(camera_receive_latency_ns, scale=NS_PER_MS)
             if (
                 camera_receive_latency_ns is not None
                 and not camera_receive_timestamps_zero_filled
@@ -393,9 +384,7 @@ def diagnose_episode(dataset: str | Path, episode: int) -> dict[str, Any]:
             if motor_age_ns is not None
             else None,
         },
-        "timestamp_non_increasing_intervals": int(
-            np.count_nonzero(intervals_ns <= 0)
-        ),
+        "timestamp_non_increasing_intervals": int(np.count_nonzero(intervals_ns <= 0)),
         "camera_sequence": sequence_health,
         "status_counts": {
             "motor_command_accepted": _count_true(motor_accepted),
@@ -567,8 +556,7 @@ def format_report(report: Mapping[str, Any]) -> str:
     motor_limit = limits["max_motor_age"]
     lines.extend(
         [
-            "  saved limits: "
-            f"control={control_limit:.3f} ms"
+            f"  saved limits: control={control_limit:.3f} ms"
             if control_limit is not None
             else "  saved limits: control=unavailable",
         ]

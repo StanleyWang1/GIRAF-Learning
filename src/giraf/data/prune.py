@@ -60,9 +60,7 @@ def _validate_dataset(root, ends: np.ndarray) -> int:
         raise RuntimeError("dataset is missing data/timestamp_ns")
     action = root["data/action"]
     if action.ndim != 2 or action.shape[1] <= GRASP_INDEX:
-        raise RuntimeError(
-            f"data/action must have at least {GRASP_INDEX + 1} columns"
-        )
+        raise RuntimeError(f"data/action must have at least {GRASP_INDEX + 1} columns")
     n_steps = int(action.shape[0])
     expected_steps = int(ends[-1]) if len(ends) else 0
     if n_steps != expected_steps:
@@ -230,7 +228,11 @@ def _copy_episode_metadata(source_root, target_root, segments) -> None:
         ):
             wall_starts = np.asarray(
                 [
-                    int(source_meta["episode_start_wall_time_ns"][segment.source_episode])
+                    int(
+                        source_meta["episode_start_wall_time_ns"][
+                            segment.source_episode
+                        ]
+                    )
                     + int(starts[index])
                     - int(
                         source_meta["episode_start_monotonic_ns"][

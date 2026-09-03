@@ -60,9 +60,7 @@ def create_diagnostic_replay(path: Path) -> None:
     for name, values in arrays.items():
         data.create_dataset(name, data=values, chunks=(2,) + values.shape[1:])
     meta.create_dataset("episode_ends", data=np.asarray([2, 4], dtype=np.int64))
-    meta.create_dataset(
-        "episode_valid_steps", data=np.asarray([1, 1], dtype=np.int64)
-    )
+    meta.create_dataset("episode_valid_steps", data=np.asarray([1, 1], dtype=np.int64))
     meta.create_dataset(
         "episode_invalid_steps", data=np.asarray([1, 1], dtype=np.int64)
     )
@@ -78,16 +76,12 @@ class EpisodeDiagnosticsTests(unittest.TestCase):
 
             self.assertEqual(report["steps"], 2)
             self.assertEqual(report["valid_steps"], 1)
-            self.assertEqual(
-                report["hardware_failure_signals"]["control_too_old"], 1
-            )
+            self.assertEqual(report["hardware_failure_signals"]["control_too_old"], 1)
             self.assertEqual(
                 report["validity_rules"]["hardware"]["stored_mismatch_steps"], 0
             )
             self.assertEqual(
-                report["stored_timing_consistency"]["control_age_ns"][
-                    "mismatch_steps"
-                ],
+                report["stored_timing_consistency"]["control_age_ns"]["mismatch_steps"],
                 1,
             )
             self.assertTrue(report["metadata_counts"]["matches_data"])
@@ -108,13 +102,9 @@ class EpisodeDiagnosticsTests(unittest.TestCase):
             self.assertEqual(report["camera_sequence"]["discontinuities"], 1)
             self.assertEqual(report["camera_sequence"]["duplicates"], 1)
             self.assertEqual(report["camera_sequence"]["estimated_missing_frames"], 0)
+            self.assertEqual(report["hardware_failure_signals"]["motor_too_old"], 1)
             self.assertEqual(
-                report["hardware_failure_signals"]["motor_too_old"], 1
-            )
-            self.assertEqual(
-                report["hardware_failure_signals"][
-                    "motor_command_not_accepted"
-                ],
+                report["hardware_failure_signals"]["motor_command_not_accepted"],
                 1,
             )
 
@@ -123,18 +113,21 @@ class EpisodeDiagnosticsTests(unittest.TestCase):
             source = Path(directory) / "source.zarr"
             create_diagnostic_replay(source)
             stdout = StringIO()
-            with patch.object(
-                __import__("sys"),
-                "argv",
-                [
-                    "giraf-diagnose",
-                    "--dataset",
-                    str(source),
-                    "--episode",
-                    "0",
-                    "--json",
-                ],
-            ), redirect_stdout(stdout):
+            with (
+                patch.object(
+                    __import__("sys"),
+                    "argv",
+                    [
+                        "giraf-diagnose",
+                        "--dataset",
+                        str(source),
+                        "--episode",
+                        "0",
+                        "--json",
+                    ],
+                ),
+                redirect_stdout(stdout),
+            ):
                 result = main()
 
             self.assertEqual(result, 0)

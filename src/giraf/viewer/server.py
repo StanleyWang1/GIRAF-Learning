@@ -18,7 +18,6 @@ import cv2
 
 from .dataset import DatasetFormatError, GirafDataset
 
-
 EPISODE_ROUTE = re.compile(
     r"^/api/episode/(?P<episode>\d+)/(?P<resource>schema|metrics|events|signals|frame)$"
 )
@@ -45,7 +44,9 @@ class _FrameCache:
                 self._values.popitem(last=False)
 
 
-def _encode_frame(dataset: GirafDataset, episode: int, index: int, profile: str) -> bytes:
+def _encode_frame(
+    dataset: GirafDataset, episode: int, index: int, profile: str
+) -> bytes:
     frame_rgb = dataset.frame(episode, index)
     if profile == "scrub" and max(frame_rgb.shape[:2]) > 640:
         height, width = frame_rgb.shape[:2]
@@ -93,18 +94,14 @@ def create_server(
             self.end_headers()
             self.wfile.write(payload)
 
-        def _send_json(
-            self, payload: Any, status: HTTPStatus = HTTPStatus.OK
-        ) -> None:
+        def _send_json(self, payload: Any, status: HTTPStatus = HTTPStatus.OK) -> None:
             encoded = json.dumps(
                 payload, allow_nan=False, separators=(",", ":")
             ).encode("utf-8")
             self._send_bytes(encoded, "application/json; charset=utf-8", status)
 
         @staticmethod
-        def _integer_query(
-            query: dict[str, list[str]], key: str, default: int
-        ) -> int:
+        def _integer_query(query: dict[str, list[str]], key: str, default: int) -> int:
             raw = query.get(key, [str(default)])[0]
             try:
                 return int(raw)
@@ -122,12 +119,12 @@ def create_server(
                     HTTPStatus.INTERNAL_SERVER_ERROR,
                 )
                 return
-            content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+            content_type = (
+                mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+            )
             self._send_bytes(path.read_bytes(), content_type)
 
-        def _serve_frame(
-            self, episode: int, query: dict[str, list[str]]
-        ) -> None:
+        def _serve_frame(self, episode: int, query: dict[str, list[str]]) -> None:
             index = self._integer_query(query, "idx", 0)
             profile = query.get("profile", ["full"])[0]
             if profile not in {"full", "scrub"}:
@@ -171,9 +168,7 @@ def create_server(
             start = self._integer_query(query, "start", 0)
             end = self._integer_query(query, "end", length)
             stride = self._integer_query(query, "stride", 1)
-            self._send_json(
-                dataset.signal_payload(episode, keys, start, end, stride)
-            )
+            self._send_json(dataset.signal_payload(episode, keys, start, end, stride))
 
         def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
             parsed = urlsplit(self.path)
@@ -210,7 +205,12 @@ def create_server(
                 self._serve_episode_resource(
                     int(match.group("episode")), match.group("resource"), query
                 )
-            except (DatasetFormatError, FileNotFoundError, IndexError, ValueError) as exc:
+            except (
+                DatasetFormatError,
+                FileNotFoundError,
+                IndexError,
+                ValueError,
+            ) as exc:
                 self._send_json({"detail": str(exc)}, HTTPStatus.BAD_REQUEST)
             except (BrokenPipeError, ConnectionResetError):
                 return
