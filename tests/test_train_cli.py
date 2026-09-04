@@ -4,8 +4,10 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
+import torch
 
 from giraf.learning import DiffusionPolicy
 from giraf.learning.train_cli import main, parse_config
@@ -49,7 +51,15 @@ class TrainCliTests(unittest.TestCase):
         self.assertEqual(config.epochs, 2)
 
     def test_training_writes_checkpoints_metrics_and_normalizer(self) -> None:
-        self.assertEqual(main(self.args), 0)
+        with patch(
+            "giraf.learning.diffusion.nn.utils.clip_grad_norm_",
+            wraps=torch.nn.utils.clip_grad_norm_,
+        ) as clip_grad_norm:
+            self.assertEqual(main(self.args), 0)
+        self.assertTrue(clip_grad_norm.called)
+        self.assertTrue(
+            all(call.kwargs["foreach"] is False for call in clip_grad_norm.call_args_list)
+        )
         self.assertTrue((self.run_dir / "policy.pt").is_file())
         self.assertTrue((self.run_dir / "policy_epoch_0002.pt").is_file())
         self.assertFalse((self.run_dir / "policy_epoch_0001.pt").exists())

@@ -157,7 +157,9 @@ class DiffusionPolicy:
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         gradient_norm = nn.utils.clip_grad_norm_(
-            self.model.parameters(), self.config.gradient_clip_norm
+            self.model.parameters(),
+            self.config.gradient_clip_norm,
+            foreach=False,
         )
         self.optimizer.step()
         return {

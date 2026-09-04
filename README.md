@@ -234,20 +234,77 @@ remains `act`, `train_step`, and `save`.
 
 ### Training
 
+Install the optional W&B client and authenticate once:
+
 ```bash
-uv run giraf-train --dataset data/demos/replay_buffer_cleaned.zarr   --output-dir checkpoints/tape_grasping --epochs 200 --batch-size 64
+uv sync --extra train
+uv run wandb login
 ```
+
+Use `tmux` for a long run so it survives a terminal disconnect:
+
+```bash
+cd ~/Documents/GIRAF-Learning
+tmux new -s giraf-train
+```
+
+Inside `tmux`, choose the dataset and a unique run directory. The timestamp
+keeps a new run from appending metrics to, or overwriting checkpoints in, an
+older run:
+
+```bash
+TRAIN_DATASET=data/tape_grasping/sept03_trials.zarr
+TRAIN_RUN_NAME=sept03_trials_200ep_$(date +%Y%m%d-%H%M%S)
+TRAIN_RUN_DIR="checkpoints/tape_grasping/$TRAIN_RUN_NAME"
+
+if test -e "$TRAIN_RUN_DIR"; then
+  echo "ERROR: refusing to reuse existing run directory: $TRAIN_RUN_DIR"
+  exit 1
+fi
+
+mkdir -p "$TRAIN_RUN_DIR"
+
+export WANDB_MODE=online
+export WANDB_NAME="$TRAIN_RUN_NAME"
+export WANDB_CONSOLE=off
+export PYTHONFAULTHANDLER=1
+export TORCH_SHOW_CPP_STACKTRACES=1
+ulimit -c unlimited
+set -o pipefail
+
+uv run giraf-train \
+  --dataset "$TRAIN_DATASET" \
+  --output-dir "$TRAIN_RUN_DIR" \
+  --epochs 200 \
+  --batch-size 64 \
+  --learning-rate 1e-4 \
+  --checkpoint-every 20 \
+  --device cuda \
+  --seed 0 \
+  --preload-images \
+  --wandb \
+  --wandb-project giraf-tape-grasping \
+  2>&1 | tee "$TRAIN_RUN_DIR/train.log"
+
+training_status=${PIPESTATUS[0]}
+printf '%s\n' "$training_status" | tee "$TRAIN_RUN_DIR/exit_status.txt"
+```
+
+`WANDB_MODE=online` enables live monitoring. `WANDB_CONSOLE=off` leaves metric
+logging enabled but prevents W&B from intercepting the terminal stream, so
+`train.log` retains native crash diagnostics. The exit status is `0` after a
+successful run; values above `128` identify termination by a Unix signal.
+
+Detach from `tmux` without stopping training by pressing `Ctrl-b`, releasing
+both keys, and then pressing `d`. Reattach with `tmux attach -t giraf-train`.
 
 The run directory receives `config.json`, `normalizer.json`, `metrics.jsonl`
 (one line per epoch), `policy.pt` after every epoch, and
 `policy_epoch_NNNN.pt` every `--checkpoint-every` epochs. Windows are anchored
 at every step whose `alignment_valid` flag is set; the first observation and
 the last action repeat at episode boundaries, matching what `act()` does with
-its history. Use `--preload-images` when the dataset fits in RAM.
-
-Add `--wandb` to mirror metrics to Weights & Biases. It runs offline by default
-and needs no account; set `WANDB_MODE=online` to upload. Install the client
-with `uv sync --extra train`.
+its history. Use `--preload-images` only when the uncompressed images fit in
+RAM. W&B runs offline by default when `WANDB_MODE` is not set.
 
 ```python
 from giraf.learning import DiffusionPolicy, ReplayDataset, train
