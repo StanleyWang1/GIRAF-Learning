@@ -12,8 +12,8 @@ imu:
 
 dataset:
   output_dir: data/tape_grasping
-  zarr_name: clive_trials.zarr
-  episode_dir_name: clive_trials_videos
+  zarr_name: sept03_trials.zarr
+  episode_dir_name: sept03_trials_videos
   aligned_hz: 30.0
   resize_dim: [224, 224]
   resize_mode: stretch
