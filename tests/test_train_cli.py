@@ -50,6 +50,10 @@ class TrainCliTests(unittest.TestCase):
         self.assertEqual(config.policy.inference_steps, 4)
         self.assertEqual(config.epochs, 2)
 
+    def test_resume_requires_an_explicit_completed_epoch(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "positive --start-epoch"):
+            parse_config([*self.args, "--resume", str(self.run_dir / "policy.pt")])
+
     def test_training_writes_checkpoints_metrics_and_normalizer(self) -> None:
         with patch(
             "giraf.learning.diffusion.nn.utils.clip_grad_norm_",
@@ -87,6 +91,43 @@ class TrainCliTests(unittest.TestCase):
         self.assertTrue((action[:6] <= policy.normalizer.action_high[:6] + 1e-5).all())
         self.assertIn(float(action[6]), (0.0, 1.0))
 
+    def test_training_resumes_existing_policy_and_optimizer(self) -> None:
+        resumed_dir = Path(self._tmp.name) / "resumed-run"
+        first_args = self.args.copy()
+        first_args[first_args.index("--epochs") + 1] = "1"
+        self.assertEqual(main(first_args), 0)
+
+        resume_args = self.args.copy()
+        resume_args[resume_args.index("--output-dir") + 1] = str(resumed_dir)
+        resume_args.extend(
+            [
+                "--resume",
+                str(self.run_dir / "policy.pt"),
+                "--start-epoch",
+                "1",
+            ]
+        )
+        self.assertEqual(main(resume_args), 0)
+        records = [
+            json.loads(line)
+            for line in (resumed_dir / "metrics.jsonl").read_text().splitlines()
+        ]
+        self.assertEqual([record["epoch"] for record in records], [2])
+        policy = DiffusionPolicy.load(resumed_dir / "policy.pt", device="cpu")
+        optimizer_steps = {
+            int(state["step"].item()) for state in policy.optimizer.state.values()
+        }
+        self.assertEqual(optimizer_steps, {6})
+
+        same_dir_args = [
+            *self.args,
+            "--resume",
+            str(self.run_dir / "policy.pt"),
+            "--start-epoch",
+            "1",
+        ]
+        with self.assertRaisesRegex(ValueError, "new --output-dir"):
+            main(same_dir_args)
 
 if __name__ == "__main__":
     unittest.main()

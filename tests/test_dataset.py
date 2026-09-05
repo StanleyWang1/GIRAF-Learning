@@ -107,6 +107,15 @@ class ReplayDatasetTests(unittest.TestCase):
         second_a = next(iter(a))
         self.assertFalse(np.array_equal(first_a.actions, second_a.actions))
 
+        resumed = ReplayDataset(
+            self.path,
+            batch_size=9,
+            prediction_horizon=4,
+            seed=3,
+            start_epoch=1,
+        )
+        np.testing.assert_array_equal(second_a.actions, next(iter(resumed)).actions)
+
     def test_preloaded_images_match_zarr_reads(self) -> None:
         streamed = ReplayDataset(
             self.path, batch_size=9, prediction_horizon=4, shuffle=False

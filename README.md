@@ -306,6 +306,42 @@ the last action repeat at episode boundaries, matching what `act()` does with
 its history. Use `--preload-images` only when the uncompressed images fit in
 RAM. W&B runs offline by default when `WANDB_MODE` is not set.
 
+To warm-start a recovery run from an existing checkpoint, use one whose
+completed epoch is known. A numbered checkpoint is preferable after an abrupt
+shutdown because its filename makes that boundary explicit. Use a new output
+directory, set `--start-epoch` to that boundary, and set `--epochs` to the total
+target:
+
+```bash
+RECOVERY_RUN_NAME=recovered_from_0260_$(date +%Y%m%d-%H%M%S)
+RECOVERY_RUN_DIR="checkpoints/tape_grasping/$RECOVERY_RUN_NAME"
+export WANDB_NAME="$RECOVERY_RUN_NAME"
+
+uv run giraf-train \
+  --dataset "$TRAIN_DATASET" \
+  --output-dir "$RECOVERY_RUN_DIR" \
+  --epochs 500 \
+  --batch-size 64 \
+  --learning-rate 1e-4 \
+  --checkpoint-every 20 \
+  --device cuda \
+  --seed 0 \
+  --preload-images \
+  --wandb \
+  --wandb-project giraf-tape-grasping \
+  --resume "$TRAIN_RUN_DIR/policy_epoch_0260.pt" \
+  --start-epoch 260
+```
+
+The checkpoint restores the model, optimizer, normalizer, and policy
+configuration. `--start-epoch 260` advances logging and deterministic dataset
+shuffling so the next epoch is 261. Older checkpoints do not contain the exact
+PyTorch or CUDA random-number state, so this is a valid stochastic continuation
+rather than a bit-for-bit replay of an uninterrupted run. Use the same dataset,
+batch size, and seed as the original command. The recovery directory and W&B
+tracking are new; their configuration records the source checkpoint, while the
+original run remains untouched.
+
 ```python
 from giraf.learning import DiffusionPolicy, ReplayDataset, train
 

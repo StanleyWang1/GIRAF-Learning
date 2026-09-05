@@ -22,6 +22,8 @@ from .pipeline import train
 class TrainConfig:
     dataset: Path
     output_dir: Path
+    resume: Path | None = None
+    start_epoch: int = 0
     epochs: int = 100
     batch_size: int = 64
     checkpoint_every: int = 10
@@ -42,6 +44,19 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="run directory (default: checkpoints/<timestamp>)",
+    )
+    parser.add_argument(
+        "--resume",
+        type=Path,
+        default=None,
+        metavar="CHECKPOINT",
+        help="restore model and optimizer from an existing policy checkpoint",
+    )
+    parser.add_argument(
+        "--start-epoch",
+        type=int,
+        default=0,
+        help="last completed epoch in --resume (required when resuming)",
     )
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--batch-size", type=int, default=64)
@@ -65,6 +80,12 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
     args = build_parser().parse_args(argv)
     if args.epochs <= 0 or args.batch_size <= 0 or args.checkpoint_every <= 0:
         raise SystemExit("epochs, batch-size and checkpoint-every must be positive")
+    if args.resume is None and args.start_epoch != 0:
+        raise SystemExit("--start-epoch requires --resume")
+    if args.resume is not None and args.start_epoch <= 0:
+        raise SystemExit("--resume requires a positive --start-epoch")
+    if args.resume is not None and args.epochs <= args.start_epoch:
+        raise SystemExit("--epochs must be greater than --start-epoch")
     policy = DiffusionPolicyConfig(learning_rate=args.learning_rate, device=args.device)
     if args.down_dims is not None:
         policy = replace(policy, down_dims=tuple(args.down_dims))
@@ -78,6 +99,8 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
     return TrainConfig(
         dataset=args.dataset,
         output_dir=output_dir,
+        resume=args.resume,
+        start_epoch=args.start_epoch,
         epochs=args.epochs,
         batch_size=args.batch_size,
         checkpoint_every=args.checkpoint_every,
@@ -141,16 +164,38 @@ def run(config: TrainConfig) -> Path:
 
     torch.manual_seed(config.seed)
     config.output_dir.mkdir(parents=True, exist_ok=True)
+    if (
+        config.resume is not None
+        and config.resume.resolve().parent == config.output_dir.resolve()
+    ):
+        raise ValueError(
+            "a resumed legacy checkpoint must use a new --output-dir so the "
+            "original metrics and checkpoints remain untouched"
+        )
+    if config.resume is None:
+        policy = None
+        policy_config = config.policy
+    else:
+        policy = DiffusionPolicy.load(config.resume, device=config.policy.device)
+        policy_config = policy.config
     dataset = ReplayDataset(
         config.dataset,
         batch_size=config.batch_size,
-        observation_horizon=config.policy.observation_horizon,
-        prediction_horizon=config.policy.prediction_horizon,
+        observation_horizon=policy_config.observation_horizon,
+        prediction_horizon=policy_config.prediction_horizon,
         seed=config.seed,
+        start_epoch=config.start_epoch,
         preload_images=config.preload_images,
     )
     normalizer = dataset.fit_normalizer()
-    policy = DiffusionPolicy(config.policy, normalizer=normalizer)
+    if policy is None:
+        policy = DiffusionPolicy(policy_config, normalizer=normalizer)
+    elif (
+        policy.normalizer is None
+        or policy.normalizer.to_dict() != normalizer.to_dict()
+    ):
+        raise ValueError("dataset normalizer differs from the resumed checkpoint")
+    config = replace(config, policy=policy.config)
     (config.output_dir / "config.json").write_text(
         json.dumps(_json_safe(asdict(config)), indent=2) + "\n"
     )
@@ -162,11 +207,17 @@ def run(config: TrainConfig) -> Path:
         f"device={policy.device}",
         flush=True,
     )
+    if config.resume is not None:
+        print(
+            f"[TRAIN] warm-started {config.resume} after epoch {config.start_epoch}; "
+            f"target={config.epochs}",
+            flush=True,
+        )
 
     logger = _Logger(config)
     latest = config.output_dir / "policy.pt"
     try:
-        for epoch in range(1, config.epochs + 1):
+        for epoch in range(config.start_epoch + 1, config.epochs + 1):
             started = time.monotonic()
             metrics = _mean_metrics(train(policy, dataset, epochs=1))
             metrics["epoch_seconds"] = time.monotonic() - started

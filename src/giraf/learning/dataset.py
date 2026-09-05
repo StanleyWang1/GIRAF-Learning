@@ -72,16 +72,19 @@ class ReplayDataset:
         prediction_horizon: int = 16,
         shuffle: bool = True,
         seed: int = 0,
+        start_epoch: int = 0,
         preload_images: bool = False,
         require_alignment_valid: bool = True,
     ) -> None:
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
+        if start_epoch < 0:
+            raise ValueError("start_epoch must be non-negative")
         self.path = Path(path)
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.seed = seed
-        self._epoch = 0
+        self._epoch = start_epoch
 
         root = zarr.open_group(str(self.path), mode="r")
         data = root["data"]

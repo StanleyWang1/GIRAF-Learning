@@ -139,9 +139,9 @@ else
 fi
 ```
 
-The trainer does not currently resume an interrupted run. Reusing an existing
-directory restarts at epoch 1, appends to `metrics.jsonl`, and can mix files
-from separate attempts. Prefer a new output directory for each restart.
+For a fresh run, prefer a new output directory. A recovery run can warm-start
+from a policy checkpoint when its completed epoch is supplied explicitly; see
+the command below.
 
 ## 5. Start training in tmux
 
@@ -183,6 +183,41 @@ A healthy startup prints a line resembling:
 
 Using `--device cuda` is deliberate: it makes the command fail clearly if CUDA
 is unavailable instead of silently training on the CPU.
+
+### Warm-start after an interruption
+
+Prefer the newest numbered checkpoint after an abrupt shutdown because its
+filename identifies a completed epoch. For example, continue epoch 260 through
+a total target of 500 epochs with:
+
+```bash
+export WANDB_MODE=online
+RECOVERY_RUN_NAME=recovered-from-0260-$(date +%Y%m%d-%H%M%S)
+RECOVERY_RUN_DIR="checkpoints/tape_grasping/$RECOVERY_RUN_NAME"
+export WANDB_NAME="$RECOVERY_RUN_NAME"
+
+uv run --frozen giraf-train \
+  --dataset data/tape_grasping/stanley_trials_cleaned.zarr \
+  --output-dir "$RECOVERY_RUN_DIR" \
+  --epochs 500 \
+  --batch-size 64 \
+  --checkpoint-every 10 \
+  --device cuda \
+  --preload-images \
+  --wandb \
+  --wandb-project giraf-tape-grasping \
+  --resume checkpoints/tape_grasping/policy_epoch_0260.pt \
+  --start-epoch 260
+```
+
+The checkpoint restores model and optimizer state. The explicit start epoch
+also continues metric numbering and dataset shuffling at epoch 261. Exact
+PyTorch and CUDA random-number state was not stored in existing checkpoints,
+so the resumed run is a valid stochastic continuation rather than bit-for-bit
+identical to an uninterrupted run. Keep the original dataset, batch size, and
+seed. The command intentionally creates a new output directory and W&B run,
+with the source checkpoint recorded in the new run configuration. This keeps
+the original metrics and checkpoints unchanged.
 
 ## 6. Detach from and reconnect to tmux
 
