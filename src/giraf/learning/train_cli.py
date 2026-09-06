@@ -12,7 +12,6 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
-import numpy as np
 import torch
 import zarr
 
@@ -20,7 +19,7 @@ from giraf.data.schema import ACTION_SPACES
 
 from .dataset import ReplayDataset, split_episodes
 from .diffusion import DiffusionPolicy, DiffusionPolicyConfig
-from .pipeline import evaluate, train
+from .pipeline import evaluate, mean_metrics, train
 
 
 @dataclass(frozen=True)
@@ -226,11 +225,6 @@ def _json_safe(value):
     return value
 
 
-def _mean_metrics(history: list[dict[str, float]]) -> dict[str, float]:
-    keys = history[0].keys()
-    return {key: float(np.mean([step[key] for step in history])) for key in keys}
-
-
 def _build_lr_scheduler(
     policy: DiffusionPolicy, config: TrainConfig, batches_per_epoch: int
 ) -> torch.optim.lr_scheduler.LambdaLR:
@@ -384,7 +378,7 @@ def run(config: TrainConfig) -> Path:
     try:
         for epoch in range(config.start_epoch + 1, config.epochs + 1):
             started = time.monotonic()
-            metrics = _mean_metrics(
+            metrics = mean_metrics(
                 train(
                     policy,
                     train_dataset,
