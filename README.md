@@ -307,14 +307,15 @@ its history. Use `--preload-images` only when the uncompressed images fit in
 RAM. W&B runs offline by default when `WANDB_MODE` is not set.
 
 `--val-fraction` (default `0.1`) holds out that fraction of episodes, at
-least one when there are two or more, for validation; the split is written to
-`config.json` as `train_episodes` and `val_episodes`, and the normalizer is
-fitted on the training episodes only. Each epoch also logs `val_loss`, a
-deterministic denoising loss computed with timesteps spread evenly over the
-schedule instead of random ones, and `val_action_mse`, the error of a full
-sampled action chunk against the ground-truth actions; `val_action_mse` is
-the metric to watch since denoising loss correlates weakly with rollout
-quality. `best.pt` is saved whenever `val_action_mse` improves.
+least one whenever there are two or more, for validation. The split is
+episode-level and written to `config.json` as `train_episodes` and
+`val_episodes`, and the normalizer is fitted on the training episodes only.
+Each epoch also logs `val_loss`, a deterministic denoising loss computed with
+timesteps spread evenly over the schedule instead of random ones, and
+`val_action_mse`, the error between a fully sampled action chunk and the
+ground-truth actions. `val_action_mse` is the metric to watch, since
+denoising loss correlates only weakly with rollout quality. `best.pt` is
+saved whenever `val_action_mse` improves.
 
 To warm-start a recovery run from an existing checkpoint, use one whose
 completed epoch is known. A numbered checkpoint is preferable after an abrupt
