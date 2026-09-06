@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from collections import deque
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
@@ -20,7 +21,8 @@ from .network import DiffusionNetwork
 from .normalize import Normalizer
 from .policy import Batch, Metrics, Tensor
 
-_CHECKPOINT_VERSION = 2
+_CHECKPOINT_VERSION = 3
+_SUPPORTED_CHECKPOINT_VERSIONS = (2, _CHECKPOINT_VERSION)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +39,7 @@ class DiffusionPolicyConfig:
     learning_rate: float = 1e-4
     weight_decay: float = 1e-6
     gradient_clip_norm: float = 1.0
+    ema_decay: float = 0.999
     eval_seed: int = 0
     device: str = "auto"
 
@@ -73,6 +76,8 @@ class DiffusionPolicyConfig:
             )
         if self.gradient_clip_norm <= 0:
             raise ValueError("gradient_clip_norm must be positive")
+        if not 0 <= self.ema_decay < 1:
+            raise ValueError("ema_decay must satisfy 0 <= ema_decay < 1")
 
 
 def _resolve_device(requested: str) -> torch.device:
@@ -114,6 +119,12 @@ class DiffusionPolicy:
             timestep_dim=self.config.timestep_features,
             kernel_size=self.config.kernel_size,
         ).to(self.device)
+        if self.config.ema_decay > 0:
+            self.ema_model = copy.deepcopy(self.model)
+            self.ema_model.requires_grad_(False)
+            self.ema_model.eval()
+        else:
+            self.ema_model = None
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
             lr=self.config.learning_rate,
@@ -161,10 +172,33 @@ class DiffusionPolicy:
             foreach=False,
         )
         self.optimizer.step()
+        self._update_ema()
         return {
             "loss": float(loss.detach()),
             "gradient_norm": float(gradient_norm.detach()),
         }
+
+    @property
+    def _inference_model(self) -> nn.Module:
+        """Return the EMA model when one exists, otherwise the online model."""
+
+        return self.ema_model if self.ema_model is not None else self.model
+
+    @torch.no_grad()
+    def _update_ema(self) -> None:
+        """Blend the EMA model's weights toward the online model's current weights."""
+
+        if self.ema_model is None:
+            return
+        decay = self.config.ema_decay
+        for ema_param, param in zip(
+            self.ema_model.parameters(), self.model.parameters(), strict=True
+        ):
+            ema_param.lerp_(param, 1 - decay)
+        for ema_buffer, buffer in zip(
+            self.ema_model.buffers(), self.model.buffers(), strict=True
+        ):
+            ema_buffer.copy_(buffer)
 
     @torch.no_grad()
     def evaluate(self, batch: Batch) -> Metrics:
@@ -172,15 +206,16 @@ class DiffusionPolicy:
 
         images, states = self._prepare_observations(batch.observations)
         actions = self._prepare_actions(batch.actions, images.shape[0])
-        was_training = self.model.training
-        self.model.eval()
+        model = self._inference_model
+        was_training = model.training
+        model.eval()
         try:
             # Reseed every call so loss and action_mse are identical across
             # repeat calls on the same batch; action_mse tracks what the
             # robot would execute, which loss only weakly correlates with.
             generator = torch.Generator(device=self.device)
             generator.manual_seed(self.config.eval_seed)
-            condition = self.model.encode_observation(images, states)
+            condition = model.encode_observation(images, states)
 
             timesteps = (
                 torch.linspace(
@@ -193,7 +228,7 @@ class DiffusionPolicy:
                 .long()
             )
             noise = torch.randn(actions.shape, device=self.device, generator=generator)
-            loss = self._epsilon_loss(condition, actions, noise, timesteps)
+            loss = self._epsilon_loss(condition, actions, noise, timesteps, model=model)
 
             sample = self._denoise(condition, generator=generator)
             start = self.config.observation_horizon - 1
@@ -202,7 +237,7 @@ class DiffusionPolicy:
                 sample[:, start:stop].clamp(-1, 1), actions[:, start:stop]
             )
         finally:
-            self.model.train(was_training)
+            model.train(was_training)
         return {"loss": float(loss), "action_mse": float(action_mse)}
 
     @torch.no_grad()
@@ -237,6 +272,7 @@ class DiffusionPolicy:
             "version": _CHECKPOINT_VERSION,
             "config": asdict(self.config),
             "model": self.model.state_dict(),
+            "ema": None if self.ema_model is None else self.ema_model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
             "normalizer": None
             if self.normalizer is None
@@ -256,7 +292,7 @@ class DiffusionPolicy:
         payload: dict[str, Any] = torch.load(
             Path(path), map_location=resolved_device, weights_only=True
         )
-        if payload.get("version") != _CHECKPOINT_VERSION:
+        if payload.get("version") not in _SUPPORTED_CHECKPOINT_VERSIONS:
             raise ValueError("unsupported diffusion-policy checkpoint version")
         raw_config = dict(payload["config"])
         raw_config["down_dims"] = tuple(raw_config["down_dims"])
@@ -268,6 +304,13 @@ class DiffusionPolicy:
             normalizer=None if normalizer is None else Normalizer.from_dict(normalizer),
         )
         policy.model.load_state_dict(payload["model"])
+        if policy.ema_model is not None:
+            # Version 2 payloads have no "ema" key: seed the EMA copy from
+            # the loaded model weights instead of starting it from scratch.
+            ema_state = payload.get("ema")
+            policy.ema_model.load_state_dict(
+                ema_state if ema_state is not None else payload["model"]
+            )
         policy.optimizer.load_state_dict(payload["optimizer"])
         return policy
 
@@ -277,11 +320,14 @@ class DiffusionPolicy:
         actions: torch.Tensor,
         noise: torch.Tensor,
         timesteps: torch.Tensor,
+        *,
+        model: nn.Module | None = None,
     ) -> torch.Tensor:
-        """Add noise at the given timesteps, predict it, and return the MSE."""
+        """Add noise at the given timesteps, predict it with ``model``, and return the MSE."""
 
+        net = model if model is not None else self.model
         noisy_actions = self.scheduler.add_noise(actions, noise, timesteps)
-        predicted_noise = self.model(noisy_actions, timesteps, condition)
+        predicted_noise = net(noisy_actions, timesteps, condition)
         return nn.functional.mse_loss(predicted_noise, noise)
 
     def _prepare_observations(
@@ -386,6 +432,7 @@ class DiffusionPolicy:
         ``evaluate()``.
         """
 
+        model = self._inference_model
         sample = torch.randn(
             (condition.shape[0], self.config.prediction_horizon, ACTION_DIM),
             device=self.device,
@@ -393,7 +440,7 @@ class DiffusionPolicy:
         )
         self.scheduler.set_timesteps(self.config.inference_steps, device=self.device)
         for timestep in self.scheduler.timesteps:
-            predicted_noise = self.model(sample, timestep, condition)
+            predicted_noise = model(sample, timestep, condition)
             sample = self.scheduler.step(
                 predicted_noise, timestep, sample, generator=generator
             ).prev_sample
@@ -402,13 +449,14 @@ class DiffusionPolicy:
     def _sample(self, images: torch.Tensor, states: torch.Tensor) -> list[np.ndarray]:
         """Sample one action chunk for ``act()`` and return physical-unit actions."""
 
-        was_training = self.model.training
-        self.model.eval()
+        model = self._inference_model
+        was_training = model.training
+        model.eval()
         try:
-            condition = self.model.encode_observation(images, states)
+            condition = model.encode_observation(images, states)
             sample = self._denoise(condition)
         finally:
-            self.model.train(was_training)
+            model.train(was_training)
 
         start = self.config.observation_horizon - 1
         stop = start + self.config.action_horizon
