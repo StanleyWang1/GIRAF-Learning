@@ -72,7 +72,7 @@ def create_server(
     port: int = 8080,
     requested_episode: int | None = None,
 ) -> ThreadingHTTPServer:
-    """Create a server instance; useful for both the CLI and tests."""
+    """Create a server instance for the CLI or an embedding process."""
 
     static_dir = Path(__file__).resolve().parent / "static"
     frame_cache = _FrameCache()

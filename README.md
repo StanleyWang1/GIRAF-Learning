@@ -17,7 +17,6 @@ data, and learning code are separate packages with explicit boundaries.
 │   ├── kinematics.py             # GIRAF kinematic model
 │   ├── settings.py               # shared runtime constants
 │   └── teleop.py                 # teleoperation application
-├── tests/                        # non-hardware unit tests (ring buffer, saver)
 ├── pyproject.toml                # package metadata and dependencies
 └── uv.lock                       # exact reproducible dependency lock
 ```
@@ -430,16 +429,18 @@ five-value Gymnasium step result and legacy four-value Gym result are accepted.
 
 ## Verification
 
-This is a research repo and will not carry a test suite. The remaining unit
-tests cover ring buffer overrun detection, causal alignment, staging, and the
-saver process. Everything else needs the robot.
-
-TODO: remove `tests/` and the unittest line below; replace them with a
-documented smoke run (tiny synthetic Zarr through `giraf-train` and
-`giraf-view`) once the policy improvements have landed.
+This is a research repo and carries no test suite. Check a change with a
+smoke run: lint, then train a tiny policy for one epoch on any collected
+dataset and reload the checkpoint.
 
 ```bash
-uv run python -m unittest discover tests
-uvx ruff check src tests
+uvx ruff check src
+uv run giraf-train --dataset data/demos/replay_buffer.zarr \
+  --output-dir /tmp/giraf-smoke --epochs 1 --batch-size 8 \
+  --down-dims 8 16 --diffusion-steps 4 --device cpu
+uv run python -c "from giraf.learning import DiffusionPolicy; \
+  DiffusionPolicy.load('/tmp/giraf-smoke/best.pt', device='cpu')"
 uv run --extra hardware giraf-teleop --help
 ```
+
+Everything hardware-facing needs the robot.
