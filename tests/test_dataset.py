@@ -22,6 +22,10 @@ def write_dataset(path: Path, episode_ends=(3, 4, 10), image_size=(6, 8)) -> Pat
     action = np.tile(np.arange(n_steps, dtype=np.float32)[:, None], (1, 7))
     action[:, 6] = np.arange(n_steps) % 2
     data.array("action", action, chunks=(4, 7))
+    joint_position_command = np.tile(
+        (10 + np.arange(n_steps, dtype=np.float32))[:, None], (1, 6)
+    )
+    data.array("joint_position_command", joint_position_command, chunks=(4, 6))
     data.array(
         "state",
         np.tile(np.arange(n_steps, dtype=np.float32)[:, None], (1, 15)),

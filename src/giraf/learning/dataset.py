@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 
-from giraf.data.schema import ACTION_DIM, STATE_DIM
+from giraf.data.schema import ACTION_DIM, ACTION_SPACES, GRASP_INDEX, STATE_DIM
 
 from .normalize import Normalizer
 from .policy import Batch
@@ -95,11 +95,14 @@ class ReplayDataset:
         preload_images: bool = False,
         require_alignment_valid: bool = True,
         episodes: Sequence[int] | None = None,
+        action_space: str = "twist",
     ) -> None:
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
         if start_epoch < 0:
             raise ValueError("start_epoch must be non-negative")
+        if action_space not in ACTION_SPACES:
+            raise ValueError(f"action_space must be one of {ACTION_SPACES}")
         self.path = Path(path)
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -108,7 +111,16 @@ class ReplayDataset:
 
         root = zarr.open_group(str(self.path), mode="r")
         data = root["data"]
-        self.actions = np.asarray(data["action"][:], dtype=np.float32)
+        if action_space == "twist":
+            self.actions = np.asarray(data["action"][:], dtype=np.float32)
+        else:
+            joint_position = np.asarray(
+                data["joint_position_command"][:, :6], dtype=np.float32
+            )
+            grasp = np.asarray(
+                data["action"][:, GRASP_INDEX : GRASP_INDEX + 1], dtype=np.float32
+            )
+            self.actions = np.concatenate([joint_position, grasp], axis=1)
         self.states = np.asarray(data["state"][:], dtype=np.float32)
         n_steps = self.actions.shape[0]
         if self.actions.shape != (n_steps, ACTION_DIM):
