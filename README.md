@@ -326,8 +326,10 @@ saved whenever `val_action_mse` improves.
 
 Camera images are cropped to `crop_fraction` (default `0.9`) of their height
 and width and, during training only, given per-sample brightness and contrast
-jitter of up to `color_jitter` (default `0.1`); evaluation and `act()` use a
-center crop with no jitter.
+jitter of up to `color_jitter` (default `0.1`). Evaluation and `act()` use a
+center crop with no jitter. Checkpoints saved before this feature existed
+load with `crop_fraction=1.0` and `color_jitter=0.0` so they keep seeing the
+uncropped, unjittered images they were trained on.
 
 To warm-start a recovery run from an existing checkpoint, use one whose
 completed epoch is known. A numbered checkpoint is preferable after an abrupt

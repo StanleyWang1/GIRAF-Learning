@@ -311,6 +311,10 @@ class DiffusionPolicy:
             raise ValueError("unsupported diffusion-policy checkpoint version")
         raw_config = dict(payload["config"])
         raw_config["down_dims"] = tuple(raw_config["down_dims"])
+        # Checkpoints predating augmentation support trained on uncropped, unjittered
+        # images; default to that behavior instead of silently cropping/jittering them.
+        raw_config.setdefault("crop_fraction", 1.0)
+        raw_config.setdefault("color_jitter", 0.0)
         config = DiffusionPolicyConfig(**raw_config)
         config = replace(config, device=str(resolved_device))
         normalizer = payload.get("normalizer")
