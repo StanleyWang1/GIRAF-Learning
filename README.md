@@ -244,6 +244,22 @@ more precise spatial alignment; `dinov2` wraps a frozen, pretrained DINOv2
 backbone for more robust features on limited data, and downloads its weights
 through `torch.hub` on first use.
 
+### Action spaces and temporal ensembling
+
+`DiffusionPolicyConfig.action_space` (also `--action-space` on `giraf-train`)
+selects what `act()` returns: `twist` is `[vx, vy, vz, wx, wy, wz, grasp]` in
+m/s and rad/s; `joint_position` is absolute joint targets in the teleop joint
+order (`base_roll`, `base_pitch`, `boom_extension`, `wrist_1`, `wrist_2`,
+`wrist_3`) plus grasp. `--prediction-horizon` (default `16`) and
+`--action-horizon` (default `8`) control the length of each predicted action
+chunk and how many steps of it are executed before replanning. With
+temporal ensembling (default on, `--no-temporal-ensemble` to disable) each
+`act()` call averages every still-open plan's prediction for the current
+step before thresholding grasp, smoothing the transition between replans
+instead of jumping straight to a new chunk. A deployment executor must read
+`action_space` from the checkpoint config to know how to interpret the
+actions `act()` returns.
+
 ### Training
 
 Install the optional W&B client and authenticate once:

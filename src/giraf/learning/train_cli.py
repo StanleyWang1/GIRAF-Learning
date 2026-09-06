@@ -16,6 +16,8 @@ import numpy as np
 import torch
 import zarr
 
+from giraf.data.schema import ACTION_SPACES
+
 from .dataset import ReplayDataset, split_episodes
 from .diffusion import DiffusionPolicy, DiffusionPolicyConfig
 from .pipeline import evaluate, train
@@ -103,6 +105,29 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--wandb", action="store_true", help="log to Weights & Biases")
     parser.add_argument("--wandb-project", default="giraf")
+    parser.add_argument(
+        "--action-space",
+        choices=ACTION_SPACES,
+        default="twist",
+        help="action representation: twist (m/s, rad/s) or joint_position",
+    )
+    parser.add_argument(
+        "--prediction-horizon",
+        type=int,
+        default=16,
+        help="length of the predicted action chunk",
+    )
+    parser.add_argument(
+        "--action-horizon",
+        type=int,
+        default=8,
+        help="executed steps per replan",
+    )
+    parser.add_argument(
+        "--no-temporal-ensemble",
+        action="store_true",
+        help="disable averaging overlapping action-chunk predictions in act()",
+    )
     return parser
 
 
@@ -121,7 +146,13 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
     if args.resume is not None and args.epochs <= args.start_epoch:
         raise SystemExit("--epochs must be greater than --start-epoch")
     policy = DiffusionPolicyConfig(
-        learning_rate=args.learning_rate, device=args.device, encoder=args.encoder
+        learning_rate=args.learning_rate,
+        device=args.device,
+        encoder=args.encoder,
+        action_space=args.action_space,
+        prediction_horizon=args.prediction_horizon,
+        action_horizon=args.action_horizon,
+        temporal_ensemble=not args.no_temporal_ensemble,
     )
     if args.down_dims is not None:
         policy = replace(policy, down_dims=tuple(args.down_dims))
@@ -263,6 +294,7 @@ def run(config: TrainConfig) -> Path:
         start_epoch=config.start_epoch,
         preload_images=config.preload_images,
         episodes=train_episodes,
+        action_space=policy_config.action_space,
     )
     val_dataset = None
     if val_episodes:
@@ -274,6 +306,7 @@ def run(config: TrainConfig) -> Path:
             shuffle=False,
             preload_images=config.preload_images,
             episodes=val_episodes,
+            action_space=policy_config.action_space,
         )
 
     normalizer = train_dataset.fit_normalizer()
