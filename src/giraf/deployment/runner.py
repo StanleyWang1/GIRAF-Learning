@@ -478,6 +478,11 @@ def run(config: DeploymentConfig) -> Path:
         print(f"[DEPLOY] Loading {config.checkpoint} on {config.device}...", flush=True)
         torch.manual_seed(config.seed)
         policy = DiffusionPolicy.load(config.checkpoint, device=config.device)
+        if policy.config.action_space != "twist":
+            raise SystemExit(
+                "deployment executes twist actions; checkpoint action_space is "
+                f"{policy.config.action_space!r}"
+            )
         if policy.normalizer is None:
             raise RuntimeError("checkpoint does not contain a training normalizer")
         if config.inference_steps is not None:
