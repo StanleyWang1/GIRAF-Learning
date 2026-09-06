@@ -211,10 +211,12 @@ uv run giraf-replay --dataset data/demos/replay_buffer.zarr --episode 0 \
 The initial policy is a conditional DDPM implemented with PyTorch:
 
 - a small RGB encoder conditions a temporal 1D U-Net together with robot state;
-- training predicts noise added by a cosine-beta DDPM scheduler;
-- inference denoises a 16-step sequence and executes an 8-step action chunk;
-- checkpoints contain model state, optimizer state, configuration, and format
-  version and are written atomically.
+- training predicts noise added by a cosine-beta DDPM scheduler and keeps an
+  exponential moving average of the weights (`ema_decay`, default `0.999`);
+- inference uses a 16-step DDIM schedule (`inference_steps`, default `16`) on
+  the EMA weights when available, then executes an 8-step action chunk;
+- checkpoints contain model, optimizer, and EMA state, configuration, and
+  format version, and are written atomically.
 
 Batches carry raw physical units straight from the ReplayBuffer:
 
@@ -305,6 +307,11 @@ at every step whose `alignment_valid` flag is set; the first observation and
 the last action repeat at episode boundaries, matching what `act()` does with
 its history. Use `--preload-images` only when the uncompressed images fit in
 RAM. W&B runs offline by default when `WANDB_MODE` is not set.
+
+The learning rate follows a linear warmup to the peak value over
+`--warmup-steps` optimizer steps (default `500`), then decays by a cosine
+schedule to `--min-lr-ratio` of the peak (default `0.1`) by the end of
+training; the current value is logged each epoch as `lr`.
 
 `--val-fraction` (default `0.1`) holds out that fraction of episodes, at
 least one whenever there are two or more, for validation. The split is
