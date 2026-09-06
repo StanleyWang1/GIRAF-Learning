@@ -10,10 +10,12 @@ from torch import nn
 
 
 def _group_count(channels: int) -> int:
+    """Return the largest group size in (8, 4, 2, 1) that divides ``channels``."""
+
     return next(group for group in (8, 4, 2, 1) if channels % group == 0)
 
 
-class ImageEncoder(nn.Module):
+class ConvEncoder(nn.Module):
     """Small resolution-independent RGB encoder."""
 
     def __init__(self, output_dim: int) -> None:
@@ -41,6 +43,8 @@ class ImageEncoder(nn.Module):
         self.encoder = nn.Sequential(*layers)
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
+        """Encode a [N, 3, H, W] image batch to [N, output_dim]."""
+
         return self.encoder(images)
 
 
@@ -238,7 +242,7 @@ class DiffusionNetwork(nn.Module):
         super().__init__()
         self.observation_horizon = observation_horizon
         self.state_dim = state_dim
-        self.image_encoder = ImageEncoder(vision_features)
+        self.image_encoder = ConvEncoder(vision_features)
         observation_dim = observation_horizon * (vision_features + state_dim)
         self.noise_predictor = ConditionalUnet1d(
             action_dim=action_dim,
