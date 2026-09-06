@@ -177,7 +177,7 @@ class DiffusionPolicy:
         """Perform one epsilon-prediction update and return scalar metrics."""
 
         images, states = self._prepare_observations(batch.observations, augment=True)
-        actions = self._prepare_actions(batch.actions, images.shape[0])
+        actions = self._prepare_actions(batch.actions, images.shape[0], strict=True)
         self.model.train()
         condition = self.model.encode_observation(images, states)
         noise = torch.randn_like(actions)
@@ -228,10 +228,10 @@ class DiffusionPolicy:
 
     @torch.no_grad()
     def evaluate(self, batch: Batch) -> Metrics:
-        """Compute a deterministic denoising loss (``loss``) and sampled-trajectory error (``action_mse``)."""
+        """Compute a deterministic denoising loss and sampled-trajectory error."""
 
         images, states = self._prepare_observations(batch.observations, augment=False)
-        actions = self._prepare_actions(batch.actions, images.shape[0])
+        actions = self._prepare_actions(batch.actions, images.shape[0], strict=False)
         model = self._inference_model
         was_training = model.training
         model.eval()
@@ -268,7 +268,7 @@ class DiffusionPolicy:
 
     @torch.no_grad()
     def act(self, observation: Observation) -> np.ndarray:
-        """Return one action, replanning and temporally ensembling overlapping chunks."""
+        """Return one action, replanning and ensembling overlapping chunks."""
 
         image, state = self._validate_current_observation(observation)
         self._images.append(image)
@@ -342,8 +342,8 @@ class DiffusionPolicy:
         raw_config.setdefault("crop_fraction", 1.0)
         raw_config.setdefault("color_jitter", 0.0)
         raw_config.setdefault("encoder", "conv")
-        # Checkpoints predating temporal ensembling recorded only twist actions
-        # and replanned every action_horizon calls without averaging.
+        # Checkpoints predating temporal ensembling recorded only twist actions;
+        # they keep the same replan cadence and now average overlapping chunks.
         raw_config.setdefault("action_space", "twist")
         raw_config.setdefault("temporal_ensemble", True)
         config = DiffusionPolicyConfig(**raw_config)
@@ -373,7 +373,7 @@ class DiffusionPolicy:
         *,
         model: nn.Module | None = None,
     ) -> torch.Tensor:
-        """Add noise at the given timesteps, predict it with ``model``, and return the MSE."""
+        """Add noise at the given timesteps, predict it, and return the MSE."""
 
         net = model if model is not None else self.model
         noisy_actions = self.scheduler.add_noise(actions, noise, timesteps)
@@ -383,7 +383,7 @@ class DiffusionPolicy:
     def _prepare_observations(
         self, observations: dict[str, Tensor], *, augment: bool
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Validate, scale, crop, and (when ``augment``) jitter camera and state observations."""
+        """Validate, scale, crop, and (if augmenting) jitter camera/state obs."""
 
         missing = {"camera_rgb", "state"}.difference(observations)
         if missing:
@@ -433,7 +433,7 @@ class DiffusionPolicy:
         return images.contiguous(), states
 
     def _augment_images(self, images: torch.Tensor, *, augment: bool) -> torch.Tensor:
-        """Crop to ``config.crop_fraction`` and, when augmenting, jitter brightness/contrast."""
+        """Crop to ``crop_fraction``; augment to also jitter brightness/contrast."""
 
         crop_fraction = self.config.crop_fraction
         batch, horizon, channels, height, width = images.shape
@@ -444,18 +444,19 @@ class DiffusionPolicy:
             max_left = width - crop_width
             if augment:
                 # One offset per sample, shared across that sample's history frames.
-                top = torch.randint(0, max_top + 1, (batch,), device=self.device)
-                left = torch.randint(0, max_left + 1, (batch,), device=self.device)
+                # Generated on CPU and listed to avoid a device sync per sample.
+                top = torch.randint(0, max_top + 1, (batch,)).tolist()
+                left = torch.randint(0, max_left + 1, (batch,)).tolist()
             else:
-                top = torch.full((batch,), max_top // 2, device=self.device)
-                left = torch.full((batch,), max_left // 2, device=self.device)
+                top = [max_top // 2] * batch
+                left = [max_left // 2] * batch
             cropped = torch.empty(
                 (batch, horizon, channels, crop_height, crop_width),
                 dtype=images.dtype,
                 device=self.device,
             )
             for sample in range(batch):
-                sample_top, sample_left = int(top[sample]), int(left[sample])
+                sample_top, sample_left = top[sample], left[sample]
                 cropped[sample] = images[
                     sample,
                     :,
@@ -474,7 +475,11 @@ class DiffusionPolicy:
             images = (((images - mean) * contrast + mean) * brightness).clamp_(0, 1)
         return images
 
-    def _prepare_actions(self, value: Tensor, batch_size: int) -> torch.Tensor:
+    def _prepare_actions(
+        self, value: Tensor, batch_size: int, *, strict: bool
+    ) -> torch.Tensor:
+        """Normalize actions; raise on out-of-range values when strict, else clamp."""
+
         actions = torch.as_tensor(value, dtype=torch.float32, device=self.device)
         expected_shape = (batch_size, self.config.prediction_horizon, ACTION_DIM)
         if actions.shape != expected_shape:
@@ -486,7 +491,9 @@ class DiffusionPolicy:
         if self.normalizer is not None:
             actions = self.normalizer.normalize_actions(actions)
         if actions.min() < -1 or actions.max() > 1:
-            raise ValueError("action values must be in [-1, 1] after normalization")
+            if strict:
+                raise ValueError("action values must be in [-1, 1] after normalization")
+            actions = actions.clamp(-1, 1)
         return actions
 
     @staticmethod
@@ -545,7 +552,7 @@ class DiffusionPolicy:
         return sample
 
     def _sample(self, images: torch.Tensor, states: torch.Tensor) -> np.ndarray:
-        """Sample the usable prediction window for ``act()``, denormalized and unthresholded."""
+        """Sample the usable window for ``act()``, denormalized and unthresholded."""
 
         model = self._inference_model
         was_training = model.training
