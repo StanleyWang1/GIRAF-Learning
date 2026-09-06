@@ -28,3 +28,9 @@ wandb/
 *.pt
 *.pth
 *.log
+
+# SDD scratch
+.superpowers/
+
+# SDD scratch workspace
+.superpowers/
