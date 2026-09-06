@@ -36,6 +36,8 @@ class DiffusionPolicyConfig:
     down_dims: tuple[int, ...] = (64, 128, 256)
     timestep_features: int = 128
     kernel_size: int = 5
+    crop_fraction: float = 0.9
+    color_jitter: float = 0.1
     learning_rate: float = 1e-4
     weight_decay: float = 1e-6
     gradient_clip_norm: float = 1.0
@@ -78,6 +80,10 @@ class DiffusionPolicyConfig:
             raise ValueError("gradient_clip_norm must be positive")
         if not 0 <= self.ema_decay < 1:
             raise ValueError("ema_decay must satisfy 0 <= ema_decay < 1")
+        if not 0.5 <= self.crop_fraction <= 1.0:
+            raise ValueError("crop_fraction must satisfy 0.5 <= crop_fraction <= 1.0")
+        if not 0 <= self.color_jitter <= 0.5:
+            raise ValueError("color_jitter must satisfy 0 <= color_jitter <= 0.5")
 
 
 def _resolve_device(requested: str) -> torch.device:
@@ -158,7 +164,7 @@ class DiffusionPolicy:
     def train_step(self, batch: Batch) -> Metrics:
         """Perform one epsilon-prediction update and return scalar metrics."""
 
-        images, states = self._prepare_observations(batch.observations)
+        images, states = self._prepare_observations(batch.observations, augment=True)
         actions = self._prepare_actions(batch.actions, images.shape[0])
         self.model.train()
         condition = self.model.encode_observation(images, states)
@@ -212,7 +218,7 @@ class DiffusionPolicy:
     def evaluate(self, batch: Batch) -> Metrics:
         """Compute a deterministic denoising loss (``loss``) and sampled-trajectory error (``action_mse``)."""
 
-        images, states = self._prepare_observations(batch.observations)
+        images, states = self._prepare_observations(batch.observations, augment=False)
         actions = self._prepare_actions(batch.actions, images.shape[0])
         model = self._inference_model
         was_training = model.training
@@ -265,7 +271,8 @@ class DiffusionPolicy:
                 {
                     "camera_rgb": np.stack(images)[None],
                     "state": np.stack(states)[None],
-                }
+                },
+                augment=False,
             )
             self._actions.extend(self._sample(prepared_images, prepared_states))
         return self._actions.popleft().copy()
@@ -339,8 +346,10 @@ class DiffusionPolicy:
         return nn.functional.mse_loss(predicted_noise, noise)
 
     def _prepare_observations(
-        self, observations: dict[str, Tensor]
+        self, observations: dict[str, Tensor], *, augment: bool
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Validate, scale, crop, and (when ``augment``) jitter camera and state observations."""
+
         missing = {"camera_rgb", "state"}.difference(observations)
         if missing:
             raise KeyError(f"observations are missing keys: {sorted(missing)}")
@@ -360,8 +369,6 @@ class DiffusionPolicy:
             images = images.permute(0, 1, 4, 2, 3)
         else:
             raise ValueError("camera_rgb must contain exactly three RGB channels")
-        if min(images.shape[-2:]) < 8:
-            raise ValueError("camera_rgb height and width must be at least 8 pixels")
         if images.dtype == torch.uint8:
             images = images.float().div_(255)
         elif images.is_floating_point():
@@ -372,6 +379,9 @@ class DiffusionPolicy:
                 )
         else:
             raise TypeError("camera_rgb must be uint8 or floating point")
+        images = self._augment_images(images, augment=augment)
+        if min(images.shape[-2:]) < 8:
+            raise ValueError("camera_rgb height and width must be at least 8 pixels")
 
         states = torch.as_tensor(
             observations["state"], dtype=torch.float32, device=self.device
@@ -386,6 +396,48 @@ class DiffusionPolicy:
         if self.normalizer is not None:
             states = self.normalizer.normalize_states(states)
         return images.contiguous(), states
+
+    def _augment_images(self, images: torch.Tensor, *, augment: bool) -> torch.Tensor:
+        """Crop to ``config.crop_fraction`` and, when augmenting, jitter brightness/contrast."""
+
+        crop_fraction = self.config.crop_fraction
+        batch, horizon, channels, height, width = images.shape
+        if crop_fraction < 1:
+            crop_height = round(height * crop_fraction)
+            crop_width = round(width * crop_fraction)
+            max_top = height - crop_height
+            max_left = width - crop_width
+            if augment:
+                # One offset per sample, shared across that sample's history frames.
+                top = torch.randint(0, max_top + 1, (batch,), device=self.device)
+                left = torch.randint(0, max_left + 1, (batch,), device=self.device)
+            else:
+                top = torch.full((batch,), max_top // 2, device=self.device)
+                left = torch.full((batch,), max_left // 2, device=self.device)
+            cropped = torch.empty(
+                (batch, horizon, channels, crop_height, crop_width),
+                dtype=images.dtype,
+                device=self.device,
+            )
+            for sample in range(batch):
+                sample_top, sample_left = int(top[sample]), int(left[sample])
+                cropped[sample] = images[
+                    sample,
+                    :,
+                    :,
+                    sample_top : sample_top + crop_height,
+                    sample_left : sample_left + crop_width,
+                ]
+            images = cropped
+
+        jitter = self.config.color_jitter
+        if augment and jitter > 0:
+            # Factors are per-sample (shared across history); the mean is per-frame.
+            factors = torch.rand((2, batch, 1, 1, 1, 1), device=self.device)
+            brightness, contrast = 1 - jitter + 2 * jitter * factors
+            mean = images.mean(dim=(2, 3, 4), keepdim=True)
+            images = (((images - mean) * contrast + mean) * brightness).clamp_(0, 1)
+        return images
 
     def _prepare_actions(self, value: Tensor, batch_size: int) -> torch.Tensor:
         actions = torch.as_tensor(value, dtype=torch.float32, device=self.device)

@@ -20,7 +20,7 @@ class TrainCliTests(unittest.TestCase):
         self.addCleanup(self._tmp.cleanup)
         root = Path(self._tmp.name)
         self.dataset = write_dataset(
-            root / "buffer.zarr", episode_ends=(12, 24), image_size=(8, 8)
+            root / "buffer.zarr", episode_ends=(12, 24), image_size=(16, 16)
         )
         self.run_dir = root / "run"
         self.args = [
@@ -87,7 +87,7 @@ class TrainCliTests(unittest.TestCase):
         # act() returns physical units: twist within the fitted bounds, binary grasp.
         action = policy.act(
             {
-                "camera_rgb": np.zeros((8, 8, 3), np.uint8),
+                "camera_rgb": np.zeros((16, 16, 3), np.uint8),
                 "state": np.zeros(15, np.float32),
             }
         )

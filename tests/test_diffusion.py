@@ -37,6 +37,7 @@ class DiffusionPolicyEvaluateTests(unittest.TestCase):
                 inference_steps=4,
                 device="cpu",
                 eval_seed=123,
+                crop_fraction=1.0,
             )
         )
         self.batch = _tiny_batch()
