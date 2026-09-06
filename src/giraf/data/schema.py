@@ -26,6 +26,8 @@ JOINT_FIELDS: Final[tuple[str, ...]] = (
     "wrist_2_rad",
     "wrist_3_rad",
 )
+JOINT_ACTION_FIELDS: Final[tuple[str, ...]] = JOINT_FIELDS + ("grasp_command",)
+ACTION_SPACES: Final[tuple[str, ...]] = ("twist", "joint_position")
 STATE_FIELDS: Final[tuple[str, ...]] = JOINT_FIELDS + (
     "eef_x_m",
     "eef_y_m",
