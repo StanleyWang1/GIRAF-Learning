@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 
-from giraf.learning.dataset import ReplayDataset, episode_windows
+from giraf.learning.dataset import ReplayDataset, episode_windows, split_episodes
 
 
 def write_dataset(path: Path, episode_ends=(3, 4, 10), image_size=(6, 8)) -> Path:
@@ -69,6 +69,34 @@ class EpisodeWindowTests(unittest.TestCase):
             episode_windows(
                 np.array([3]), None, observation_horizon=4, prediction_horizon=2
             )
+
+
+class SplitEpisodesTests(unittest.TestCase):
+    def test_deterministic_for_a_seed(self) -> None:
+        first = split_episodes(10, 0.2, seed=7)
+        second = split_episodes(10, 0.2, seed=7)
+        self.assertEqual(first, second)
+
+    def test_train_and_val_are_disjoint_and_cover_all_episodes(self) -> None:
+        train, val = split_episodes(10, 0.3, seed=1)
+        self.assertTrue(set(train).isdisjoint(val))
+        self.assertEqual(sorted(train + val), list(range(10)))
+
+    def test_gives_at_least_one_val_episode_when_fraction_positive(self) -> None:
+        train, val = split_episodes(2, 0.01, seed=0)
+        self.assertEqual(len(val), 1)
+        self.assertEqual(len(train), 1)
+
+    def test_gives_zero_val_episodes_when_fraction_is_zero(self) -> None:
+        train, val = split_episodes(10, 0.0, seed=0)
+        self.assertEqual(val, [])
+        self.assertEqual(train, list(range(10)))
+
+    def test_rejects_invalid_val_fraction(self) -> None:
+        with self.assertRaises(ValueError):
+            split_episodes(10, 1.0, seed=0)
+        with self.assertRaises(ValueError):
+            split_episodes(10, -0.1, seed=0)
 
 
 class ReplayDatasetTests(unittest.TestCase):
@@ -137,6 +165,31 @@ class ReplayDatasetTests(unittest.TestCase):
         normalizer = dataset.fit_normalizer()
         self.assertEqual(float(normalizer.action_low[0]), 0.0)
         self.assertEqual(float(normalizer.action_high[0]), 9.0)
+
+    def test_n_episodes_reports_total_regardless_of_selection(self) -> None:
+        dataset = ReplayDataset(
+            self.path, batch_size=4, prediction_horizon=4, episodes=[1]
+        )
+        self.assertEqual(dataset.n_episodes, 3)
+        self.assertEqual(dataset.episodes, [1])
+
+    def test_episode_subset_keeps_only_windows_anchored_in_that_episode(self) -> None:
+        # episode_ends=(3, 4, 10): episode 1 is the single step at index 3.
+        dataset = ReplayDataset(
+            self.path,
+            batch_size=9,
+            prediction_horizon=4,
+            shuffle=False,
+            episodes=[1],
+        )
+        self.assertEqual(dataset.n_windows, 1)
+        batch = next(iter(dataset))
+        anchor = batch.observations["camera_rgb"][:, -1, 0, 0, 0]
+        np.testing.assert_array_equal(anchor, [3])
+
+    def test_episode_subset_rejects_out_of_range_indices(self) -> None:
+        with self.assertRaises(ValueError):
+            ReplayDataset(self.path, batch_size=4, prediction_horizon=4, episodes=[5])
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -55,6 +56,24 @@ def episode_windows(
     return np.concatenate(obs_blocks), np.concatenate(act_blocks)
 
 
+def split_episodes(
+    n_episodes: int, val_fraction: float, seed: int
+) -> tuple[list[int], list[int]]:
+    """Shuffle episode indices into disjoint sorted train and validation lists."""
+
+    if not 0 <= val_fraction < 1:
+        raise ValueError("val_fraction must satisfy 0 <= val_fraction < 1")
+    n_val = round(n_episodes * val_fraction)
+    if val_fraction > 0 and n_episodes >= 2:
+        n_val = max(1, min(n_val, n_episodes - 1))
+    elif val_fraction == 0:
+        n_val = 0
+    order = np.random.default_rng(seed).permutation(n_episodes)
+    val = sorted(int(i) for i in order[:n_val])
+    train = sorted(int(i) for i in order[n_val:])
+    return train, val
+
+
 class ReplayDataset:
     """Re-iterable batch source over ``replay_buffer.zarr``.
 
@@ -75,6 +94,7 @@ class ReplayDataset:
         start_epoch: int = 0,
         preload_images: bool = False,
         require_alignment_valid: bool = True,
+        episodes: Sequence[int] | None = None,
     ) -> None:
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
@@ -109,9 +129,22 @@ class ReplayDataset:
         episode_ends = np.asarray(root["meta/episode_ends"][:], dtype=np.int64)
         if episode_ends.size and int(episode_ends[-1]) != n_steps:
             raise ValueError("meta/episode_ends does not cover data arrays")
+        self._episode_ends = episode_ends
         valid = None
         if require_alignment_valid and "alignment_valid" in data:
-            valid = np.asarray(data["alignment_valid"][:])
+            valid = np.asarray(data["alignment_valid"][:]) != 0
+        if episodes is None:
+            self.episodes = list(range(len(episode_ends)))
+        else:
+            out_of_range = [e for e in episodes if not 0 <= e < len(episode_ends)]
+            if out_of_range:
+                raise ValueError(f"episode indices out of range: {out_of_range}")
+            self.episodes = sorted(int(e) for e in episodes)
+            episode_of_step = np.repeat(
+                np.arange(len(episode_ends)), np.diff(episode_ends, prepend=0)
+            )
+            episode_mask = np.isin(episode_of_step, self.episodes)
+            valid = episode_mask if valid is None else valid & episode_mask
         self.obs_idx, self.act_idx = episode_windows(
             episode_ends,
             valid,
@@ -123,7 +156,15 @@ class ReplayDataset:
 
     @property
     def n_windows(self) -> int:
+        """Total number of training windows kept after filtering."""
+
         return len(self.obs_idx)
+
+    @property
+    def n_episodes(self) -> int:
+        """Total number of episodes in the underlying replay buffer."""
+
+        return len(self._episode_ends)
 
     def __len__(self) -> int:
         return -(-self.n_windows // self.batch_size)
