@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
 import numpy as np
@@ -11,7 +11,13 @@ from .environment import Environment
 from .policy import Batch, Metrics, Policy
 
 
-def train(policy: Policy, batches: Iterable[Batch], *, epochs: int) -> list[Metrics]:
+def train(
+    policy: Policy,
+    batches: Iterable[Batch],
+    *,
+    epochs: int,
+    on_step: Callable[[Metrics], None] | None = None,
+) -> list[Metrics]:
     """Run a minimal training loop and return step metrics.
 
     ``giraf.learning.train_cli`` wraps this with checkpoints and logging.
@@ -25,7 +31,10 @@ def train(policy: Policy, batches: Iterable[Batch], *, epochs: int) -> list[Metr
     history: list[Metrics] = []
     for _ in range(epochs):
         for batch in batches:
-            history.append(policy.train_step(batch))
+            metrics = policy.train_step(batch)
+            history.append(metrics)
+            if on_step is not None:
+                on_step(metrics)
     return history
 
 

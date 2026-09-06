@@ -7,6 +7,7 @@ import json
 import math
 import os
 import time
+import warnings
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
@@ -32,6 +33,8 @@ class TrainConfig:
     seed: int = 0
     val_fraction: float = 0.1
     preload_images: bool = False
+    warmup_steps: int = 500
+    min_lr_ratio: float = 0.1
     wandb: bool = False
     wandb_project: str = "giraf"
     policy: DiffusionPolicyConfig = DiffusionPolicyConfig()
@@ -77,6 +80,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--preload-images", action="store_true", help="hold all frames in RAM"
     )
     parser.add_argument(
+        "--warmup-steps",
+        type=int,
+        default=500,
+        help="linear learning-rate warmup, in optimizer steps",
+    )
+    parser.add_argument(
+        "--min-lr-ratio",
+        type=float,
+        default=0.1,
+        help="learning rate floor at the end of cosine decay, as a fraction of the peak",
+    )
+    parser.add_argument(
         "--down-dims", type=int, nargs="+", default=None, help="U-Net widths"
     )
     parser.add_argument("--diffusion-steps", type=int, default=None)
@@ -89,6 +104,10 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
     args = build_parser().parse_args(argv)
     if args.epochs <= 0 or args.batch_size <= 0 or args.checkpoint_every <= 0:
         raise SystemExit("epochs, batch-size and checkpoint-every must be positive")
+    if args.warmup_steps < 0:
+        raise SystemExit("warmup-steps must be non-negative")
+    if not 0 < args.min_lr_ratio <= 1:
+        raise SystemExit("min-lr-ratio must satisfy 0 < min-lr-ratio <= 1")
     if args.resume is None and args.start_epoch != 0:
         raise SystemExit("--start-epoch requires --resume")
     if args.resume is not None and args.start_epoch <= 0:
@@ -116,6 +135,8 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
         seed=args.seed,
         val_fraction=args.val_fraction,
         preload_images=args.preload_images,
+        warmup_steps=args.warmup_steps,
+        min_lr_ratio=args.min_lr_ratio,
         wandb=args.wandb,
         wandb_project=args.wandb_project,
         policy=policy,
@@ -167,6 +188,37 @@ def _json_safe(value):
 def _mean_metrics(history: list[dict[str, float]]) -> dict[str, float]:
     keys = history[0].keys()
     return {key: float(np.mean([step[key] for step in history])) for key in keys}
+
+
+def _build_lr_scheduler(
+    policy: DiffusionPolicy, config: TrainConfig, batches_per_epoch: int
+) -> torch.optim.lr_scheduler.LambdaLR:
+    """Build a warmup-then-cosine LR schedule, fast-forwarded to a resumed epoch."""
+
+    total_steps = config.epochs * batches_per_epoch
+    warmup_steps = config.warmup_steps
+    min_lr_ratio = config.min_lr_ratio
+
+    def lr_lambda(step: int) -> float:
+        """Linear warmup to 1.0 over warmup_steps, then cosine decay to min_lr_ratio."""
+
+        if warmup_steps > 0 and step < warmup_steps:
+            return step / warmup_steps
+        span = max(1, total_steps - warmup_steps)
+        progress = min(1.0, (step - warmup_steps) / span)
+        cosine = 0.5 * (1 + math.cos(math.pi * progress))
+        return min_lr_ratio + (1 - min_lr_ratio) * cosine
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(policy.optimizer, lr_lambda)
+    with warnings.catch_warnings():
+        # Fast-forwarding replays past steps without matching optimizer.step()
+        # calls, which torch otherwise (harmlessly) warns about.
+        warnings.filterwarnings(
+            "ignore", message=r"Detected call of `lr_scheduler\.step\(\)`"
+        )
+        for _ in range(config.start_epoch * batches_per_epoch):
+            scheduler.step()
+    return scheduler
 
 
 def run(config: TrainConfig) -> Path:
@@ -244,6 +296,8 @@ def run(config: TrainConfig) -> Path:
             flush=True,
         )
 
+    lr_scheduler = _build_lr_scheduler(policy, config, len(train_dataset))
+
     logger = _Logger(config)
     latest = config.output_dir / "policy.pt"
     best = config.output_dir / "best.pt"
@@ -251,7 +305,15 @@ def run(config: TrainConfig) -> Path:
     try:
         for epoch in range(config.start_epoch + 1, config.epochs + 1):
             started = time.monotonic()
-            metrics = _mean_metrics(train(policy, train_dataset, epochs=1))
+            metrics = _mean_metrics(
+                train(
+                    policy,
+                    train_dataset,
+                    epochs=1,
+                    on_step=lambda _: lr_scheduler.step(),
+                )
+            )
+            metrics["lr"] = lr_scheduler.get_last_lr()[0]
             if val_dataset is not None:
                 val_metrics = evaluate(policy, val_dataset)
                 metrics["val_loss"] = val_metrics["loss"]
