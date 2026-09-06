@@ -393,6 +393,13 @@ batch size, and seed as the original command. The recovery directory and W&B
 tracking are new; their configuration records the source checkpoint, while the
 original run remains untouched.
 
+If the source checkpoint was trained without a validation split, pass
+`--val-fraction 0` on the recovery run too, or accept that reported
+`val_loss`/`val_action_mse` may include episodes the checkpoint already
+trained on. The episode split is reproducible across runs whenever
+`n_episodes`, `--val-fraction`, and `--seed` all match, so passing the
+original values recreates the same held-out episodes.
+
 ```python
 from giraf.learning import DiffusionPolicy, ReplayDataset, train
 
