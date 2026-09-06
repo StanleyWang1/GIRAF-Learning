@@ -145,6 +145,9 @@ class ReplayDataset:
         valid = None
         if require_alignment_valid and "alignment_valid" in data:
             valid = np.asarray(data["alignment_valid"][:]) != 0
+        self._episode_of_step = np.repeat(
+            np.arange(len(episode_ends)), np.diff(episode_ends, prepend=0)
+        )
         if episodes is None:
             self.episodes = list(range(len(episode_ends)))
         else:
@@ -152,10 +155,7 @@ class ReplayDataset:
             if out_of_range:
                 raise ValueError(f"episode indices out of range: {out_of_range}")
             self.episodes = sorted(int(e) for e in episodes)
-            episode_of_step = np.repeat(
-                np.arange(len(episode_ends)), np.diff(episode_ends, prepend=0)
-            )
-            episode_mask = np.isin(episode_of_step, self.episodes)
+            episode_mask = np.isin(self._episode_of_step, self.episodes)
             valid = episode_mask if valid is None else valid & episode_mask
         self.obs_idx, self.act_idx = episode_windows(
             episode_ends,
@@ -182,7 +182,10 @@ class ReplayDataset:
         return -(-self.n_windows // self.batch_size)
 
     def fit_normalizer(self) -> Normalizer:
-        return Normalizer.fit(self.actions, self.states)
+        """Fit a Normalizer on the rows belonging to self.episodes (the training split)."""
+
+        mask = np.isin(self._episode_of_step, self.episodes)
+        return Normalizer.fit(self.actions[mask], self.states[mask])
 
     def _images(self, indices: np.ndarray) -> np.ndarray:
         flat = indices.reshape(-1)
