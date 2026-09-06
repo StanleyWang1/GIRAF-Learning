@@ -182,7 +182,7 @@ class ReplayDataset:
         return -(-self.n_windows // self.batch_size)
 
     def fit_normalizer(self) -> Normalizer:
-        """Fit a Normalizer on the rows belonging to self.episodes (the training split)."""
+        """Fit a Normalizer on the rows in self.episodes (the training split)."""
 
         mask = np.isin(self._episode_of_step, self.episodes)
         return Normalizer.fit(self.actions[mask], self.states[mask])
