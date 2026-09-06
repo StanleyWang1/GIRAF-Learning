@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import numpy as np
 import torch
-from diffusers import DDPMScheduler
+from diffusers import DDIMScheduler, DDPMScheduler
 from torch import nn
 
 from giraf.data.schema import ACTION_DIM, GRASP_INDEX, STATE_DIM
@@ -31,7 +31,7 @@ class DiffusionPolicyConfig:
     prediction_horizon: int = 16
     action_horizon: int = 8
     diffusion_steps: int = 100
-    inference_steps: int = 100
+    inference_steps: int = 16
     vision_features: int = 128
     down_dims: tuple[int, ...] = (64, 128, 256)
     timestep_features: int = 128
@@ -135,6 +135,14 @@ class DiffusionPolicy:
             beta_schedule="squaredcos_cap_v2",
             prediction_type="epsilon",
             clip_sample=True,
+        )
+        self.inference_scheduler = DDIMScheduler(
+            num_train_timesteps=self.config.diffusion_steps,
+            beta_schedule="squaredcos_cap_v2",
+            prediction_type="epsilon",
+            clip_sample=True,
+            set_alpha_to_one=True,
+            steps_offset=0,
         )
         self._images: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
         self._states: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
@@ -426,10 +434,11 @@ class DiffusionPolicy:
     def _denoise(
         self, condition: torch.Tensor, *, generator: torch.Generator | None = None
     ) -> torch.Tensor:
-        """Run the DDPM reverse process and return the full normalized sample.
+        """Run the DDIM reverse process and return the full normalized sample.
 
         Assumes the model is already in eval mode; shared by ``act()`` and
-        ``evaluate()``.
+        ``evaluate()``. Reads ``self.config.inference_steps`` at call time so
+        the deployment runner can override it via ``dataclasses.replace``.
         """
 
         model = self._inference_model
@@ -438,10 +447,12 @@ class DiffusionPolicy:
             device=self.device,
             generator=generator,
         )
-        self.scheduler.set_timesteps(self.config.inference_steps, device=self.device)
-        for timestep in self.scheduler.timesteps:
+        self.inference_scheduler.set_timesteps(
+            self.config.inference_steps, device=self.device
+        )
+        for timestep in self.inference_scheduler.timesteps:
             predicted_noise = model(sample, timestep, condition)
-            sample = self.scheduler.step(
+            sample = self.inference_scheduler.step(
                 predicted_noise, timestep, sample, generator=generator
             ).prev_sample
         return sample
