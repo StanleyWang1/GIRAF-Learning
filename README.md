@@ -390,9 +390,13 @@ five-value Gymnasium step result and legacy four-value Gym result are accepted.
 
 ## Verification
 
-The unit tests cover the non-hardware parts that are easy to get wrong: ring
-buffer overrun detection, causal alignment, staging, and the saver process.
-Everything else needs the robot.
+This is a research repo and will not carry a test suite. The remaining unit
+tests cover ring buffer overrun detection, causal alignment, staging, and the
+saver process. Everything else needs the robot.
+
+TODO: remove `tests/` and the unittest line below; replace them with a
+documented smoke run (tiny synthetic Zarr through `giraf-train` and
+`giraf-view`) once the policy improvements have landed.
 
 ```bash
 uv run python -m unittest discover tests
