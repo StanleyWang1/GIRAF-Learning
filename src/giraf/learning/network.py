@@ -6,13 +6,36 @@ import math
 from itertools import pairwise
 
 import torch
+import torchvision
 from torch import nn
+from torch.nn import functional as F
+
+_IMAGENET_MEAN = (0.485, 0.456, 0.406)
+_IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
 def _group_count(channels: int) -> int:
     """Return the largest group size in (8, 4, 2, 1) that divides ``channels``."""
 
     return next(group for group in (8, 4, 2, 1) if channels % group == 0)
+
+
+def _normalize_imagenet(images: torch.Tensor) -> torch.Tensor:
+    """Normalize a [0, 1] image batch with ImageNet mean and std."""
+
+    mean = torch.tensor(_IMAGENET_MEAN, device=images.device).view(1, 3, 1, 1)
+    std = torch.tensor(_IMAGENET_STD, device=images.device).view(1, 3, 1, 1)
+    return (images - mean) / std
+
+
+def _replace_batchnorm_with_groupnorm(module: nn.Module) -> None:
+    """Recursively swap every BatchNorm2d child for a GroupNorm(16, channels)."""
+
+    for name, child in module.named_children():
+        if isinstance(child, nn.BatchNorm2d):
+            setattr(module, name, nn.GroupNorm(16, child.num_features))
+        else:
+            _replace_batchnorm_with_groupnorm(child)
 
 
 class ConvEncoder(nn.Module):
@@ -46,6 +69,65 @@ class ConvEncoder(nn.Module):
         """Encode a [N, 3, H, W] image batch to [N, output_dim]."""
 
         return self.encoder(images)
+
+
+class SpatialSoftmax(nn.Module):
+    """Reduce a feature map to expected keypoint coordinates on a [-1, 1] grid."""
+
+    def __init__(self, in_channels: int, num_keypoints: int) -> None:
+        super().__init__()
+        self.project = nn.Conv2d(in_channels, num_keypoints, kernel_size=1)
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        """Map a [N, C, H, W] feature map to [N, 2 * num_keypoints] coordinates."""
+
+        heatmaps = self.project(features)
+        batch, keypoints, height, width = heatmaps.shape
+        weights = F.softmax(heatmaps.flatten(2), dim=-1).view(
+            batch, keypoints, height, width
+        )
+        xs = torch.linspace(-1, 1, width, device=features.device)
+        ys = torch.linspace(-1, 1, height, device=features.device)
+        expected_x = (weights * xs.view(1, 1, 1, width)).sum(dim=(2, 3))
+        expected_y = (weights * ys.view(1, 1, height, 1)).sum(dim=(2, 3))
+        return torch.stack((expected_x, expected_y), dim=-1).flatten(1)
+
+
+class ResNetEncoder(nn.Module):
+    """ResNet-18 backbone (GroupNorm) with a spatial-softmax keypoint head."""
+
+    def __init__(self, output_dim: int, num_keypoints: int = 32) -> None:
+        super().__init__()
+        backbone = torchvision.models.resnet18(weights=None)
+        _replace_batchnorm_with_groupnorm(backbone)
+        self.backbone = nn.Sequential(
+            backbone.conv1,
+            backbone.bn1,
+            backbone.relu,
+            backbone.maxpool,
+            backbone.layer1,
+            backbone.layer2,
+            backbone.layer3,
+            backbone.layer4,
+        )
+        self.spatial_softmax = SpatialSoftmax(512, num_keypoints)
+        self.project = nn.Linear(2 * num_keypoints, output_dim)
+
+    def forward(self, images: torch.Tensor) -> torch.Tensor:
+        """Encode a [N, 3, H, W] image batch in [0, 1] to [N, output_dim]."""
+
+        features = self.backbone(_normalize_imagenet(images))
+        return self.project(self.spatial_softmax(features))
+
+
+def build_encoder(name: str, output_dim: int) -> nn.Module:
+    """Construct the named image encoder ("conv" or "resnet18")."""
+
+    if name == "conv":
+        return ConvEncoder(output_dim)
+    if name == "resnet18":
+        return ResNetEncoder(output_dim)
+    raise ValueError(f"unknown encoder {name!r}, expected one of: conv, resnet18")
 
 
 class SinusoidalEmbedding(nn.Module):
