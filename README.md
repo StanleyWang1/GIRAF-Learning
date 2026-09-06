@@ -210,7 +210,7 @@ uv run giraf-replay --dataset data/demos/replay_buffer.zarr --episode 0 \
 
 The initial policy is a conditional DDPM implemented with PyTorch:
 
-- a small RGB encoder conditions a temporal 1D U-Net together with robot state;
+- a pluggable RGB encoder conditions a temporal 1D U-Net together with robot state;
 - training predicts noise added by a cosine-beta DDPM scheduler and keeps an
   exponential moving average of the weights (`ema_decay`, default `0.999`);
 - inference uses a 16-step DDIM schedule (`inference_steps`, default `16`) on
@@ -233,6 +233,16 @@ happens inside the policy. `act()` keeps its own two-frame observation
 history; `DiffusionPolicy.reset()` clears it at an episode boundary and
 `rollout()` calls it when a policy provides it. The required policy contract
 remains `act`, `train_step`, and `save`.
+
+### Encoders
+
+`DiffusionPolicyConfig.encoder` (also `--encoder` on `giraf-train`) selects the
+image encoder: `conv` is the small baseline convolutional net, trained end to
+end; `resnet18` is a ResNet-18 (GroupNorm instead of BatchNorm) with a
+spatial-softmax keypoint head, also trained end to end, for tasks that need
+more precise spatial alignment; `dinov2` wraps a frozen, pretrained DINOv2
+backbone for more robust features on limited data, and downloads its weights
+through `torch.hub` on first use.
 
 ### Training
 

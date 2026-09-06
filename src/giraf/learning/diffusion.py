@@ -38,6 +38,7 @@ class DiffusionPolicyConfig:
     kernel_size: int = 5
     crop_fraction: float = 0.9
     color_jitter: float = 0.1
+    encoder: str = "conv"
     learning_rate: float = 1e-4
     weight_decay: float = 1e-6
     gradient_clip_norm: float = 1.0
@@ -124,6 +125,7 @@ class DiffusionPolicy:
             down_dims=self.config.down_dims,
             timestep_dim=self.config.timestep_features,
             kernel_size=self.config.kernel_size,
+            encoder=self.config.encoder,
         ).to(self.device)
         if self.config.ema_decay > 0:
             self.ema_model = copy.deepcopy(self.model)

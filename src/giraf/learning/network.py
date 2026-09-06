@@ -374,11 +374,12 @@ class DiffusionNetwork(nn.Module):
         down_dims: tuple[int, ...],
         timestep_dim: int,
         kernel_size: int,
+        encoder: str = "conv",
     ) -> None:
         super().__init__()
         self.observation_horizon = observation_horizon
         self.state_dim = state_dim
-        self.image_encoder = ConvEncoder(vision_features)
+        self.image_encoder = build_encoder(encoder, vision_features)
         observation_dim = observation_horizon * (vision_features + state_dim)
         self.noise_predictor = ConditionalUnet1d(
             action_dim=action_dim,

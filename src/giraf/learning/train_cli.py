@@ -95,6 +95,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--down-dims", type=int, nargs="+", default=None, help="U-Net widths"
     )
     parser.add_argument("--diffusion-steps", type=int, default=None)
+    parser.add_argument(
+        "--encoder",
+        choices=("conv", "resnet18", "dinov2"),
+        default="conv",
+        help="image encoder; dinov2 downloads weights through torch.hub on first use",
+    )
     parser.add_argument("--wandb", action="store_true", help="log to Weights & Biases")
     parser.add_argument("--wandb-project", default="giraf")
     return parser
@@ -114,7 +120,9 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
         raise SystemExit("--resume requires a positive --start-epoch")
     if args.resume is not None and args.epochs <= args.start_epoch:
         raise SystemExit("--epochs must be greater than --start-epoch")
-    policy = DiffusionPolicyConfig(learning_rate=args.learning_rate, device=args.device)
+    policy = DiffusionPolicyConfig(
+        learning_rate=args.learning_rate, device=args.device, encoder=args.encoder
+    )
     if args.down_dims is not None:
         policy = replace(policy, down_dims=tuple(args.down_dims))
     if args.diffusion_steps is not None:
