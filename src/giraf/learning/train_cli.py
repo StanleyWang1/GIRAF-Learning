@@ -91,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--min-lr-ratio",
         type=float,
         default=0.1,
-        help="learning rate floor at the end of cosine decay, as a fraction of the peak",
+        help="LR floor at the end of cosine decay, as a fraction of the peak",
     )
     parser.add_argument(
         "--down-dims", type=int, nargs="+", default=None, help="U-Net widths"
@@ -139,6 +139,8 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
         raise SystemExit("warmup-steps must be non-negative")
     if not 0 < args.min_lr_ratio <= 1:
         raise SystemExit("min-lr-ratio must satisfy 0 < min-lr-ratio <= 1")
+    if not 0 <= args.val_fraction < 1:
+        raise SystemExit("val-fraction must satisfy 0 <= val-fraction < 1")
     if args.resume is None and args.start_epoch != 0:
         raise SystemExit("--start-epoch requires --resume")
     if args.resume is not None and args.start_epoch <= 0:
@@ -183,7 +185,7 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
 
 
 class _Logger:
-    """Append one JSON line per epoch to metrics.jsonl and optionally mirror to wandb."""
+    """Append one JSON line per epoch to metrics.jsonl, optionally mirrored to wandb."""
 
     def __init__(self, config: TrainConfig) -> None:
         self._file = (config.output_dir / "metrics.jsonl").open("a")
@@ -242,7 +244,7 @@ def _build_lr_scheduler(
         """Linear warmup to 1.0 over warmup_steps, then cosine decay to min_lr_ratio."""
 
         if warmup_steps > 0 and step < warmup_steps:
-            return step / warmup_steps
+            return (step + 1) / warmup_steps
         span = max(1, total_steps - warmup_steps)
         progress = min(1.0, (step - warmup_steps) / span)
         cosine = 0.5 * (1 + math.cos(math.pi * progress))
@@ -258,6 +260,30 @@ def _build_lr_scheduler(
         for _ in range(config.start_epoch * batches_per_epoch):
             scheduler.step()
     return scheduler
+
+
+_RESUME_WATCHED_FIELDS = (
+    "encoder",
+    "action_space",
+    "prediction_horizon",
+    "action_horizon",
+    "temporal_ensemble",
+    "learning_rate",
+    "down_dims",
+    "diffusion_steps",
+)
+
+
+def _ignored_resume_flags(
+    cli_policy: DiffusionPolicyConfig, checkpoint_policy: DiffusionPolicyConfig
+) -> list[str]:
+    """Return watched policy fields where the CLI value differs from the checkpoint."""
+
+    return [
+        field
+        for field in _RESUME_WATCHED_FIELDS
+        if getattr(cli_policy, field) != getattr(checkpoint_policy, field)
+    ]
 
 
 def run(config: TrainConfig) -> Path:
@@ -279,6 +305,12 @@ def run(config: TrainConfig) -> Path:
     else:
         policy = DiffusionPolicy.load(config.resume, device=config.policy.device)
         policy_config = policy.config
+        ignored = _ignored_resume_flags(config.policy, policy_config)
+        if ignored:
+            print(
+                f"[TRAIN] resuming from checkpoint; ignoring CLI flags: {ignored}",
+                flush=True,
+            )
 
     root = zarr.open_group(str(config.dataset), mode="r")
     dataset_episode_count = len(root["meta/episode_ends"])
@@ -307,6 +339,12 @@ def run(config: TrainConfig) -> Path:
             preload_images=config.preload_images,
             episodes=val_episodes,
             action_space=policy_config.action_space,
+        )
+    if config.resume is not None and val_dataset is not None:
+        print(
+            "[TRAIN] warning: validation episodes may have been trained on by "
+            "the resumed checkpoint",
+            flush=True,
         )
 
     normalizer = train_dataset.fit_normalizer()
