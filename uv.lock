@@ -292,6 +292,8 @@ dependencies = [
     { name = "sympy" },
     { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
     { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "torchvision", version = "0.28.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "torchvision", version = "0.29.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
     { name = "zarr" },
 ]
 
@@ -323,6 +325,8 @@ requires-dist = [
     { name = "sympy", specifier = "==1.14.0" },
     { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.7,<3" },
     { name = "torch", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=2.7,<3", index = "https://download.pytorch.org/whl/cu130" },
+    { name = "torchvision", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=0.22,<1" },
+    { name = "torchvision", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=0.22,<1", index = "https://download.pytorch.org/whl/cu130" },
     { name = "wandb", marker = "extra == 'train'", specifier = ">=0.19" },
     { name = "zarr", specifier = "==2.18.7" },
 ]
@@ -974,6 +978,40 @@ wheels = [
     { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:e729d57eb3e0c859fa7a9c27f9f274121c2c09ae70a376ac227a650807b0457c", upload-time = "2026-09-02T18:51:18Z" },
     { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:9c5693d3ca91743202034094ad3b3df20b5eb1373d5e0bc8a5d976be12c35302", upload-time = "2026-09-02T18:51:32Z" },
     { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp312-cp312-win_amd64.whl", hash = "sha256:6a20371bf5af2af933a6149e5ec13f7ea7ad506276137dae9386f98d236c02ff", upload-time = "2026-09-02T18:52:06Z" },
+]
+
+[[package]]
+name = "torchvision"
+version = "0.28.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform != 'linux' and sys_platform != 'win32'",
+]
+dependencies = [
+    { name = "numpy", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "pillow", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/15/49/c1cab1ecbb3ff1a380a3f99283db1dee61b8afe354f6352c643b65937130/torchvision-0.28.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:e9f54c30cd52e3ef7fd034cc69b7bb7e0964e1c8f8743e018ab92e95b40f9eee", size = 1856020, upload-time = "2026-07-08T16:07:52.182Z" },
+]
+
+[[package]]
+name = "torchvision"
+version = "0.29.0+cu130"
+source = { registry = "https://download.pytorch.org/whl/cu130" }
+resolution-markers = [
+    "sys_platform == 'linux' or sys_platform == 'win32'",
+]
+dependencies = [
+    { name = "numpy", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "pillow", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+wheels = [
+    { url = "https://download-r2.pytorch.org/whl/cu130/torchvision-0.29.0%2Bcu130-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:7678a0ed87d39580ab0369b4183d815ba92b84aa6a2c5bd60c67ab80274acef9", upload-time = "2026-09-02T00:28:04Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torchvision-0.29.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:fb681a367becdbf40cd559f1b553be79832885a58414980e77bed192fd960673", upload-time = "2026-09-02T00:28:04Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torchvision-0.29.0%2Bcu130-cp312-cp312-win_amd64.whl", hash = "sha256:b33bbcaef5227b66de396163b7a8fb4d444072ffcc4d672774c7368db8f3a52a", upload-time = "2026-09-02T00:28:05Z" },
 ]
 
 [[package]]
