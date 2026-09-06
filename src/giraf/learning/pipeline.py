@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+import numpy as np
+
 from .environment import Environment
 from .policy import Batch, Metrics, Policy
 
@@ -25,6 +27,16 @@ def train(policy: Policy, batches: Iterable[Batch], *, epochs: int) -> list[Metr
         for batch in batches:
             history.append(policy.train_step(batch))
     return history
+
+
+def evaluate(policy: Policy, batches: Iterable[Batch]) -> Metrics:
+    """Run ``policy.evaluate`` over batches and return the mean of each metric."""
+
+    history: list[Metrics] = [policy.evaluate(batch) for batch in batches]
+    if not history:
+        raise ValueError("evaluate requires at least one batch")
+    keys = history[0].keys()
+    return {key: float(np.mean([step[key] for step in history])) for key in keys}
 
 
 @dataclass(frozen=True, slots=True)
