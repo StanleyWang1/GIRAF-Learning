@@ -14,7 +14,7 @@ import torch
 from diffusers import DDIMScheduler, DDPMScheduler
 from torch import nn
 
-from giraf.data.schema import ACTION_DIM, GRASP_INDEX, STATE_DIM
+from giraf.data.schema import ACTION_DIM, ACTION_SPACES, GRASP_INDEX, STATE_DIM
 
 from .environment import Observation
 from .network import DiffusionNetwork
@@ -30,6 +30,8 @@ class DiffusionPolicyConfig:
     observation_horizon: int = 2
     prediction_horizon: int = 16
     action_horizon: int = 8
+    action_space: str = "twist"
+    temporal_ensemble: bool = True
     diffusion_steps: int = 100
     inference_steps: int = 16
     vision_features: int = 128
@@ -62,6 +64,8 @@ class DiffusionPolicyConfig:
             raise ValueError("diffusion configuration values must be positive")
         if self.action_horizon + self.observation_horizon - 1 > self.prediction_horizon:
             raise ValueError("the executable action window exceeds prediction_horizon")
+        if self.action_space not in ACTION_SPACES:
+            raise ValueError(f"action_space must be one of {ACTION_SPACES}")
         if self.inference_steps > self.diffusion_steps:
             raise ValueError("inference_steps cannot exceed diffusion_steps")
         if self.timestep_features < 4 or self.timestep_features % 2:
@@ -154,14 +158,20 @@ class DiffusionPolicy:
         )
         self._images: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
         self._states: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
-        self._actions: deque[np.ndarray] = deque()
+        # Plan buffer: per-future-step running sum/count of predictions from
+        # every plan that still covers that step, for temporal ensembling.
+        self._plan_sum: deque[np.ndarray] = deque()
+        self._plan_count: deque[int] = deque()
+        self._steps_since_plan = 0
 
     def reset(self) -> None:
-        """Clear observation and action history at an episode boundary."""
+        """Clear observation history and the plan buffer at an episode boundary."""
 
         self._images.clear()
         self._states.clear()
-        self._actions.clear()
+        self._plan_sum.clear()
+        self._plan_count.clear()
+        self._steps_since_plan = 0
 
     def train_step(self, batch: Batch) -> Metrics:
         """Perform one epsilon-prediction update and return scalar metrics."""
@@ -258,12 +268,12 @@ class DiffusionPolicy:
 
     @torch.no_grad()
     def act(self, observation: Observation) -> np.ndarray:
-        """Return one action while replanning in configurable action chunks."""
+        """Return one action, replanning and temporally ensembling overlapping chunks."""
 
         image, state = self._validate_current_observation(observation)
         self._images.append(image)
         self._states.append(state)
-        if not self._actions:
+        if not self._plan_sum or self._steps_since_plan >= self.config.action_horizon:
             images = list(self._images)
             states = list(self._states)
             while len(images) < self.config.observation_horizon:
@@ -276,8 +286,22 @@ class DiffusionPolicy:
                 },
                 augment=False,
             )
-            self._actions.extend(self._sample(prepared_images, prepared_states))
-        return self._actions.popleft().copy()
+            plan = self._sample(prepared_images, prepared_states)
+            if not self.config.temporal_ensemble:
+                self._plan_sum.clear()
+                self._plan_count.clear()
+            for offset, prediction in enumerate(plan):
+                if offset < len(self._plan_sum):
+                    self._plan_sum[offset] += prediction
+                    self._plan_count[offset] += 1
+                else:
+                    self._plan_sum.append(prediction.copy())
+                    self._plan_count.append(1)
+            self._steps_since_plan = 0
+        action = self._plan_sum.popleft() / self._plan_count.popleft()
+        action[GRASP_INDEX] = float(action[GRASP_INDEX] >= 0.5)
+        self._steps_since_plan += 1
+        return action
 
     def save(self, path: str | Path) -> None:
         """Atomically save model, optimizer, and configuration."""
@@ -318,6 +342,10 @@ class DiffusionPolicy:
         raw_config.setdefault("crop_fraction", 1.0)
         raw_config.setdefault("color_jitter", 0.0)
         raw_config.setdefault("encoder", "conv")
+        # Checkpoints predating temporal ensembling recorded only twist actions
+        # and replanned every action_horizon calls without averaging.
+        raw_config.setdefault("action_space", "twist")
+        raw_config.setdefault("temporal_ensemble", True)
         config = DiffusionPolicyConfig(**raw_config)
         config = replace(config, device=str(resolved_device))
         normalizer = payload.get("normalizer")
@@ -516,8 +544,8 @@ class DiffusionPolicy:
             ).prev_sample
         return sample
 
-    def _sample(self, images: torch.Tensor, states: torch.Tensor) -> list[np.ndarray]:
-        """Sample one action chunk for ``act()`` and return physical-unit actions."""
+    def _sample(self, images: torch.Tensor, states: torch.Tensor) -> np.ndarray:
+        """Sample the usable prediction window for ``act()``, denormalized and unthresholded."""
 
         model = self._inference_model
         was_training = model.training
@@ -529,10 +557,7 @@ class DiffusionPolicy:
             model.train(was_training)
 
         start = self.config.observation_horizon - 1
-        stop = start + self.config.action_horizon
-        actions = sample[0, start:stop].clamp(-1, 1)
+        actions = sample[0, start:].clamp(-1, 1)
         if self.normalizer is not None:
             actions = self.normalizer.denormalize_actions(actions)
-        actions = actions.cpu().numpy().astype(np.float32)
-        actions[:, GRASP_INDEX] = (actions[:, GRASP_INDEX] >= 0.5).astype(np.float32)
-        return list(actions)
+        return actions.cpu().numpy().astype(np.float32)
