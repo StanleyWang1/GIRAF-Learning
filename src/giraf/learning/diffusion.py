@@ -19,7 +19,9 @@ from giraf.data.schema import ACTION_DIM, ACTION_SPACES, GRASP_INDEX, STATE_DIM
 from .environment import Observation
 from .network import DiffusionNetwork
 from .normalize import Normalizer
+from .plan_buffer import PlanBuffer
 from .policy import Batch, Metrics, Tensor
+from .preprocess import augment_images, validate_images
 
 _CHECKPOINT_VERSION = 3
 _SUPPORTED_CHECKPOINT_VERSIONS = (2, _CHECKPOINT_VERSION)
@@ -158,20 +160,14 @@ class DiffusionPolicy:
         )
         self._images: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
         self._states: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
-        # Plan buffer: per-future-step running sum/count of predictions from
-        # every plan that still covers that step, for temporal ensembling.
-        self._plan_sum: deque[np.ndarray] = deque()
-        self._plan_count: deque[int] = deque()
-        self._steps_since_plan = 0
+        self._plan_buffer = PlanBuffer()
 
     def reset(self) -> None:
         """Clear observation history and the plan buffer at an episode boundary."""
 
         self._images.clear()
         self._states.clear()
-        self._plan_sum.clear()
-        self._plan_count.clear()
-        self._steps_since_plan = 0
+        self._plan_buffer.reset()
 
     def train_step(self, batch: Batch) -> Metrics:
         """Perform one epsilon-prediction update and return scalar metrics."""
@@ -273,7 +269,7 @@ class DiffusionPolicy:
         image, state = self._validate_current_observation(observation)
         self._images.append(image)
         self._states.append(state)
-        if not self._plan_sum or self._steps_since_plan >= self.config.action_horizon:
+        if self._plan_buffer.ready_to_replan(self.config.action_horizon):
             images = list(self._images)
             states = list(self._states)
             while len(images) < self.config.observation_horizon:
@@ -287,20 +283,10 @@ class DiffusionPolicy:
                 augment=False,
             )
             plan = self._sample(prepared_images, prepared_states)
-            if not self.config.temporal_ensemble:
-                self._plan_sum.clear()
-                self._plan_count.clear()
-            for offset, prediction in enumerate(plan):
-                if offset < len(self._plan_sum):
-                    self._plan_sum[offset] += prediction
-                    self._plan_count[offset] += 1
-                else:
-                    self._plan_sum.append(prediction.copy())
-                    self._plan_count.append(1)
-            self._steps_since_plan = 0
-        action = self._plan_sum.popleft() / self._plan_count.popleft()
+            self._plan_buffer.add(plan, ensemble=self.config.temporal_ensemble)
+        action = self._plan_buffer.pop()
         action[GRASP_INDEX] = float(action[GRASP_INDEX] >= 0.5)
-        self._steps_since_plan += 1
+        self._plan_buffer.step()
         return action
 
     def save(self, path: str | Path) -> None:
@@ -390,31 +376,14 @@ class DiffusionPolicy:
             raise KeyError(f"observations are missing keys: {sorted(missing)}")
 
         images = torch.as_tensor(observations["camera_rgb"], device=self.device)
-        if images.ndim != 5 or images.shape[1] != self.config.observation_horizon:
-            raise ValueError(
-                "camera_rgb must have shape [batch, observation_horizon, C, H, W] "
-                "or [batch, observation_horizon, H, W, C]"
-            )
-        if images.shape[0] == 0:
-            raise ValueError("training batches cannot be empty")
+        images = validate_images(images, self.config.observation_horizon)
         expected_prefix = (images.shape[0], self.config.observation_horizon)
-        if images.shape[2] == 3:
-            pass
-        elif images.shape[-1] == 3:
-            images = images.permute(0, 1, 4, 2, 3)
-        else:
-            raise ValueError("camera_rgb must contain exactly three RGB channels")
-        if images.dtype == torch.uint8:
-            images = images.float().div_(255)
-        elif images.is_floating_point():
-            images = images.float()
-            if not torch.isfinite(images).all() or images.min() < 0 or images.max() > 1:
-                raise ValueError(
-                    "floating-point camera_rgb values must be finite in [0, 1]"
-                )
-        else:
-            raise TypeError("camera_rgb must be uint8 or floating point")
-        images = self._augment_images(images, augment=augment)
+        images = augment_images(
+            images,
+            crop_fraction=self.config.crop_fraction,
+            color_jitter=self.config.color_jitter,
+            augment=augment,
+        )
         if min(images.shape[-2:]) < 8:
             raise ValueError("camera_rgb height and width must be at least 8 pixels")
 
@@ -431,49 +400,6 @@ class DiffusionPolicy:
         if self.normalizer is not None:
             states = self.normalizer.normalize_states(states)
         return images.contiguous(), states
-
-    def _augment_images(self, images: torch.Tensor, *, augment: bool) -> torch.Tensor:
-        """Crop to ``crop_fraction``; augment to also jitter brightness/contrast."""
-
-        crop_fraction = self.config.crop_fraction
-        batch, horizon, channels, height, width = images.shape
-        if crop_fraction < 1:
-            crop_height = round(height * crop_fraction)
-            crop_width = round(width * crop_fraction)
-            max_top = height - crop_height
-            max_left = width - crop_width
-            if augment:
-                # One offset per sample, shared across that sample's history frames.
-                # Generated on CPU and listed to avoid a device sync per sample.
-                top = torch.randint(0, max_top + 1, (batch,)).tolist()
-                left = torch.randint(0, max_left + 1, (batch,)).tolist()
-            else:
-                top = [max_top // 2] * batch
-                left = [max_left // 2] * batch
-            cropped = torch.empty(
-                (batch, horizon, channels, crop_height, crop_width),
-                dtype=images.dtype,
-                device=self.device,
-            )
-            for sample in range(batch):
-                sample_top, sample_left = top[sample], left[sample]
-                cropped[sample] = images[
-                    sample,
-                    :,
-                    :,
-                    sample_top : sample_top + crop_height,
-                    sample_left : sample_left + crop_width,
-                ]
-            images = cropped
-
-        jitter = self.config.color_jitter
-        if augment and jitter > 0:
-            # Factors are per-sample (shared across history); the mean is per-frame.
-            factors = torch.rand((2, batch, 1, 1, 1, 1), device=self.device)
-            brightness, contrast = 1 - jitter + 2 * jitter * factors
-            mean = images.mean(dim=(2, 3, 4), keepdim=True)
-            images = (((images - mean) * contrast + mean) * brightness).clamp_(0, 1)
-        return images
 
     def _prepare_actions(
         self, value: Tensor, batch_size: int, *, strict: bool
