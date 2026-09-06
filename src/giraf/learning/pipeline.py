@@ -32,7 +32,10 @@ def train(policy: Policy, batches: Iterable[Batch], *, epochs: int) -> list[Metr
 def evaluate(policy: Policy, batches: Iterable[Batch]) -> Metrics:
     """Run ``policy.evaluate`` over batches and return the mean of each metric."""
 
-    history: list[Metrics] = [policy.evaluate(batch) for batch in batches]
+    evaluate_batch = getattr(policy, "evaluate", None)
+    if not callable(evaluate_batch):
+        raise TypeError(f"{type(policy).__name__} does not implement evaluate")
+    history: list[Metrics] = [evaluate_batch(batch) for batch in batches]
     if not history:
         raise ValueError("evaluate requires at least one batch")
     keys = history[0].keys()

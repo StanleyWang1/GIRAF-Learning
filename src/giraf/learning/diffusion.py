@@ -168,23 +168,16 @@ class DiffusionPolicy:
 
     @torch.no_grad()
     def evaluate(self, batch: Batch) -> Metrics:
-        """Compute a deterministic denoising loss and sampled-trajectory error.
-
-        ``loss`` uses timesteps stratified evenly over the diffusion schedule
-        instead of random ones. ``action_mse`` runs the same sampler as
-        ``act()`` and compares it against the ground-truth actions over the
-        executable window, in normalized space; it tracks what the robot
-        would actually execute, which the denoising loss only weakly
-        correlates with. Noise and the sampler's initial noise are drawn from
-        a generator reseeded with ``config.eval_seed`` on every call, so
-        repeat calls on the same batch agree exactly.
-        """
+        """Compute a deterministic denoising loss (``loss``) and sampled-trajectory error (``action_mse``)."""
 
         images, states = self._prepare_observations(batch.observations)
         actions = self._prepare_actions(batch.actions, images.shape[0])
         was_training = self.model.training
         self.model.eval()
         try:
+            # Reseed every call so loss and action_mse are identical across
+            # repeat calls on the same batch; action_mse tracks what the
+            # robot would execute, which loss only weakly correlates with.
             generator = torch.Generator(device=self.device)
             generator.manual_seed(self.config.eval_seed)
             condition = self.model.encode_observation(images, states)
