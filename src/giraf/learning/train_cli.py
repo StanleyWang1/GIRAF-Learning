@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import time
 from collections.abc import Sequence
@@ -12,10 +13,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import zarr
 
-from .dataset import ReplayDataset
+from .dataset import ReplayDataset, split_episodes
 from .diffusion import DiffusionPolicy, DiffusionPolicyConfig
-from .pipeline import train
+from .pipeline import evaluate, train
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,7 @@ class TrainConfig:
     batch_size: int = 64
     checkpoint_every: int = 10
     seed: int = 0
+    val_fraction: float = 0.1
     preload_images: bool = False
     wandb: bool = False
     wandb_project: str = "giraf"
@@ -64,6 +67,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--checkpoint-every", type=int, default=10, help="in epochs")
     parser.add_argument("--device", default="auto", help="auto, cpu, cuda, cuda:0, ...")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--val-fraction",
+        type=float,
+        default=0.1,
+        help="fraction of episodes held out for validation",
+    )
     parser.add_argument(
         "--preload-images", action="store_true", help="hold all frames in RAM"
     )
@@ -105,6 +114,7 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
         batch_size=args.batch_size,
         checkpoint_every=args.checkpoint_every,
         seed=args.seed,
+        val_fraction=args.val_fraction,
         preload_images=args.preload_images,
         wandb=args.wandb,
         wandb_project=args.wandb_project,
@@ -178,7 +188,13 @@ def run(config: TrainConfig) -> Path:
     else:
         policy = DiffusionPolicy.load(config.resume, device=config.policy.device)
         policy_config = policy.config
-    dataset = ReplayDataset(
+
+    root = zarr.open_group(str(config.dataset), mode="r")
+    dataset_episode_count = len(root["meta/episode_ends"])
+    train_episodes, val_episodes = split_episodes(
+        dataset_episode_count, config.val_fraction, config.seed
+    )
+    train_dataset = ReplayDataset(
         config.dataset,
         batch_size=config.batch_size,
         observation_horizon=policy_config.observation_horizon,
@@ -186,25 +202,39 @@ def run(config: TrainConfig) -> Path:
         seed=config.seed,
         start_epoch=config.start_epoch,
         preload_images=config.preload_images,
+        episodes=train_episodes,
     )
-    normalizer = dataset.fit_normalizer()
+    val_dataset = None
+    if val_episodes:
+        val_dataset = ReplayDataset(
+            config.dataset,
+            batch_size=config.batch_size,
+            observation_horizon=policy_config.observation_horizon,
+            prediction_horizon=policy_config.prediction_horizon,
+            shuffle=False,
+            preload_images=config.preload_images,
+            episodes=val_episodes,
+        )
+
+    normalizer = train_dataset.fit_normalizer()
     if policy is None:
         policy = DiffusionPolicy(policy_config, normalizer=normalizer)
-    elif (
-        policy.normalizer is None
-        or policy.normalizer.to_dict() != normalizer.to_dict()
-    ):
-        raise ValueError("dataset normalizer differs from the resumed checkpoint")
+    elif policy.normalizer is None:
+        raise ValueError("resumed checkpoint has no normalizer")
     config = replace(config, policy=policy.config)
+    config_payload = _json_safe(asdict(config))
+    config_payload["train_episodes"] = train_episodes
+    config_payload["val_episodes"] = val_episodes
     (config.output_dir / "config.json").write_text(
-        json.dumps(_json_safe(asdict(config)), indent=2) + "\n"
+        json.dumps(config_payload, indent=2) + "\n"
     )
     (config.output_dir / "normalizer.json").write_text(
-        json.dumps(normalizer.to_dict(), indent=2) + "\n"
+        json.dumps(policy.normalizer.to_dict(), indent=2) + "\n"
     )
     print(
-        f"[TRAIN] {dataset.n_windows} windows, {len(dataset)} batches/epoch, "
-        f"device={policy.device}",
+        f"[TRAIN] {train_dataset.n_windows} windows, {len(train_dataset)} "
+        f"batches/epoch, device={policy.device}, "
+        f"train_episodes={train_episodes}, val_episodes={val_episodes}",
         flush=True,
     )
     if config.resume is not None:
@@ -216,10 +246,19 @@ def run(config: TrainConfig) -> Path:
 
     logger = _Logger(config)
     latest = config.output_dir / "policy.pt"
+    best = config.output_dir / "best.pt"
+    best_val_action_mse = math.inf
     try:
         for epoch in range(config.start_epoch + 1, config.epochs + 1):
             started = time.monotonic()
-            metrics = _mean_metrics(train(policy, dataset, epochs=1))
+            metrics = _mean_metrics(train(policy, train_dataset, epochs=1))
+            if val_dataset is not None:
+                val_metrics = evaluate(policy, val_dataset)
+                metrics["val_loss"] = val_metrics["loss"]
+                metrics["val_action_mse"] = val_metrics["action_mse"]
+                if metrics["val_action_mse"] < best_val_action_mse:
+                    best_val_action_mse = metrics["val_action_mse"]
+                    policy.save(best)
             metrics["epoch_seconds"] = time.monotonic() - started
             logger.log(epoch, metrics)
             policy.save(latest)

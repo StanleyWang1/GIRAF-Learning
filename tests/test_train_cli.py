@@ -41,6 +41,8 @@ class TrainCliTests(unittest.TestCase):
             "16",
             "--diffusion-steps",
             "4",
+            "--val-fraction",
+            "0",
         ]
 
     def test_parse_config_applies_model_overrides(self) -> None:
@@ -62,7 +64,10 @@ class TrainCliTests(unittest.TestCase):
             self.assertEqual(main(self.args), 0)
         self.assertTrue(clip_grad_norm.called)
         self.assertTrue(
-            all(call.kwargs["foreach"] is False for call in clip_grad_norm.call_args_list)
+            all(
+                call.kwargs["foreach"] is False
+                for call in clip_grad_norm.call_args_list
+            )
         )
         self.assertTrue((self.run_dir / "policy.pt").is_file())
         self.assertTrue((self.run_dir / "policy_epoch_0002.pt").is_file())
@@ -128,6 +133,27 @@ class TrainCliTests(unittest.TestCase):
         ]
         with self.assertRaisesRegex(ValueError, "new --output-dir"):
             main(same_dir_args)
+
+    def test_validation_split_reports_val_metrics_and_best_checkpoint(self) -> None:
+        args = self.args.copy()
+        args[args.index("--val-fraction") + 1] = "0.5"
+        self.assertEqual(main(args), 0)
+
+        records = [
+            json.loads(line)
+            for line in (self.run_dir / "metrics.jsonl").read_text().splitlines()
+        ]
+        self.assertTrue(all("val_loss" in record for record in records))
+        self.assertTrue(all("val_action_mse" in record for record in records))
+        self.assertTrue((self.run_dir / "best.pt").is_file())
+
+        config = json.loads((self.run_dir / "config.json").read_text())
+        self.assertTrue(config["train_episodes"])
+        self.assertTrue(config["val_episodes"])
+        self.assertTrue(
+            set(config["train_episodes"]).isdisjoint(config["val_episodes"])
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
