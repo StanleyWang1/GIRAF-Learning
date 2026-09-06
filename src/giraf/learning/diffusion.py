@@ -37,6 +37,7 @@ class DiffusionPolicyConfig:
     learning_rate: float = 1e-4
     weight_decay: float = 1e-6
     gradient_clip_norm: float = 1.0
+    eval_seed: int = 0
     device: str = "auto"
 
     def __post_init__(self) -> None:
@@ -150,9 +151,7 @@ class DiffusionPolicy:
             device=self.device,
             dtype=torch.long,
         )
-        noisy_actions = self.scheduler.add_noise(actions, noise, timesteps)
-        predicted_noise = self.model(noisy_actions, timesteps, condition)
-        loss = nn.functional.mse_loss(predicted_noise, noise)
+        loss = self._epsilon_loss(condition, actions, noise, timesteps)
 
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
@@ -166,6 +165,52 @@ class DiffusionPolicy:
             "loss": float(loss.detach()),
             "gradient_norm": float(gradient_norm.detach()),
         }
+
+    @torch.no_grad()
+    def evaluate(self, batch: Batch) -> Metrics:
+        """Compute a deterministic denoising loss and sampled-trajectory error.
+
+        ``loss`` uses timesteps stratified evenly over the diffusion schedule
+        instead of random ones. ``action_mse`` runs the same sampler as
+        ``act()`` and compares it against the ground-truth actions over the
+        executable window, in normalized space; it tracks what the robot
+        would actually execute, which the denoising loss only weakly
+        correlates with. Noise and the sampler's initial noise are drawn from
+        a generator reseeded with ``config.eval_seed`` on every call, so
+        repeat calls on the same batch agree exactly.
+        """
+
+        images, states = self._prepare_observations(batch.observations)
+        actions = self._prepare_actions(batch.actions, images.shape[0])
+        was_training = self.model.training
+        self.model.eval()
+        try:
+            generator = torch.Generator(device=self.device)
+            generator.manual_seed(self.config.eval_seed)
+            condition = self.model.encode_observation(images, states)
+
+            timesteps = (
+                torch.linspace(
+                    0,
+                    self.config.diffusion_steps - 1,
+                    actions.shape[0],
+                    device=self.device,
+                )
+                .round()
+                .long()
+            )
+            noise = torch.randn(actions.shape, device=self.device, generator=generator)
+            loss = self._epsilon_loss(condition, actions, noise, timesteps)
+
+            sample = self._denoise(condition, generator=generator)
+            start = self.config.observation_horizon - 1
+            stop = start + self.config.action_horizon
+            action_mse = nn.functional.mse_loss(
+                sample[:, start:stop].clamp(-1, 1), actions[:, start:stop]
+            )
+        finally:
+            self.model.train(was_training)
+        return {"loss": float(loss), "action_mse": float(action_mse)}
 
     @torch.no_grad()
     def act(self, observation: Observation) -> np.ndarray:
@@ -232,6 +277,19 @@ class DiffusionPolicy:
         policy.model.load_state_dict(payload["model"])
         policy.optimizer.load_state_dict(payload["optimizer"])
         return policy
+
+    def _epsilon_loss(
+        self,
+        condition: torch.Tensor,
+        actions: torch.Tensor,
+        noise: torch.Tensor,
+        timesteps: torch.Tensor,
+    ) -> torch.Tensor:
+        """Add noise at the given timesteps, predict it, and return the MSE."""
+
+        noisy_actions = self.scheduler.add_noise(actions, noise, timesteps)
+        predicted_noise = self.model(noisy_actions, timesteps, condition)
+        return nn.functional.mse_loss(predicted_noise, noise)
 
     def _prepare_observations(
         self, observations: dict[str, Tensor]
@@ -326,23 +384,36 @@ class DiffusionPolicy:
             raise ValueError("state values must be finite")
         return image.copy(), state.copy()
 
+    def _denoise(
+        self, condition: torch.Tensor, *, generator: torch.Generator | None = None
+    ) -> torch.Tensor:
+        """Run the DDPM reverse process and return the full normalized sample.
+
+        Assumes the model is already in eval mode; shared by ``act()`` and
+        ``evaluate()``.
+        """
+
+        sample = torch.randn(
+            (condition.shape[0], self.config.prediction_horizon, ACTION_DIM),
+            device=self.device,
+            generator=generator,
+        )
+        self.scheduler.set_timesteps(self.config.inference_steps, device=self.device)
+        for timestep in self.scheduler.timesteps:
+            predicted_noise = self.model(sample, timestep, condition)
+            sample = self.scheduler.step(
+                predicted_noise, timestep, sample, generator=generator
+            ).prev_sample
+        return sample
+
     def _sample(self, images: torch.Tensor, states: torch.Tensor) -> list[np.ndarray]:
+        """Sample one action chunk for ``act()`` and return physical-unit actions."""
+
         was_training = self.model.training
         self.model.eval()
         try:
             condition = self.model.encode_observation(images, states)
-            sample = torch.randn(
-                (images.shape[0], self.config.prediction_horizon, ACTION_DIM),
-                device=self.device,
-            )
-            self.scheduler.set_timesteps(
-                self.config.inference_steps, device=self.device
-            )
-            for timestep in self.scheduler.timesteps:
-                predicted_noise = self.model(sample, timestep, condition)
-                sample = self.scheduler.step(
-                    predicted_noise, timestep, sample
-                ).prev_sample
+            sample = self._denoise(condition)
         finally:
             self.model.train(was_training)
 
