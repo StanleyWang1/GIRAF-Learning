@@ -165,7 +165,11 @@ class DinoV2Encoder(nn.Module):
         images = _normalize_imagenet(images)
         tokens = self.backbone.forward_features(images)["x_norm_patchtokens"]
         batch, num_patches, embed_dim = tokens.shape
-        grid = int(math.isqrt(num_patches))
+        grid = math.isqrt(num_patches)
+        if grid * grid != num_patches:
+            raise ValueError(
+                f"DINOv2 returned {num_patches} patch tokens, expected a square grid"
+            )
         features = tokens.transpose(1, 2).reshape(batch, embed_dim, grid, grid)
         return self.project(self.spatial_softmax(features))
 
