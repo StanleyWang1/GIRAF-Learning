@@ -120,14 +120,68 @@ class ResNetEncoder(nn.Module):
         return self.project(self.spatial_softmax(features))
 
 
+class DinoV2Encoder(nn.Module):
+    """Frozen DINOv2 backbone with a spatial-softmax keypoint head."""
+
+    def __init__(
+        self,
+        output_dim: int,
+        *,
+        backbone: nn.Module | None = None,
+        model_name: str = "dinov2_vits14",
+        patch_size: int = 14,
+        num_keypoints: int = 32,
+    ) -> None:
+        super().__init__()
+        if backbone is None:
+            backbone = torch.hub.load("facebookresearch/dinov2", model_name)
+        self.backbone = backbone
+        self.backbone.requires_grad_(False)
+        self.backbone.eval()
+        self.patch_size = patch_size
+        self.spatial_softmax = SpatialSoftmax(backbone.embed_dim, num_keypoints)
+        self.project = nn.Linear(2 * num_keypoints, output_dim)
+
+    def train(self, mode: bool = True) -> DinoV2Encoder:
+        """Set training mode on this module while keeping the backbone in eval mode."""
+
+        super().train(mode)
+        self.backbone.eval()
+        return self
+
+    def forward(self, images: torch.Tensor) -> torch.Tensor:
+        """Encode a [N, 3, H, W] image batch in [0, 1] to [N, output_dim]."""
+
+        height, width = images.shape[-2:]
+        target_height = math.ceil(height / self.patch_size) * self.patch_size
+        target_width = math.ceil(width / self.patch_size) * self.patch_size
+        if (target_height, target_width) != (height, width):
+            images = F.interpolate(
+                images,
+                size=(target_height, target_width),
+                mode="bilinear",
+                align_corners=False,
+            )
+        images = _normalize_imagenet(images)
+        tokens = self.backbone.forward_features(images)["x_norm_patchtokens"]
+        batch, num_patches, embed_dim = tokens.shape
+        grid = int(math.isqrt(num_patches))
+        features = tokens.transpose(1, 2).reshape(batch, embed_dim, grid, grid)
+        return self.project(self.spatial_softmax(features))
+
+
 def build_encoder(name: str, output_dim: int) -> nn.Module:
-    """Construct the named image encoder ("conv" or "resnet18")."""
+    """Construct the named image encoder ("conv", "resnet18", or "dinov2")."""
 
     if name == "conv":
         return ConvEncoder(output_dim)
     if name == "resnet18":
         return ResNetEncoder(output_dim)
-    raise ValueError(f"unknown encoder {name!r}, expected one of: conv, resnet18")
+    if name == "dinov2":
+        return DinoV2Encoder(output_dim)
+    raise ValueError(
+        f"unknown encoder {name!r}, expected one of: conv, resnet18, dinov2"
+    )
 
 
 class SinusoidalEmbedding(nn.Module):
