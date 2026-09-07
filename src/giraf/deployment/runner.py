@@ -18,6 +18,7 @@ import numpy as np
 import torch
 
 from giraf.data.config import CollectorConfig, load_config
+from giraf.data.schema import GRASP_INDEX
 from giraf.learning import DiffusionPolicy
 from giraf.settings import CONTROL_HZ
 
@@ -700,7 +701,12 @@ def run(config: DeploymentConfig) -> Path:
                 # A synchronous diffusion sample can take longer than one 30 Hz
                 # action period. Hold zero while sampling rather than extending
                 # the previous velocity command for an unintended duration.
-                runtime.set_action(np.zeros(7, dtype=np.float32))
+                # Preserve the current gripper command; zeroing all seven
+                # channels would force the gripper open during every replan.
+                hold_action = np.zeros(7, dtype=np.float32)
+                with runtime.lock:
+                    hold_action[GRASP_INDEX] = runtime.action[GRASP_INDEX]
+                runtime.set_action(hold_action)
             raw_action = policy.act({"camera_rgb": image, "state": state})
             inference_latency = time.monotonic() - inference_started
             if replanning:
