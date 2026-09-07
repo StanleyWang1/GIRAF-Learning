@@ -11,6 +11,7 @@ data, and learning code are separate packages with explicit boundaries.
 ├── config/data_collection.yaml   # collection settings
 ├── src/giraf/
 │   ├── data/                     # capture, alignment, Zarr storage, replay
+│   ├── deployment/               # guarded live policy trials and rollout logs
 │   ├── drivers/                  # camera, input, OptiTrack, and motor adapters
 │   ├── learning/                 # policy/environment contracts and loops
 │   ├── viewer/                   # read-only local dataset web viewer
@@ -408,9 +409,162 @@ history = train(policy, dataset, epochs=1)
 policy = DiffusionPolicy.load("checkpoints/tape_grasping/policy.pt", device="cpu")
 ```
 
-Still missing: evaluation rollouts, which need the MuJoCo simulator backend.
+### Deployment
+
+Run the deployment prototype with `python -m giraf.deployment`; there is no
+`giraf-deploy` entry point. It loads one checkpoint and runs a bounded trial
+using live camera RGB and command-derived robot state.
+
+**Compatibility:** `conv`, `resnet18`, and `dinov2` checkpoints use the shared
+policy loader and inference path. The saved encoder, center crop, image/state
+normalization, EMA weights when present, action horizon, and temporal ensembling
+are applied automatically. Training-time color jitter is disabled. DINOv2
+initialization uses `torch.hub`, so its backbone code and pretrained weights
+must be cached or downloadable on the deployment machine. Checkpoints must
+contain a normalizer and use `action_space="twist"`; `joint_position` policies
+are explicitly rejected before motors are opened.
+
+#### Prepare and check command generation
+
+Run from the repository root. Sync the environment after pulling learning-code
+changes; the encoders require `torchvision`, including when loading an older
+conv checkpoint:
+
+```bash
+uv sync --frozen --extra hardware
+uv run --frozen --extra hardware python -m giraf.deployment --help
+```
+
+All modes use the live camera and Linux keyboard input. Stop teleop and any
+other process using those devices before launching deployment. OptiTrack is
+not used by the standalone deployment runner.
+
+| Mode | Behavior |
+| --- | --- |
+| `shadow` (default) | Reports policy outputs with a fixed logical joint pose; motors are not opened. |
+| `dry-run` | Integrates bounded commands into a simulated joint pose; motors are not opened. |
+| `hardware` | Connects motors, stages to the recorded start, and executes bounded policy commands. |
+
+Dry-run uses live images even as the simulated joint pose changes. It checks
+command generation and limits; it does not simulate the visual consequences of
+motion or evaluate task success.
+
+For the September ResNet checkpoint, begin with:
+
+```bash
+uv run --frozen --extra hardware python -m giraf.deployment \
+  --checkpoint checkpoints/tape_grasping/nautilus-policy-v2-resnet/best.pt \
+  --reference-dataset data/tape_grasping/sept03_trials.zarr \
+  --reference-episode 16 \
+  --config config/tape_grasping.yaml \
+  --device cuda \
+  --mode dry-run \
+  --action-scale 0.2 \
+  --duration 5
+```
+
+The runner prints a no-motion inference preview. Release SPACE to arm the
+trial, then hold SPACE to run it. Releasing SPACE during the trial stops the
+program; `Ctrl-C` also stops it. Use `--mode shadow` for a fixed logical pose.
+
+Replace `--checkpoint` to try another model. `best.pt` is selected by validation
+action MSE; `policy.pt` is the latest saved model, and `policy_epoch_NNNN.pt`
+selects a particular epoch. Choose a zero-based `--reference-episode` from a
+dataset for the same task and a scene you can reproduce. The runner uses that
+episode's first recorded joint pose and saves its image for comparison; policy
+inference uses the live image. `--config` supplies camera settings and the
+dataset RGB resize, which should match training (224 x 224 here). The runner
+checks the reference image shape against this configuration.
+
+These commands retain the checkpoint's inference schedule: this ResNet model
+uses 16 inference steps. Its 100 diffusion training steps are a separate
+setting. `--inference-steps N` overrides inference only and must not exceed the
+checkpoint's diffusion steps. Inspect preview and rollout latency before
+changing it; an override can change policy quality. The older conv trial used
+an explicit 10-step override, which is not a requirement for newer models.
+
+#### Run on the robot
+
+Before launching hardware mode, put the physical robot at the same teleop home
+pose used for collection. The MAB driver zeros its encoders on connection, and
+the runner initializes its commanded joints to `[0, 0, 0.31, 0, 0, 0]`. Starting
+at another physical pose would give the commands the wrong coordinate frame.
+Position the camera, object, and surroundings like the selected demonstration.
+Keep the physical kill switch reachable and remain at the terminal during motion.
+
+```bash
+uv run --frozen --extra hardware python -m giraf.deployment \
+  --checkpoint checkpoints/tape_grasping/nautilus-policy-v2-resnet/best.pt \
+  --reference-dataset data/tape_grasping/sept03_trials.zarr \
+  --reference-episode 16 \
+  --config config/tape_grasping.yaml \
+  --device cuda \
+  --mode hardware \
+  --action-scale 0.2 \
+  --duration 5 \
+  --confirm-hardware
+```
+
+1. Begin with SPACE released. Motor connections initialize the home targets.
+2. Hold SPACE continuously to stage slowly to the recorded start. Releasing
+   before staging completes stops the program and closes the motor interfaces.
+3. When staging completes, release SPACE. Review the printed raw action,
+   guarded action, joint velocity, and inference latency from the preview.
+4. Hold SPACE again to start the rollout. The five-second duration starts here,
+   after staging and preview. Release SPACE or press `Ctrl-C` to stop.
+
+The default `--action-scale 0.2` scales the six twist channels and their hard
+velocity ceilings to 20%; it does not scale staging speeds or grasp. Increase
+the scale or `--duration` deliberately after reviewing a short trial. CUDA is
+the default device; `--device cpu` is available, but inference must still meet
+the configured freshness limits.
+
+Grasp defaults to an **open command**, not an unpowered gripper. Add
+`--allow-grasp` to let the policy select open/closed after reviewing arm motion.
+There is a current limitation: each synchronous replan temporarily sets all
+seven action channels to zero. This holds the commanded arm pose during
+inference and also commands the gripper open, even with `--allow-grasp`.
+Brief holds can coexist with visually smooth motion. The command interruption
+does not establish how much the gripper physically moves or explain a failed
+manipulation on its own; inspect it when evaluating grasp behavior.
+
+#### Logs, limits, and handoff
+
+Each invocation creates `deployment_runs/YYYYMMDD-HHMMSS/` containing:
+
+- `config.json`: checkpoint path and deployment options;
+- `events.jsonl`: staging, preview, policy outputs, inference latency, control
+  commands, and the final stop reason;
+- `camera.mp4`: live camera video, unless `--no-video` is set;
+- `reference_start.png`: the selected episode's starting image.
+
+Use `--log-dir PATH` for a custom, unused run directory. To review a run:
+
+```bash
+ls -lt deployment_runs
+tail -n 30 deployment_runs/YYYYMMDD-HHMMSS/events.jsonl
+```
+
+The executor clamps twists, caps joint speeds, enforces joint limits, and
+checks rollout state against checkpoint training bounds (`--state-margin 0.05`
+by default). It stops on stale actions (`--action-timeout 0.5` seconds), stale
+frames (`--max-frame-age 0.15` seconds), deadman release, or the duration limit.
+State and staging completion are command-derived; measured joint arrival is
+not verified. There is no collision detection, contact sensing, or automatic
+task-success evaluation. Retain the run directory when reporting trial results.
+
+Matching a recorded start is a requirement of this prototype's initialization,
+not of diffusion policies in general. It supplies a known commanded pose and a
+familiar starting scene. Direct teleop/policy handoff is not implemented:
+releasing SPACE ends this runner rather than returning control to teleop.
+A future shared session could preserve motor calibration and joint/gripper
+state while switching action sources, resetting policy history, and
+re-anchoring teleop. Until then, each hardware launch requires physical home
+and staging again.
 
 ### MuJoCo drop-in
+
+Automated simulation evaluation still requires a MuJoCo backend.
 
 Pass the existing Gym/Gymnasium-style MuJoCo environment directly to the
 adapter:
