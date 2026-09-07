@@ -21,6 +21,7 @@ wandb_key.txt
 
 # Runtime and experiment output
 /data/
+/deployment_runs/
 checkpoints/
 runs/
 wandb/
