@@ -16,10 +16,9 @@ class CameraConfig:
     fps: float = 30.0
 
 
-# TODO: IMU settings are validated and stored but no IMU producer, ring buffer,
-# alignment, or Zarr arrays exist yet. The DepthAI IMU feed is still to be built.
 @dataclass(frozen=True, slots=True)
 class ImuConfig:
+    enabled: bool = True
     report_rate_hz: int = 100
     queue_size: int = 200
     batch_report_threshold: int = 1
@@ -77,6 +76,8 @@ class CollectorConfig:
         )
         if camera.width <= 0 or camera.height <= 0 or camera.fps <= 0:
             raise ValueError("camera dimensions and fps must be positive")
+        if not isinstance(imu.enabled, bool):
+            raise ValueError("IMU enabled must be a boolean")
         if not 1 <= imu.report_rate_hz <= 100:
             raise ValueError("IMU report_rate_hz must be between 1 and 100")
         if (

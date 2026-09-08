@@ -10,6 +10,8 @@ import numpy as np
 import zarr
 
 from .config import CollectorConfig
+from .imu import IMU_FIELDS, IMU_STREAMS
+from .imu_storage import append_streams, initialize_streams, recover_streams
 from .schema import (
     ACTION_FIELDS,
     EPISODE_META_KEYS,
@@ -57,6 +59,20 @@ class ReplayBufferWriter:
                 compressor=None,
             )
         self._set_schema_attributes()
+        if self.n_episodes and (
+            not set(TIME_DATA_KEYS).issubset(self.data.array_keys())
+            or not set(EPISODE_META_KEYS).issubset(self.meta.array_keys())
+        ):
+            raise RuntimeError("committed v2 dataset is missing required arrays")
+        if self.n_episodes and "imu" not in self.root:
+            raise RuntimeError("committed v2 dataset is missing IMU streams")
+        if not self.n_episodes:
+            initialize_streams(
+                self.root,
+                config.dataset.imu_zarr_chunk_length,
+                disk_compressor(),
+                committed=True,
+            )
         self.recover_uncommitted_tail()
 
     def _set_schema_attributes(self) -> None:
@@ -65,12 +81,20 @@ class ReplayBufferWriter:
         if existing is not None and existing != SCHEMA_VERSION:
             raise RuntimeError(
                 f"dataset schema is {existing!r}, expected {SCHEMA_VERSION!r}"
+                "; choose a fresh dataset output directory (no automatic migration)"
             )
         expected = {
             "schema_version": SCHEMA_VERSION,
             "action_fields": list(ACTION_FIELDS),
             "joint_fields": list(JOINT_FIELDS),
             "state_fields": list(STATE_FIELDS),
+            "imu_fields": list(IMU_FIELDS),
+            "imu_sensor_order": list(IMU_STREAMS),
+            "imu_enabled": self.config.imu.enabled,
+            "max_imu_age_ms": self.config.alignment.max_imu_age_ms,
+            "imu_alignment": "latest already-received report at or before camera capture; no host filtering",
+            "imu_missing": "NaN values, -1 timestamp/sequence/age, available=0, valid=0",
+            "imu_validity": "available, finite, age within threshold; quaternion norm 0.9..1.1; accuracy saved separately",
             "state_semantics": "command-derived; not measured hardware feedback",
             "grasp_semantics": "operator command; not contact sensing",
             "image_layout": "THWC RGB uint8",
@@ -81,7 +105,13 @@ class ReplayBufferWriter:
                 "host dispatch calls returned successfully; not hardware feedback"
             ),
         }
-        for key in ("aligned_hz", "resize_dim", "resize_mode"):
+        for key in (
+            "aligned_hz",
+            "resize_dim",
+            "resize_mode",
+            "imu_enabled",
+            "max_imu_age_ms",
+        ):
             if key in attrs and attrs[key] != expected[key]:
                 raise RuntimeError(
                     f"dataset attribute {key}={attrs[key]!r} does not match "
@@ -119,6 +149,7 @@ class ReplayBufferWriter:
             if array.shape[0] > committed_steps:
                 array.resize((committed_steps,) + array.shape[1:])
         committed_episodes = self.n_episodes
+        recover_streams(self.root, committed_episodes)
         for key in EPISODE_META_KEYS:
             if key in self.meta:
                 array = self.meta[key]
@@ -188,15 +219,29 @@ class ReplayBufferWriter:
             "episode_start_monotonic_ns": np.int64(start_monotonic_ns),
             "episode_valid_steps": np.int64(valid_steps),
             "episode_invalid_steps": np.int64(invalid_steps),
+            "episode_stop_monotonic_ns": np.int64(
+                stage_group.attrs["episode_stop_monotonic_ns"]
+            ),
+            "episode_imu_valid_steps": np.int64(
+                stage_group.attrs["episode_imu_valid_steps"]
+            ),
+            "episode_imu_session_id": np.asarray(
+                stage_group.attrs["imu_acquisition"]["session_id"], dtype="U32"
+            ),
         }
         episode_index = self.n_episodes
+        append_streams(stage_group, self.root, episode_index)
+        acquisition = stage_group.attrs["imu_acquisition"]
+        sessions = dict(self.root.attrs.get("imu_sessions", {}))
+        sessions[acquisition["session_id"]] = acquisition
+        self.root.attrs["imu_sessions"] = sessions
         for key, value in episode_meta.items():
             if key not in self.meta:
                 self.meta.create_dataset(
                     key,
                     shape=(episode_index,),
                     chunks=(1024,),
-                    dtype=np.int64,
+                    dtype=np.asarray(value).dtype,
                     compressor=None,
                 )
             target = self.meta[key]

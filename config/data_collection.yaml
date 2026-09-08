@@ -4,15 +4,16 @@ camera:
   fps: 30.0
 
 imu:
+  enabled: true
   report_rate_hz: 100
   queue_size: 200
   batch_report_threshold: 1
   max_batch_reports: 10
 
 dataset:
-  output_dir: data/demos
-  zarr_name: replay_buffer.zarr
-  episode_dir_name: videos
+  output_dir: data/imu_test
+  zarr_name: imu_test.zarr
+  episode_dir_name: imu_test_videos
   aligned_hz: 30.0
   resize_dim: [224, 224]
   resize_mode: stretch

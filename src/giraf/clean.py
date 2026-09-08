@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import zarr
 
+from .data.imu_storage import copy_pruned_streams, segment_time_bounds, validate_streams
 from .data.schema import GRASP_INDEX
 from .diagnostics import (
     array_missing_chunk_rows,
@@ -337,6 +338,15 @@ def _copy_episode_metadata(source_root, target_root, segments: list[Segment]) ->
             target_meta["episode_valid_steps"][:] = valid_counts
         if "episode_invalid_steps" in target_meta:
             target_meta["episode_invalid_steps"][:] = lengths - valid_counts
+    if "episode_stop_monotonic_ns" in target_meta:
+        target_meta["episode_stop_monotonic_ns"][:] = [
+            segment_time_bounds(source_root, s)[1] for s in segments
+        ]
+    if "episode_imu_valid_steps" in target_meta:
+        target_meta["episode_imu_valid_steps"][:] = [
+            np.count_nonzero(source_root["data/imu_valid"][s.start : s.stop])
+            for s in segments
+        ]
 
 
 def _write_clean_copy(
@@ -360,6 +370,10 @@ def _write_clean_copy(
             target = _create_array_like(target_data, name, source, output_steps)
             _copy_segments(source, target, segments)
         _copy_episode_metadata(source_root, target_root, segments)
+        if "imu" in source_root:
+            validate_streams(source_root, len(source_root["meta/episode_ends"]))
+            copy_pruned_streams(source_root, target_root, segments)
+            validate_streams(target_root, len(segments))
 
         _target_root, _target_ends, target_audits = audit_replay_buffer(temporary)
         unhealthy = [audit.episode for audit in target_audits if not audit.healthy]

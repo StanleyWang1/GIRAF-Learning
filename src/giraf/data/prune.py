@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 
+from .imu_storage import copy_pruned_streams, segment_time_bounds, validate_streams
 from .schema import GRASP_INDEX
 
 
@@ -54,6 +55,8 @@ def _episode_ends(root) -> np.ndarray:
 
 
 def _validate_dataset(root, ends: np.ndarray) -> int:
+    if "imu" in root:
+        validate_streams(root, len(ends))
     if "data" not in root or "action" not in root["data"]:
         raise RuntimeError("dataset is missing data/action")
     if "timestamp_ns" not in root["data"]:
@@ -258,6 +261,14 @@ def _copy_episode_metadata(source_root, target_root, segments) -> None:
             target_meta["episode_valid_steps"][:] = valid_counts
         if "episode_invalid_steps" in target_meta:
             target_meta["episode_invalid_steps"][:] = lengths - valid_counts
+    if "episode_stop_monotonic_ns" in target_meta:
+        target_meta["episode_stop_monotonic_ns"][:] = [
+            segment_time_bounds(source_root, s)[1] for s in segments
+        ]
+    if "episode_imu_valid_steps" in target_meta:
+        target_meta["episode_imu_valid_steps"][:] = [
+            np.count_nonzero(data["imu_valid"][s.start : s.stop]) for s in segments
+        ]
 
 
 def _write_pruned_copy(
@@ -288,6 +299,7 @@ def _write_pruned_copy(
             target = _create_array_like(target_data, name, source, kept_steps)
             _copy_data(source, target, segments)
         _copy_episode_metadata(source_root, target_root, segments)
+        copy_pruned_streams(source_root, target_root, segments)
         temporary.replace(output)
     except BaseException:
         shutil.rmtree(temporary, ignore_errors=True)

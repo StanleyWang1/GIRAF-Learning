@@ -8,6 +8,9 @@ from typing import Any
 import numpy as np
 import zarr
 
+# Keep this reader usable without importing collection/video modules.
+READABLE_SCHEMA_VERSIONS = ("giraf-replay-v1", "giraf-replay-v2")
+
 TIMESTAMP_KEYS = {
     "timestamp",
     "timestamp_ns",
@@ -66,10 +69,8 @@ class GirafDataset:
 
         self.attrs = _plain(dict(self.root.attrs))
         schema_version = self.attrs.get("schema_version")
-        if schema_version != "giraf-replay-v1":
-            raise DatasetFormatError(
-                f"expected schema_version='giraf-replay-v1', found {schema_version!r}"
-            )
+        if schema_version not in READABLE_SCHEMA_VERSIONS:
+            raise DatasetFormatError(f"unsupported schema_version: {schema_version!r}")
 
         self.episode_ends = np.asarray(self.meta["episode_ends"][:], dtype=np.int64)
         if self.episode_ends.ndim != 1:
@@ -470,7 +471,13 @@ class GirafDataset:
             if key in MILLISECOND_KEYS:
                 names = [name.removesuffix("_ns") + "_ms" for name in names]
             series[key] = [
-                {"name": names[channel], "values": values[:, channel].tolist()}
+                {
+                    "name": names[channel],
+                    "values": [
+                        float(value) if np.isfinite(value) else None
+                        for value in values[:, channel]
+                    ],
+                }
                 for channel in range(values.shape[1])
             ]
 

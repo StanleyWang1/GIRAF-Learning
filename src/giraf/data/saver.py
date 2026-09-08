@@ -9,8 +9,9 @@ from typing import Any
 
 from .config import CollectorConfig
 from .episode_stage import EpisodeStage
+from .imu import IMU_STOP_GRACE_S
 from .replay_buffer import ReplayBufferWriter
-from .shared_memory import SharedMemoryRingBuffer
+from .shared_memory import RingBufferOverrun, SharedMemoryRingBuffer
 
 
 class SaverProcess(mp.Process):
@@ -24,10 +25,17 @@ class SaverProcess(mp.Process):
         self,
         config: CollectorConfig,
         aligned_ring: SharedMemoryRingBuffer,
+        imu_rings: dict | None = None,
+        imu_dropped: dict | None = None,
     ) -> None:
         super().__init__(name="dataset-saver")
         self.config = config
         self.aligned_ring = aligned_ring
+        self.imu_rings = imu_rings or {}
+        self.imu_dropped = imu_dropped or {}
+        self._imu_dropped_start = {}
+        self.imu_metadata = {"enabled": False, "session_id": ""}
+        self._imu_cursors = {}
         self.ready_event = mp.Event()
         self.parent_connection, self.child_connection = mp.Pipe(duplex=True)
         self._request_id = 0
@@ -50,6 +58,7 @@ class SaverProcess(mp.Process):
                 if self.child_connection.poll(0.005):
                     self._serve(self.child_connection.recv())
                 if self._stage is not None:
+                    self._drain_imu()
                     self._drain(self.aligned_ring.count)
         except BaseException:
             if self._stage is not None:
@@ -90,6 +99,9 @@ class SaverProcess(mp.Process):
         )
 
     def _handle(self, operation: str, command: dict[str, Any]) -> dict[str, Any]:
+        if operation == "configure_imu":
+            self.imu_metadata = command["metadata"]
+            return {"configured": True}
         if operation == "start":
             return self._start_episode(command)
         if operation == "stop":
@@ -112,7 +124,16 @@ class SaverProcess(mp.Process):
             self.config,
             start_wall_time_ns=int(command["start_wall_time_ns"]),
             start_monotonic_ns=int(command["start_monotonic_ns"]),
+            imu_metadata=self.imu_metadata,
         )
+        self._imu_cursors = {
+            name: max(0, ring.count - ring.get_max_k)
+            for name, ring in self.imu_rings.items()
+        }
+        self._imu_dropped_start = {
+            name: counter.value for name, counter in self.imu_dropped.items()
+        }
+        self._drain_imu()
         return {"started": True}
 
     def _stop_episode(self, command: dict[str, Any]) -> dict[str, Any]:
@@ -121,6 +142,26 @@ class SaverProcess(mp.Process):
         assert self._writer is not None
         self._drain(int(command["end_count"]))
         stage = self._stage
+        stop_ns = int(command["stop_monotonic_ns"])
+        stage.stop_monotonic_ns = stop_ns
+        deadline = time.monotonic() + IMU_STOP_GRACE_S
+        while self.imu_rings:
+            self._drain_imu()
+            try:
+                crossed = all(
+                    ring.count and int(ring.get()["timestamp_ns"]) >= stop_ns
+                    for ring in self.imu_rings.values()
+                )
+            except (RingBufferOverrun, TimeoutError):
+                crossed = False
+            if crossed or time.monotonic() >= deadline:
+                break
+            time.sleep(0.005)
+        stage.finish_imu(stop_ns)
+        stage.group.attrs["requested_stop_monotonic_ns"] = int(
+            command.get("requested_stop_monotonic_ns", stop_ns)
+        )
+        self._update_imu_losses()
         if stage.length == 0:
             path = stage.reject("empty episode")
             self._stage = None
@@ -148,6 +189,34 @@ class SaverProcess(mp.Process):
             for index in range(stop - self._cursor):
                 self._stage.append({key: value[index] for key, value in batch.items()})
             self._cursor = stop
+            self._drain_imu()
+
+    def _drain_imu(self) -> None:
+        assert self._stage is not None
+        for name, ring in self.imu_rings.items():
+            end = ring.count
+            cursor = self._imu_cursors[name]
+            oldest = max(0, end - ring.buffer_size)
+            if cursor < oldest:
+                self._stage.imu_saver_dropped[name] += oldest - cursor
+                cursor = oldest
+            while cursor < end:
+                stop = min(end, cursor + ring.get_max_k)
+                try:
+                    batch = ring.get_range(cursor, stop)
+                except (RingBufferOverrun, TimeoutError):
+                    # Recover on the next pass, retaining an explicit loss count.
+                    break
+                self._stage.append_imu(name, batch)
+                cursor = stop
+            self._imu_cursors[name] = cursor
+        self._update_imu_losses()
+
+    def _update_imu_losses(self) -> None:
+        for name, counter in self.imu_dropped.items():
+            self._stage.imu_producer_dropped[name] = int(
+                counter.value - self._imu_dropped_start[name]
+            )
 
     # -- parent side --------------------------------------------------------
 

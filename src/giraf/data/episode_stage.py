@@ -14,6 +14,8 @@ import numpy as np
 import zarr
 
 from .config import CollectorConfig
+from .imu import IMU_ALIGNED_KEYS, IMU_PRE_ROLL_NS, IMU_STREAMS, report_example
+from .imu_storage import initialize_streams
 from .replay_buffer import ReplayBufferWriter, disk_compressor, git_revision
 from .schema import SCHEMA_VERSION, TIME_DATA_KEYS
 
@@ -29,16 +31,27 @@ class EpisodeStage:
         *,
         start_wall_time_ns: int,
         start_monotonic_ns: int,
+        imu_metadata: dict | None = None,
     ) -> None:
         self.config = config
         self.start_wall_time_ns = int(start_wall_time_ns)
         self.start_monotonic_ns = int(start_monotonic_ns)
+        self.stop_monotonic_ns = 0
+        self.imu_metadata = imu_metadata or {"enabled": False, "session_id": ""}
         self.token = uuid.uuid4().hex
         self.directory = config.dataset.output_dir / ".partial" / self.token
         self.directory.mkdir(parents=True, exist_ok=False)
         self.zarr_path = self.directory / "episode.zarr"
         self.group = zarr.open_group(str(self.zarr_path), mode="w")
         self.data = self.group.require_group("data")
+        self.group.attrs["imu_acquisition"] = self.imu_metadata
+        initialize_streams(
+            self.group, config.dataset.imu_zarr_chunk_length, disk_compressor()
+        )
+        self.imu_batch = {name: [] for name in IMU_STREAMS}
+        self.imu_saver_dropped = dict.fromkeys(IMU_STREAMS, 0)
+        self.imu_producer_dropped = dict.fromkeys(IMU_STREAMS, 0)
+        self.imu_valid_steps = 0
         self.batch: dict[str, list[np.ndarray]] = {key: [] for key in TIME_DATA_KEYS}
         self.length = 0
         self.valid_steps = 0
@@ -84,6 +97,7 @@ class EpisodeStage:
             )
         )
         converted = {
+            **{key: sample[key] for key in IMU_ALIGNED_KEYS},
             "timestamp": np.float64(timestamp_ns / 1_000_000_000.0),
             "timestamp_ns": np.int64(timestamp_ns),
             "camera_rgb": resized.astype(np.uint8, copy=False),
@@ -124,6 +138,7 @@ class EpisodeStage:
         for key in TIME_DATA_KEYS:
             self.batch[key].append(np.asarray(converted[key]))
         self.length += 1
+        self.imu_valid_steps += int(bool(converted["imu_valid"]))
         if bool(converted["alignment_valid"]):
             self.valid_steps += 1
         else:
@@ -155,12 +170,76 @@ class EpisodeStage:
 
     def close(self) -> None:
         self.flush()
+        self.flush_imu()
         if self.video_stream is not None and self.video_container is not None:
             for packet in self.video_stream.encode():
                 self.video_container.mux(packet)
             self.video_container.close()
             self.video_stream = None
             self.video_container = None
+
+    def append_imu(self, name: str, batch: dict) -> None:
+        for index, value in enumerate(batch["timestamp_ns"]):
+            if int(value) < self.start_monotonic_ns - IMU_PRE_ROLL_NS:
+                continue
+            if self.stop_monotonic_ns and int(value) > self.stop_monotonic_ns:
+                continue
+            self.imu_batch[name].append(
+                {key: array[index] for key, array in batch.items()}
+            )
+            if len(self.imu_batch[name]) >= self.config.dataset.imu_zarr_chunk_length:
+                self.flush_imu(name)
+
+    def flush_imu(self, stream: str | None = None) -> None:
+        for name in (stream,) if stream else IMU_STREAMS:
+            pending = self.imu_batch[name]
+            group = self.group[f"imu/{name}"]
+            if pending:
+                for key in report_example(name):
+                    array = group[key]
+                    start = len(array)
+                    array.resize((start + len(pending),) + array.shape[1:])
+                    array[start:] = np.stack([sample[key] for sample in pending])
+                pending.clear()
+            group.attrs["saver_dropped"] = self.imu_saver_dropped[name]
+            group.attrs["producer_dropped"] = self.imu_producer_dropped[name]
+
+    def finish_imu(self, stop_ns: int) -> None:
+        self.stop_monotonic_ns = int(stop_ns)
+        self.flush_imu()
+        # The saver can consume reports beyond a delayed stop event before it
+        # receives that event. Trim those reports, including already-flushed ones.
+        for name in IMU_STREAMS:
+            group = self.group[f"imu/{name}"]
+            count = int(
+                np.searchsorted(group["timestamp_ns"][:], stop_ns, side="right")
+            )
+            for key in report_example(name):
+                array = group[key]
+                array.resize((count,) + array.shape[1:])
+        self.group.attrs["episode_stop_monotonic_ns"] = int(stop_ns)
+        self.group.attrs["episode_imu_valid_steps"] = self.imu_valid_steps
+
+    def imu_statistics(self) -> dict:
+        result = {"valid_steps": self.imu_valid_steps, "streams": {}}
+        for name in IMU_STREAMS:
+            group = self.group[f"imu/{name}"]
+            times = np.asarray(group["timestamp_ns"][:], dtype=np.int64)
+            count = len(times)
+            drops = group["producer_dropped_total"][:]
+            result["streams"][name] = {
+                "reports_including_pre_roll": count,
+                "rate_hz": float((count - 1) * 1e9 / (times[-1] - times[0]))
+                if count > 1 and times[-1] > times[0]
+                else None,
+                "sequence_gap_reports": int(np.sum(group["sequence_gap"][:])),
+                "saver_dropped": self.imu_saver_dropped[name],
+                "producer_dropped_during_recording": self.imu_producer_dropped[name],
+                "producer_dropped_between_retained_reports": int(drops[-1] - drops[0])
+                if count
+                else 0,
+            }
+        return result
 
     def timing_statistics(self) -> dict[str, Any]:
         self.flush()
@@ -202,7 +281,13 @@ class EpisodeStage:
             "start_wall_time_ns": self.start_wall_time_ns,
             "start_monotonic_ns": self.start_monotonic_ns,
             "schema_version": SCHEMA_VERSION,
-            "raw_100hz_retained": False,
+            "imu_full_rate_retained": bool(self.imu_metadata["enabled"]),
+            "imu": self.imu_statistics(),
+            "imu_acquisition": self.imu_metadata,
+            "stop_monotonic_ns": self.stop_monotonic_ns,
+            "requested_stop_monotonic_ns": self.group.attrs.get(
+                "requested_stop_monotonic_ns", self.stop_monotonic_ns
+            ),
             "git_revision": git_revision(),
             "collector_config": self.config.as_dict(),
             "timing": self.timing_statistics(),

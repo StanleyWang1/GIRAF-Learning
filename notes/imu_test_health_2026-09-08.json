@@ -1,0 +1,752 @@
+{
+  "dataset": "/home/giraf/Documents/GIRAF-Learning/data/imu_test/imu_test.zarr",
+  "episodes": [
+    {
+      "episode": 0,
+      "steps": 1539,
+      "recording_duration_s": 51.306292714,
+      "invalid_control_motor_steps": 7,
+      "longest_invalid_run_frames": 1,
+      "invalid_steps_local": [
+        586,
+        660,
+        986,
+        1071,
+        1089,
+        1131,
+        1293
+      ],
+      "imu_valid_steps": 1539,
+      "imu_available_per_sensor": [
+        1539,
+        1539,
+        1539
+      ],
+      "imu_age_ms": {
+        "accelerometer": {
+          "min": 0.005,
+          "median": 5.024,
+          "p95": 13.5634,
+          "p99": 15.274999999999995,
+          "max": 15.688
+        },
+        "gyroscope": {
+          "min": 0.007,
+          "median": 4.971,
+          "p95": 9.531099999999999,
+          "p99": 10.001859999999999,
+          "max": 10.54
+        },
+        "game_rotation_vector": {
+          "min": 0.004,
+          "median": 4.955,
+          "p95": 9.4851,
+          "p99": 9.947439999999999,
+          "max": 10.335
+        }
+      },
+      "imu_age_formula_mismatches": 0,
+      "camera_boundary_ok": true,
+      "first_last_camera_margin_ms": [
+        6.300155,
+        50.974559
+      ],
+      "state_nonfinite": 0,
+      "grasp_transitions": 6,
+      "action_max_abs": [
+        0.15838457643985748,
+        0.18962375819683075,
+        0.17570920288562775,
+        0.36951202154159546,
+        0.5625920295715332,
+        0.6634193658828735,
+        1.0
+      ],
+      "joint_min": [
+        -0.2885471284389496,
+        0.4730752110481262,
+        0.6141968369483948,
+        -1.5026671886444092,
+        -0.30725380778312683,
+        -0.04737577214837074
+      ],
+      "joint_max": [
+        0.09153563529253006,
+        0.8505756855010986,
+        0.9106740355491638,
+        -1.0395185947418213,
+        0.34294289350509644,
+        0.387863427400589
+      ],
+      "streams": {
+        "accelerometer": {
+          "reports": 5233,
+          "rate_hz": 100.05964181937651,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 7.499,
+            "median": 8.223,
+            "p95": 15.855,
+            "p99": 15.92269,
+            "max": 16.241
+          },
+          "receive_latency_ms": {
+            "min": 1.156466,
+            "median": 5.76246,
+            "p95": 11.309253199999999,
+            "p99": 14.11315048,
+            "max": 15.828529
+          },
+          "sequence_gap_reports_including_prefix": 1288,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "0": 5233
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.988489845,
+          "stop_margin_ms": 5.968559,
+          "value_norm": {
+            "min": 3.291538953781128,
+            "median": 9.14218521118164,
+            "p95": 11.62854290008545,
+            "p99": 14.584368019104026,
+            "max": 23.948793411254883
+          }
+        },
+        "gyroscope": {
+          "reports": 5233,
+          "rate_hz": 100.06135451670968,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 9.099,
+            "median": 10.023,
+            "p95": 10.416,
+            "p99": 10.538689999999999,
+            "max": 10.683
+          },
+          "receive_latency_ms": {
+            "min": 3.3619,
+            "median": 4.660577,
+            "p95": 10.176823999999998,
+            "p99": 11.451315000000008,
+            "max": 14.786379
+          },
+          "sequence_gap_reports_including_prefix": 0,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "0": 5233
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.990114845,
+          "stop_margin_ms": 8.488559,
+          "value_norm": {
+            "min": 0.001506511471234262,
+            "median": 0.13144689798355103,
+            "p95": 0.39133616089820855,
+            "p99": 0.5135863852500928,
+            "max": 1.0646644830703735
+          }
+        },
+        "game_rotation_vector": {
+          "reports": 5233,
+          "rate_hz": 100.06169514953801,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 9.373,
+            "median": 10.012,
+            "p95": 10.322,
+            "p99": 10.44169,
+            "max": 10.571
+          },
+          "receive_latency_ms": {
+            "min": 3.492638,
+            "median": 4.746315,
+            "p95": 10.237306799999997,
+            "p99": 11.480611480000002,
+            "max": 14.758379
+          },
+          "sequence_gap_reports_including_prefix": 0,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "3": 5233
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.990108845,
+          "stop_margin_ms": 8.660559,
+          "value_norm": {
+            "min": 0.9999624490737915,
+            "median": 1.0,
+            "p95": 1.0000275373458862,
+            "p99": 1.0000320672988892,
+            "max": 1.0000395774841309
+          }
+        }
+      },
+      "session": "1da70e9ee2f84ef48a7346e8643cf16e",
+      "video": {
+        "decoded_frames": 1539,
+        "matches_zarr_count": true,
+        "rgb_mae_vs_zarr": {
+          "min": 1.3618861607142858,
+          "median": 1.6619499362244898,
+          "p95": 1.8276134672619047,
+          "p99": 1.9089419908588436,
+          "max": 2.0317283163265305
+        },
+        "nonincreasing_pts": 0
+      },
+      "images": {
+        "identical_adjacent_frames": 0,
+        "mean_pixel_change": {
+          "min": 0.4700520833333333,
+          "median": 3.616735756802721,
+          "p95": 6.463495495854589,
+          "p99": 8.259510257227877,
+          "max": 9.617034704506803
+        },
+        "mean_brightness": {
+          "min": 103.58400430484694,
+          "median": 115.81641953656462,
+          "p95": 126.28056374893707,
+          "p99": 130.4808735916241,
+          "max": 136.01324006164967
+        }
+      },
+      "training_windows": {
+        "current_default_windows": 1532,
+        "windows_with_invalid_observation_history": 7,
+        "windows_with_invalid_action_rows": 105
+      }
+    },
+    {
+      "episode": 1,
+      "steps": 636,
+      "recording_duration_s": 21.222758169,
+      "invalid_control_motor_steps": 9,
+      "longest_invalid_run_frames": 1,
+      "invalid_steps_local": [
+        22,
+        93,
+        123,
+        159,
+        195,
+        221,
+        316,
+        345,
+        387
+      ],
+      "imu_valid_steps": 636,
+      "imu_available_per_sensor": [
+        636,
+        636,
+        636
+      ],
+      "imu_age_ms": {
+        "accelerometer": {
+          "min": 0.007,
+          "median": 4.973,
+          "p95": 13.321,
+          "p99": 15.420199999999998,
+          "max": 15.755
+        },
+        "gyroscope": {
+          "min": 0.015,
+          "median": 5.289,
+          "p95": 9.563,
+          "p99": 9.978749999999998,
+          "max": 10.25
+        },
+        "game_rotation_vector": {
+          "min": 0.012,
+          "median": 5.3260000000000005,
+          "p95": 9.64125,
+          "p99": 10.027949999999999,
+          "max": 10.351
+        }
+      },
+      "imu_age_formula_mismatches": 0,
+      "camera_boundary_ok": true,
+      "first_last_camera_margin_ms": [
+        23.665751,
+        39.715418
+      ],
+      "state_nonfinite": 0,
+      "grasp_transitions": 1,
+      "action_max_abs": [
+        0.23566807806491852,
+        0.19106343388557434,
+        0.19777792692184448,
+        0.5141182541847229,
+        1.0,
+        0.6954914927482605,
+        1.0
+      ],
+      "joint_min": [
+        -0.20652985572814941,
+        0.33610793948173523,
+        0.6503604650497437,
+        -1.650488257408142,
+        -0.5776121616363525,
+        -0.3395555019378662
+      ],
+      "joint_max": [
+        0.023409217596054077,
+        0.712118923664093,
+        1.045483112335205,
+        -0.7582716941833496,
+        0.3637228012084961,
+        0.2537271976470947
+      ],
+      "streams": {
+        "accelerometer": {
+          "reports": 2223,
+          "rate_hz": 100.05339483149919,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 7.396,
+            "median": 8.223,
+            "p95": 15.85085,
+            "p99": 15.91579,
+            "max": 16.254
+          },
+          "receive_latency_ms": {
+            "min": 1.152114,
+            "median": 5.700709,
+            "p95": 11.182318000000002,
+            "p99": 13.79762054000001,
+            "max": 16.15972
+          },
+          "sequence_gap_reports_including_prefix": 548,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "0": 2223
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.991797249,
+          "stop_margin_ms": 6.413418,
+          "value_norm": {
+            "min": 3.503082752227783,
+            "median": 9.070247650146484,
+            "p95": 13.1065411567688,
+            "p99": 16.979304122924816,
+            "max": 24.729122161865234
+          }
+        },
+        "gyroscope": {
+          "reports": 2223,
+          "rate_hz": 100.06114898028818,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 9.199,
+            "median": 10.0245,
+            "p95": 10.408,
+            "p99": 10.505790000000001,
+            "max": 10.609
+          },
+          "receive_latency_ms": {
+            "min": 3.468539,
+            "median": 4.722372,
+            "p95": 9.965999,
+            "p99": 11.437339999999999,
+            "max": 12.284849
+          },
+          "sequence_gap_reports_including_prefix": 0,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "0": 2223
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.990286249,
+          "stop_margin_ms": 6.623418,
+          "value_norm": {
+            "min": 0.003195793367922306,
+            "median": 0.16498535871505737,
+            "p95": 0.6389547765254976,
+            "p99": 0.8480885624885567,
+            "max": 1.3358721733093262
+          }
+        },
+        "game_rotation_vector": {
+          "reports": 2223,
+          "rate_hz": 100.0607885051319,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 9.389,
+            "median": 10.0075,
+            "p95": 10.331,
+            "p99": 10.43279,
+            "max": 10.554
+          },
+          "receive_latency_ms": {
+            "min": 3.479353,
+            "median": 4.81378,
+            "p95": 10.0905921,
+            "p99": 11.52271864,
+            "max": 12.405329
+          },
+          "sequence_gap_reports_including_prefix": 0,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "3": 2223
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.990350249,
+          "stop_margin_ms": 6.607418,
+          "value_norm": {
+            "min": 0.9999597072601318,
+            "median": 0.9999988675117493,
+            "p95": 1.0000277757644653,
+            "p99": 1.0000329422950744,
+            "max": 1.0000429153442383
+          }
+        }
+      },
+      "session": "f1f292c4d094468c9a4fd0fd0bf1dc84",
+      "video": {
+        "decoded_frames": 636,
+        "matches_zarr_count": true,
+        "rgb_mae_vs_zarr": {
+          "min": 1.3423549107142858,
+          "median": 1.6050070418792517,
+          "p95": 1.7614496970663267,
+          "p99": 1.844410010097789,
+          "max": 1.9253693664965987
+        },
+        "nonincreasing_pts": 0
+      },
+      "images": {
+        "identical_adjacent_frames": 0,
+        "mean_pixel_change": {
+          "min": 0.4981265943877551,
+          "median": 3.313928305697279,
+          "p95": 5.460224011479591,
+          "p99": 6.491583492772105,
+          "max": 9.004922672193878
+        },
+        "mean_brightness": {
+          "min": 105.8138884460034,
+          "median": 115.45117851828232,
+          "p95": 119.64172280240221,
+          "p99": 120.99365068292941,
+          "max": 121.21436543367346
+        }
+      },
+      "training_windows": {
+        "current_default_windows": 627,
+        "windows_with_invalid_observation_history": 9,
+        "windows_with_invalid_action_rows": 135
+      }
+    },
+    {
+      "episode": 2,
+      "steps": 627,
+      "recording_duration_s": 20.946216481,
+      "invalid_control_motor_steps": 7,
+      "longest_invalid_run_frames": 1,
+      "invalid_steps_local": [
+        14,
+        45,
+        48,
+        142,
+        437,
+        590,
+        617
+      ],
+      "imu_valid_steps": 627,
+      "imu_available_per_sensor": [
+        627,
+        627,
+        627
+      ],
+      "imu_age_ms": {
+        "accelerometer": {
+          "min": 0.012,
+          "median": 5.02,
+          "p95": 13.518999999999991,
+          "p99": 15.26842,
+          "max": 15.709
+        },
+        "gyroscope": {
+          "min": 0.019,
+          "median": 5.341,
+          "p95": 9.548099999999998,
+          "p99": 9.85948,
+          "max": 10.131
+        },
+        "game_rotation_vector": {
+          "min": 0.015,
+          "median": 5.407,
+          "p95": 9.603399999999999,
+          "p99": 9.87836,
+          "max": 10.231
+        }
+      },
+      "imu_age_formula_mismatches": 0,
+      "camera_boundary_ok": true,
+      "first_last_camera_margin_ms": [
+        31.448568,
+        55.277913
+      ],
+      "state_nonfinite": 0,
+      "grasp_transitions": 2,
+      "action_max_abs": [
+        0.12543950974941254,
+        0.11254415661096573,
+        0.12044242024421692,
+        0.256992906332016,
+        0.5046912431716919,
+        0.5040286183357239,
+        1.0
+      ],
+      "joint_min": [
+        -0.16868644952774048,
+        0.44639915227890015,
+        0.5820685029029846,
+        -1.483860969543457,
+        -0.16862228512763977,
+        -0.11843596398830414
+      ],
+      "joint_max": [
+        0.04322502017021179,
+        0.690949559211731,
+        0.8831484913825989,
+        -1.1387393474578857,
+        0.08941096812486649,
+        0.17281295359134674
+      ],
+      "streams": {
+        "accelerometer": {
+          "reports": 2196,
+          "rate_hz": 100.06366693268255,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 7.572,
+            "median": 8.22,
+            "p95": 15.87,
+            "p99": 15.918,
+            "max": 16.469
+          },
+          "receive_latency_ms": {
+            "min": 0.916428,
+            "median": 5.8135895,
+            "p95": 10.96602275,
+            "p99": 14.030113650000004,
+            "max": 16.395821
+          },
+          "sequence_gap_reports_including_prefix": 542,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "0": 2196
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.996119432,
+          "stop_margin_ms": 6.301913,
+          "value_norm": {
+            "min": 3.216923236846924,
+            "median": 9.138556957244873,
+            "p95": 11.977129220962524,
+            "p99": 16.466663455963165,
+            "max": 24.337818145751953
+          }
+        },
+        "gyroscope": {
+          "reports": 2196,
+          "rate_hz": 100.0605103970392,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 9.152,
+            "median": 10.025,
+            "p95": 10.4056,
+            "p99": 10.53212,
+            "max": 10.664
+          },
+          "receive_latency_ms": {
+            "min": 3.507999,
+            "median": 4.819055499999999,
+            "p95": 10.116349249999999,
+            "p99": 11.388281950000007,
+            "max": 13.914161
+          },
+          "sequence_gap_reports_including_prefix": 0,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "0": 2196
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.996158432,
+          "stop_margin_ms": 5.648913,
+          "value_norm": {
+            "min": 0.001065264455974102,
+            "median": 0.10039782151579857,
+            "p95": 0.3904479071497917,
+            "p99": 0.5482631653547294,
+            "max": 0.8389070630073547
+          }
+        },
+        "game_rotation_vector": {
+          "reports": 2196,
+          "rate_hz": 100.06087986563124,
+          "nonincreasing_generation": 0,
+          "nonincreasing_device": 0,
+          "interval_ms": {
+            "min": 9.351,
+            "median": 10.004,
+            "p95": 10.3403,
+            "p99": 10.436359999999999,
+            "max": 10.566
+          },
+          "receive_latency_ms": {
+            "min": 3.639902,
+            "median": 4.884033,
+            "p95": 10.22482725,
+            "p99": 11.489659900000005,
+            "max": 13.942161
+          },
+          "sequence_gap_reports_including_prefix": 0,
+          "sequence_gap_formula_mismatches": 0,
+          "host_saver_drops": 0,
+          "host_producer_drops": 0,
+          "nonfinite_values": 0,
+          "invalid_reports": 0,
+          "accuracy_counts": {
+            "3": 2196
+          },
+          "missing_chunk_rows": {},
+          "aligned_report_not_found": 0,
+          "aligned_sequence_mismatches": 0,
+          "aligned_value_mismatches": 0,
+          "aligned_validity_mismatches": 0,
+          "raw_bounds_ok": true,
+          "pre_roll_s": 0.996067432,
+          "stop_margin_ms": 5.638913,
+          "value_norm": {
+            "min": 0.9999600052833557,
+            "median": 1.000001072883606,
+            "p95": 1.0000276565551758,
+            "p99": 1.000032663345337,
+            "max": 1.00003981590271
+          }
+        }
+      },
+      "session": "f1f292c4d094468c9a4fd0fd0bf1dc84",
+      "video": {
+        "decoded_frames": 627,
+        "matches_zarr_count": true,
+        "rgb_mae_vs_zarr": {
+          "min": 1.397799744897959,
+          "median": 1.6281688456632653,
+          "p95": 1.8046496332908164,
+          "p99": 1.889475180697279,
+          "max": 1.970165019132653
+        },
+        "nonincreasing_pts": 0
+      },
+      "images": {
+        "identical_adjacent_frames": 0,
+        "mean_pixel_change": {
+          "min": 0.5375013286564626,
+          "median": 3.1471885629251704,
+          "p95": 5.825118914753402,
+          "p99": 7.387633862138605,
+          "max": 8.899394132653061
+        },
+        "mean_brightness": {
+          "min": 110.072159332483,
+          "median": 118.88460618622449,
+          "p95": 126.73809656675171,
+          "p99": 127.36421383397108,
+          "max": 128.45617426658163
+        }
+      },
+      "training_windows": {
+        "current_default_windows": 620,
+        "windows_with_invalid_observation_history": 7,
+        "windows_with_invalid_action_rows": 92
+      }
+    }
+  ],
+  "committed_episodes": 3,
+  "total_steps": 2802,
+  "zarr_bytes": 270117970,
+  "video_bytes": 10591002
+}

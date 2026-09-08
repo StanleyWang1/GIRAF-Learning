@@ -7,8 +7,10 @@ from typing import Final
 import numpy as np
 
 from .config import CollectorConfig
+from .imu import IMU_ALIGNED_KEYS, aligned_imu_example
 
-SCHEMA_VERSION: Final[str] = "giraf-replay-v1"
+SCHEMA_VERSION: Final[str] = "giraf-replay-v2"
+READABLE_SCHEMA_VERSIONS = ("giraf-replay-v1", SCHEMA_VERSION)
 ACTION_FIELDS: Final[tuple[str, ...]] = (
     "vx_m_s",
     "vy_m_s",
@@ -67,7 +69,7 @@ TIME_DATA_KEYS: Final[tuple[str, ...]] = (
     "camera_receive_latency_ns",
     "control_age_ns",
     "motor_age_ns",
-)
+) + IMU_ALIGNED_KEYS
 
 # Per-episode arrays written under meta/ next to the episode_ends commit marker.
 EPISODE_META_KEYS: Final[tuple[str, ...]] = (
@@ -75,6 +77,9 @@ EPISODE_META_KEYS: Final[tuple[str, ...]] = (
     "episode_start_monotonic_ns",
     "episode_valid_steps",
     "episode_invalid_steps",
+    "episode_stop_monotonic_ns",
+    "episode_imu_valid_steps",
+    "episode_imu_session_id",
 )
 
 
@@ -130,6 +135,7 @@ def aligned_example(config: CollectorConfig) -> dict[str, np.ndarray]:
     control = control_example()
     motor = motor_example()
     return {
+        **aligned_imu_example(),
         "camera_rgb_source": camera["camera_rgb_source"],
         "timestamp_ns": np.int64(0),
         "camera_device_timestamp_ns": np.int64(0),

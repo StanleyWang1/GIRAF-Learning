@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 
-from giraf.data.schema import SCHEMA_VERSION, STATE_DIM
+from giraf.data.schema import READABLE_SCHEMA_VERSIONS, STATE_DIM
 
 from .safety import state_from_joints
 
@@ -33,7 +33,7 @@ def load_reference_start(dataset: str | Path, episode: int) -> ReferenceStart:
         raise ValueError("reference episode must be non-negative")
 
     root = zarr.open_group(str(path), mode="r")
-    if root.attrs.get("schema_version") != SCHEMA_VERSION:
+    if root.attrs.get("schema_version") not in READABLE_SCHEMA_VERSIONS:
         raise ValueError(f"unsupported reference dataset schema: {path}")
     for key in (
         "meta/episode_ends",

@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import multiprocessing as mp
+import threading
 import time
 import traceback
 from abc import ABC, abstractmethod
 
 import numpy as np
 
-from .config import CameraConfig
+from .config import CameraConfig, ImuConfig
+from .imu import IMU_PACKET_FIELDS, IMU_STREAMS, ReportDecoder
 from .shared_memory import SharedMemoryRingBuffer
 
 
@@ -69,12 +71,6 @@ class ProducerProcess(mp.Process, ABC):
         return None
 
 
-# TODO(IMU): Add the OAK-D BNO086 to this same device pipeline. Capture calibrated
-# accelerometer, calibrated gyroscope, and GAME_ROTATION_VECTOR reports at 100 Hz;
-# retain their generation timestamps and sequence numbers as an independent raw
-# stream; and derive a causal 30 Hz data/imu observation at camera capture times.
-# Keep IMU separate from the existing 15D robot state, and update the Zarr schema,
-# saver/recovery, pruning, dataset loader, normalization, policy, and tests together.
 class CameraProducer(ProducerProcess):
     """Own the DepthAI device and publish source-resolution RGB frames."""
 
@@ -82,10 +78,16 @@ class CameraProducer(ProducerProcess):
         self,
         config: CameraConfig,
         ring: SharedMemoryRingBuffer,
+        imu_config: ImuConfig | None = None,
+        imu_rings: dict | None = None,
     ) -> None:
         super().__init__(name="camera-producer")
         self.config = config
         self.ring = ring
+        self.imu_config = imu_config or ImuConfig(enabled=False)
+        self.imu_rings = imu_rings or {}
+        self.imu_dropped = {name: mp.RawValue("Q", 0) for name in self.imu_rings}
+        self.metadata_parent, self._metadata_child = mp.Pipe(duplex=False)
 
     @staticmethod
     def _timestamp_ns(value) -> int:
@@ -97,18 +99,70 @@ class CameraProducer(ProducerProcess):
         from giraf.drivers.camera import (
             camera_connect,
             camera_disconnect,
-            camera_read_message,
         )
 
         pipeline = None
+        imu_thread = None
+        imu_stop = threading.Event()
+        imu_ready = threading.Event()
+        imu_errors = []
         try:
-            pipeline, frame_queue = camera_connect(
+            pipeline, frame_queue, imu_queue, metadata = camera_connect(
                 frame_size=(self.config.width, self.config.height),
                 frame_rate=self.config.fps,
+                imu_config=self.imu_config,
             )
+            self._metadata_child.send(metadata)
+            if imu_queue is not None:
+
+                def drain_imu():
+                    decoder = ReportDecoder()
+                    ready = set()
+                    dropped = dict.fromkeys(IMU_STREAMS, 0)
+                    try:
+                        while not imu_stop.is_set() and pipeline.isRunning():
+                            messages = imu_queue.tryGetAll()
+                            for message in messages:
+                                receive_ns = time.monotonic_ns()
+                                for packet in message.packets:
+                                    for name, field in zip(
+                                        IMU_STREAMS, IMU_PACKET_FIELDS
+                                    ):
+                                        sample = decoder.decode(
+                                            name, getattr(packet, field), receive_ns
+                                        )
+                                        if sample is None:
+                                            continue
+                                        sample["producer_dropped_total"] = np.int64(
+                                            dropped[name]
+                                        )
+                                        try:
+                                            self.imu_rings[name].put(sample, wait=False)
+                                        except TimeoutError:
+                                            dropped[name] += 1
+                                            self.imu_dropped[name].value = dropped[name]
+                                            continue
+                                        if sample["report_valid"]:
+                                            ready.add(name)
+                                if len(ready) == len(IMU_STREAMS):
+                                    imu_ready.set()
+                            if not messages:
+                                imu_stop.wait(0.001)
+                    except BaseException as exc:
+                        imu_errors.append(exc)
+
+                imu_thread = threading.Thread(target=drain_imu, name="imu-drain")
+                imu_thread.start()
+            else:
+                imu_ready.set()
             first_frame = True
             while not self.stop_event.is_set() and pipeline.isRunning():
-                message = camera_read_message(frame_queue)
+                if imu_errors:
+                    raise RuntimeError(f"IMU acquisition failed: {imu_errors[0]}")
+                message = frame_queue.tryGet()
+                if message is None:
+                    self.stop_event.wait(0.001)
+                    continue
                 receive_ns = time.monotonic_ns()
                 capture_ns = self._timestamp_ns(message.getTimestamp())
                 device_ns = self._timestamp_ns(message.getTimestampDevice())
@@ -135,7 +189,11 @@ class CameraProducer(ProducerProcess):
                     },
                     wait=False,
                 )
-                self.ready_event.set()
+                if imu_ready.is_set():
+                    self.ready_event.set()
         finally:
+            imu_stop.set()
+            if imu_thread is not None:
+                imu_thread.join(timeout=2.0)
             if pipeline is not None:
                 camera_disconnect(pipeline)

@@ -4,6 +4,9 @@ GIRAF Learning contains the robot drivers, teleoperation and demonstration
 collection stack, and a compact PyTorch diffusion-policy foundation. Hardware,
 data, and learning code are separate packages with explicit boundaries.
 
+See [IMU collection](notes/imu_collection.md) for the v2 recording schema,
+signal semantics, compatibility, hardware checks, and known device limitations.
+
 ## Repository layout
 
 ```text

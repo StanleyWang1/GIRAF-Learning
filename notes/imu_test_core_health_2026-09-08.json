@@ -1,0 +1,447 @@
+{
+  "audits": [
+    {
+      "episode": 0,
+      "start": 0,
+      "stop": 1539,
+      "healthy": true,
+      "reasons": [],
+      "missing_data_rows": {},
+      "missing_metadata": []
+    },
+    {
+      "episode": 1,
+      "start": 1539,
+      "stop": 2175,
+      "healthy": true,
+      "reasons": [],
+      "missing_data_rows": {},
+      "missing_metadata": []
+    },
+    {
+      "episode": 2,
+      "start": 2175,
+      "stop": 2802,
+      "healthy": true,
+      "reasons": [],
+      "missing_data_rows": {},
+      "missing_metadata": []
+    }
+  ],
+  "episodes": [
+    {
+      "dataset": "/home/giraf/Documents/GIRAF-Learning/data/imu_test/imu_test.zarr",
+      "schema_version": "giraf-replay-v2",
+      "git_revisions": [
+        "16c8e7d1cf970ada34f7cf59cfb6cfe656974a06"
+      ],
+      "episode": 0,
+      "episode_count": 3,
+      "global_step_start": 0,
+      "global_step_stop": 1539,
+      "steps": 1539,
+      "duration_s": 51.249018,
+      "effective_hz": 30.010331124783697,
+      "valid_steps": 1532,
+      "invalid_steps": 7,
+      "non_binary_alignment_values": 0,
+      "metadata_counts": {
+        "valid_steps": 1532,
+        "invalid_steps": 7,
+        "matches_data": true
+      },
+      "limits_ms": {
+        "max_control_age": 50.0,
+        "max_motor_age": 50.0
+      },
+      "validity_rules": {
+        "dry_run": {
+          "expected_valid_steps": 1537,
+          "stored_mismatch_steps": 5
+        },
+        "hardware": {
+          "expected_valid_steps": 1532,
+          "stored_mismatch_steps": 0
+        }
+      },
+      "hardware_failure_signals": {
+        "control_timestamp_in_future": 0,
+        "control_too_old": 2,
+        "motor_timestamp_in_future": 0,
+        "motor_too_old": 5,
+        "motor_command_not_accepted": 0
+      },
+      "invalid_without_hardware_failure_signal": 0,
+      "timing_ms": {
+        "camera_interval": {
+          "min": 33.306,
+          "p50": 33.322,
+          "p95": 33.322,
+          "max": 33.324
+        },
+        "camera_receive_latency": {
+          "min": 28.655776,
+          "p50": 30.731042,
+          "p95": 31.4348867,
+          "max": 32.470897
+        },
+        "control_age": {
+          "min": 0.000197,
+          "p50": 8.846891,
+          "p95": 27.067937499999992,
+          "max": 62.115183
+        },
+        "motor_age": {
+          "min": 0.008467,
+          "p50": 9.395377,
+          "p95": 31.711115899999992,
+          "max": 81.513438
+        }
+      },
+      "timestamp_non_increasing_intervals": 0,
+      "camera_sequence": {
+        "discontinuities": 0,
+        "duplicates": 0,
+        "backward_jumps": 0,
+        "estimated_missing_frames": 0
+      },
+      "status_counts": {
+        "motor_command_accepted": 1539,
+        "tracking": 1539,
+        "clutch": 1539
+      },
+      "non_finite_rows": {
+        "action": 0,
+        "state": 0
+      },
+      "stored_timing_consistency": {
+        "control_age_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        },
+        "motor_age_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        },
+        "camera_receive_latency_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        }
+      },
+      "missing_chunk_rows": {
+        "action": 0,
+        "alignment_valid": 0,
+        "camera_device_timestamp_ns": 0,
+        "camera_receive_latency_ns": 0,
+        "camera_receive_timestamp_ns": 0,
+        "camera_rgb": 0,
+        "camera_sequence_num": 0,
+        "can_position_target": 0,
+        "clutch": 0,
+        "control_age_ns": 0,
+        "control_timestamp_ns": 0,
+        "dynamixel_target_ticks": 0,
+        "grasp_label": 0,
+        "imu": 0,
+        "imu_age_ns": 0,
+        "imu_available": 0,
+        "imu_sensor_valid": 0,
+        "imu_sequence_num": 0,
+        "imu_timestamp_ns": 0,
+        "imu_valid": 0,
+        "joint_position_command": 0,
+        "joint_velocity_command": 0,
+        "motor_age_ns": 0,
+        "motor_command_accepted": 0,
+        "motor_timestamp_ns": 0,
+        "state": 0,
+        "timestamp": 0,
+        "timestamp_ns": 0,
+        "tracking": 0
+      },
+      "source_field_health": {
+        "camera_receive_timestamp_zero_filled": false,
+        "camera_sequence_constant": false
+      },
+      "findings": [
+        "The stored validity flags match the hardware-mode rule, not the dry-run rule."
+      ]
+    },
+    {
+      "dataset": "/home/giraf/Documents/GIRAF-Learning/data/imu_test/imu_test.zarr",
+      "schema_version": "giraf-replay-v2",
+      "git_revisions": [
+        "16c8e7d1cf970ada34f7cf59cfb6cfe656974a06"
+      ],
+      "episode": 1,
+      "episode_count": 3,
+      "global_step_start": 1539,
+      "global_step_stop": 2175,
+      "steps": 636,
+      "duration_s": 21.159377,
+      "effective_hz": 30.010335370460105,
+      "valid_steps": 627,
+      "invalid_steps": 9,
+      "non_binary_alignment_values": 0,
+      "metadata_counts": {
+        "valid_steps": 627,
+        "invalid_steps": 9,
+        "matches_data": true
+      },
+      "limits_ms": {
+        "max_control_age": 50.0,
+        "max_motor_age": 50.0
+      },
+      "validity_rules": {
+        "dry_run": {
+          "expected_valid_steps": 633,
+          "stored_mismatch_steps": 6
+        },
+        "hardware": {
+          "expected_valid_steps": 627,
+          "stored_mismatch_steps": 0
+        }
+      },
+      "hardware_failure_signals": {
+        "control_timestamp_in_future": 0,
+        "control_too_old": 3,
+        "motor_timestamp_in_future": 0,
+        "motor_too_old": 6,
+        "motor_command_not_accepted": 0
+      },
+      "invalid_without_hardware_failure_signal": 0,
+      "timing_ms": {
+        "camera_interval": {
+          "min": 33.304,
+          "p50": 33.322,
+          "p95": 33.322,
+          "max": 33.323
+        },
+        "camera_receive_latency": {
+          "min": 28.62155,
+          "p50": 30.73041,
+          "p95": 31.34901425,
+          "max": 31.982911
+        },
+        "control_age": {
+          "min": 0.000748,
+          "p50": 8.9731785,
+          "p95": 29.647983500000002,
+          "max": 57.263497
+        },
+        "motor_age": {
+          "min": 0.033021,
+          "p50": 9.687076,
+          "p95": 34.4381165,
+          "max": 56.373504
+        }
+      },
+      "timestamp_non_increasing_intervals": 0,
+      "camera_sequence": {
+        "discontinuities": 0,
+        "duplicates": 0,
+        "backward_jumps": 0,
+        "estimated_missing_frames": 0
+      },
+      "status_counts": {
+        "motor_command_accepted": 636,
+        "tracking": 636,
+        "clutch": 636
+      },
+      "non_finite_rows": {
+        "action": 0,
+        "state": 0
+      },
+      "stored_timing_consistency": {
+        "control_age_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        },
+        "motor_age_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        },
+        "camera_receive_latency_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        }
+      },
+      "missing_chunk_rows": {
+        "action": 0,
+        "alignment_valid": 0,
+        "camera_device_timestamp_ns": 0,
+        "camera_receive_latency_ns": 0,
+        "camera_receive_timestamp_ns": 0,
+        "camera_rgb": 0,
+        "camera_sequence_num": 0,
+        "can_position_target": 0,
+        "clutch": 0,
+        "control_age_ns": 0,
+        "control_timestamp_ns": 0,
+        "dynamixel_target_ticks": 0,
+        "grasp_label": 0,
+        "imu": 0,
+        "imu_age_ns": 0,
+        "imu_available": 0,
+        "imu_sensor_valid": 0,
+        "imu_sequence_num": 0,
+        "imu_timestamp_ns": 0,
+        "imu_valid": 0,
+        "joint_position_command": 0,
+        "joint_velocity_command": 0,
+        "motor_age_ns": 0,
+        "motor_command_accepted": 0,
+        "motor_timestamp_ns": 0,
+        "state": 0,
+        "timestamp": 0,
+        "timestamp_ns": 0,
+        "tracking": 0
+      },
+      "source_field_health": {
+        "camera_receive_timestamp_zero_filled": false,
+        "camera_sequence_constant": false
+      },
+      "findings": [
+        "The stored validity flags match the hardware-mode rule, not the dry-run rule."
+      ]
+    },
+    {
+      "dataset": "/home/giraf/Documents/GIRAF-Learning/data/imu_test/imu_test.zarr",
+      "schema_version": "giraf-replay-v2",
+      "git_revisions": [
+        "16c8e7d1cf970ada34f7cf59cfb6cfe656974a06"
+      ],
+      "episode": 2,
+      "episode_count": 3,
+      "global_step_start": 2175,
+      "global_step_stop": 2802,
+      "steps": 627,
+      "duration_s": 20.85949,
+      "effective_hz": 30.010321441224114,
+      "valid_steps": 620,
+      "invalid_steps": 7,
+      "non_binary_alignment_values": 0,
+      "metadata_counts": {
+        "valid_steps": 620,
+        "invalid_steps": 7,
+        "matches_data": true
+      },
+      "limits_ms": {
+        "max_control_age": 50.0,
+        "max_motor_age": 50.0
+      },
+      "validity_rules": {
+        "dry_run": {
+          "expected_valid_steps": 623,
+          "stored_mismatch_steps": 3
+        },
+        "hardware": {
+          "expected_valid_steps": 620,
+          "stored_mismatch_steps": 0
+        }
+      },
+      "hardware_failure_signals": {
+        "control_timestamp_in_future": 0,
+        "control_too_old": 4,
+        "motor_timestamp_in_future": 0,
+        "motor_too_old": 3,
+        "motor_command_not_accepted": 0
+      },
+      "invalid_without_hardware_failure_signal": 0,
+      "timing_ms": {
+        "camera_interval": {
+          "min": 33.312,
+          "p50": 33.322,
+          "p95": 33.322,
+          "max": 33.323
+        },
+        "camera_receive_latency": {
+          "min": 28.783381,
+          "p50": 30.818629,
+          "p95": 31.524467899999998,
+          "max": 32.280427
+        },
+        "control_age": {
+          "min": 0.026555,
+          "p50": 8.947566,
+          "p95": 28.97668159999999,
+          "max": 69.48386
+        },
+        "motor_age": {
+          "min": 0.004244,
+          "p50": 9.010612,
+          "p95": 33.56737189999998,
+          "max": 65.415513
+        }
+      },
+      "timestamp_non_increasing_intervals": 0,
+      "camera_sequence": {
+        "discontinuities": 0,
+        "duplicates": 0,
+        "backward_jumps": 0,
+        "estimated_missing_frames": 0
+      },
+      "status_counts": {
+        "motor_command_accepted": 627,
+        "tracking": 627,
+        "clutch": 627
+      },
+      "non_finite_rows": {
+        "action": 0,
+        "state": 0
+      },
+      "stored_timing_consistency": {
+        "control_age_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        },
+        "motor_age_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        },
+        "camera_receive_latency_ns": {
+          "mismatch_steps": 0,
+          "max_abs_error_ms": 0.0
+        }
+      },
+      "missing_chunk_rows": {
+        "action": 0,
+        "alignment_valid": 0,
+        "camera_device_timestamp_ns": 0,
+        "camera_receive_latency_ns": 0,
+        "camera_receive_timestamp_ns": 0,
+        "camera_rgb": 0,
+        "camera_sequence_num": 0,
+        "can_position_target": 0,
+        "clutch": 0,
+        "control_age_ns": 0,
+        "control_timestamp_ns": 0,
+        "dynamixel_target_ticks": 0,
+        "grasp_label": 0,
+        "imu": 0,
+        "imu_age_ns": 0,
+        "imu_available": 0,
+        "imu_sensor_valid": 0,
+        "imu_sequence_num": 0,
+        "imu_timestamp_ns": 0,
+        "imu_valid": 0,
+        "joint_position_command": 0,
+        "joint_velocity_command": 0,
+        "motor_age_ns": 0,
+        "motor_command_accepted": 0,
+        "motor_timestamp_ns": 0,
+        "state": 0,
+        "timestamp": 0,
+        "timestamp_ns": 0,
+        "tracking": 0
+      },
+      "source_field_health": {
+        "camera_receive_timestamp_zero_filled": false,
+        "camera_sequence_constant": false
+      },
+      "findings": [
+        "The stored validity flags match the hardware-mode rule, not the dry-run rule."
+      ]
+    }
+  ]
+}
