@@ -43,17 +43,18 @@ from giraf.drivers.optitrack import (
     DEFAULT_SERVER_IP,
     OptiTrackDriver,
 )
-from giraf.kinematics import num_forward_transform, num_jacobian
+from giraf.kinematics import num_jacobian
 from giraf.settings import CONTROL_HZ
+from giraf.teleop_control import (
+    POSE_TIMEOUT,
+    RelativePoseController,
+    end_effector_pose,
+    model_joints,
+)
 
-POSE_TIMEOUT = 0.15
-POSITION_GAIN = ROTATION_GAIN = 5.0
-LINEAR_LIMIT = np.array((0.5, 0.5, 0.5))
-ANGULAR_LIMIT = np.array((1.0, 1.0, 1.0))
 MAX_JOINT_SPEED = np.array((1.0, 1.0, 1.0, 2.0, 2.0, 2.0))
 ROLL_LIMIT, PITCH_MIN, PITCH_MAX = math.pi / 2, 0.0, math.pi / 2
 D3_MIN, BOOM_MIN, BOOM_MAX = 0.31, -30.0, 0.0
-ROTATION_BASIS = np.array(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
 
 
 @dataclass
@@ -86,62 +87,6 @@ def fail(source: str, error: Exception | str) -> None:
     STOP.set()
 
 
-def normalize_quaternion(value) -> np.ndarray:
-    quaternion = np.asarray(value, dtype=float)
-    norm = float(np.linalg.norm(quaternion))
-    if quaternion.shape != (4,) or not np.all(np.isfinite(quaternion)) or norm < 1e-12:
-        raise ValueError("invalid quaternion")
-    return quaternion / norm
-
-
-def quaternion_matrix(value) -> np.ndarray:
-    x, y, z, w = normalize_quaternion(value)
-    return np.array(
-        (
-            (1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)),
-            (2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)),
-            (2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)),
-        )
-    )
-
-
-def relative_quaternion(anchor, current) -> np.ndarray:
-    ax, ay, az, aw = normalize_quaternion(anchor)
-    bx, by, bz, bw = normalize_quaternion(current)
-    return normalize_quaternion(
-        (
-            aw * bx - ax * bw - ay * bz + az * by,
-            aw * by + ax * bz - ay * bw - az * bx,
-            aw * bz - ax * by + ay * bx - az * bw,
-            aw * bw + ax * bx + ay * by + az * bz,
-        )
-    )
-
-
-def rotation_vector(rotation) -> np.ndarray:
-    cosine = float(np.clip((np.trace(rotation) - 1.0) / 2.0, -1.0, 1.0))
-    angle = math.acos(cosine)
-    skew = np.array(
-        (
-            rotation[2, 1] - rotation[1, 2],
-            rotation[0, 2] - rotation[2, 0],
-            rotation[1, 0] - rotation[0, 1],
-        )
-    )
-    if angle < 1e-7:
-        return 0.5 * skew
-    if math.pi - angle < 1e-5:
-        raise RuntimeError("orientation error is too close to 180 degrees")
-    return angle * skew / (2.0 * math.sin(angle))
-
-
-def limited_velocity(error, gain, deadband, limit) -> np.ndarray:
-    magnitude = float(np.linalg.norm(error))
-    if magnitude <= deadband:
-        return np.zeros(3)
-    return np.clip(gain * error * (magnitude - deadband) / magnitude, -limit, limit)
-
-
 def boom_motor_position(extension: float) -> float:
     return -0.0508 * extension**3 - 0.4122 * extension**2 - 15.2992 * extension + 4.7840
 
@@ -155,19 +100,6 @@ def boom_extension(motor_position: float) -> float:
         if abs(error) < 1e-10:
             break
     return extension
-
-
-def model_joints(joints) -> np.ndarray:
-    return np.asarray(joints) + np.array(
-        (0.0, math.pi / 2, 0.0, math.pi / 2, -math.pi / 2, 0.0)
-    )
-
-
-def end_effector_pose(joints) -> tuple[np.ndarray, np.ndarray]:
-    transform = num_forward_transform(model_joints(joints))
-    if transform.shape != (4, 4) or not np.all(np.isfinite(transform)):
-        raise RuntimeError("invalid forward kinematics")
-    return transform[:3, 3].copy(), transform[:3, :3].copy()
 
 
 def wrist_ticks(joints) -> list[int]:
@@ -213,10 +145,7 @@ def control_loop(
 ) -> None:
     tracking = False
     armed = False
-    controller_anchor_position = controller_anchor_quaternion = (
-        controller_anchor_rotation
-    ) = None
-    robot_anchor_position = robot_anchor_rotation = None
+    controller = RelativePoseController()
     last = time.monotonic()
     period = 1.0 / CONTROL_HZ
 
@@ -244,36 +173,12 @@ def control_loop(
             elif tracking and (not fresh or not motors_ready):
                 tracking, armed = False, False
             elif not tracking and armed and fresh and motors_ready:
-                controller_anchor_position = pose_position.copy()
-                controller_anchor_quaternion = pose_quaternion.copy()
-                controller_anchor_rotation = quaternion_matrix(pose_quaternion)
-                robot_anchor_position, robot_anchor_rotation = end_effector_pose(joints)
+                controller.anchor(joints, pose_position, pose_quaternion)
                 tracking, armed = True, False
 
             if tracking:
-                relative_position = controller_anchor_rotation.T @ (
-                    pose_position - controller_anchor_position
-                )
-                controller_rotation = quaternion_matrix(
-                    relative_quaternion(controller_anchor_quaternion, pose_quaternion)
-                )
-                target_position = robot_anchor_position + relative_position
-                target_rotation = robot_anchor_rotation @ (
-                    ROTATION_BASIS.T @ controller_rotation @ ROTATION_BASIS
-                )
-                current_position, current_rotation = end_effector_pose(joints)
-                linear = limited_velocity(
-                    target_position - current_position,
-                    POSITION_GAIN,
-                    0.002,
-                    LINEAR_LIMIT,
-                )
-                angular = limited_velocity(
-                    rotation_vector(target_rotation @ current_rotation.T),
-                    ROTATION_GAIN,
-                    0.01,
-                    ANGULAR_LIMIT,
-                )
+                twist = controller.twist(joints, pose_position, pose_quaternion)
+                linear, angular = twist[:3], twist[3:]
                 jacobian = num_jacobian(model_joints(joints))
                 if jacobian.shape != (6, 6) or not np.all(np.isfinite(jacobian)):
                     raise RuntimeError("invalid Jacobian")

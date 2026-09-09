@@ -1,18 +1,18 @@
-# Guarded policy deployment
+# Teleop / policy deployment
 
-The current usage guide is in the repository
-[README's Deployment section](../../../README.md#deployment), immediately after
-Training. It covers environment setup, encoder/action compatibility, ResNet
-trial commands, all three modes, the physical-home and SPACE staging sequence,
-inference timing, the gripper replan limitation, logs, and teleop handoff status.
+See the repository [deployment guide](../../../README.md#deployment) for setup,
+connection options, controls, inference timing, pause recovery, and logs.
 
-Run this package as `python -m giraf.deployment`; no project entry point was
-added. The implementation is split into:
+Run `python -m giraf.deployment`. The console starts at logical home in teleop;
+D switches action sources, a fresh SPACE press enables motion, releasing SPACE
+pauses with motor targets retained, and Q/Ctrl+C shuts down. Recorded start
+poses and rollout durations are no longer required or accepted.
 
-- `runner.py`: command-line options, camera/inference loop, motor worker,
-  rollout phases, and logging;
-- `reference.py`: recorded start-pose loading and consistency checks;
-- `safety.py`: twist guards, kinematics, staging, and command/state limits.
+- `runner.py`: device ownership, control and inference workers, CLI, and logs.
+- `session.py`: shared state, clutch gating, pauses, and inference generations.
+- `safety.py`: twist guards, kinematics, and command/state limits.
+- `../teleop_control.py`: relative OptiTrack control shared with standalone teleop.
 
-This package does not alter the training, teleoperation, or data collection
-paths. See the main guide for the current behavior before a hardware trial.
+`reference.py` and the staging helpers remain available for offline reference
+inspection; they are not used by the deployment console. Training and collection
+entry points retain their existing behavior.

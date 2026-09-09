@@ -1,4 +1,4 @@
-"""Guarded live rollout of a trained diffusion policy."""
+"""Persistent teleop / diffusion-policy deployment session."""
 
 from __future__ import annotations
 
@@ -19,21 +19,19 @@ import torch
 
 from giraf.data.config import CollectorConfig, load_config
 from giraf.data.schema import GRASP_INDEX
+from giraf.drivers.optitrack import DEFAULT_RIGID_BODY_ID, DEFAULT_SERVER_IP
 from giraf.learning import DiffusionPolicy
 from giraf.settings import CONTROL_HZ
+from giraf.teleop_control import POSE_TIMEOUT, RelativePoseController
 
-from .reference import load_reference_start
 from .safety import (
     SafetyLimits,
     guard_policy_action,
     plan_joint_command,
-    plan_staging_command,
     state_bound_violations,
     state_from_joints,
-    validate_staging_target,
 )
-
-INITIAL_JOINTS = np.array((0.0, 0.0, 0.31, 0.0, 0.0, 0.0), dtype=np.float32)
+from .session import ActionSource, Session
 
 
 class DeploymentMode(str, Enum):
@@ -42,29 +40,17 @@ class DeploymentMode(str, Enum):
     HARDWARE = "hardware"
 
 
-class DeploymentPhase(str, Enum):
-    WAIT_HOME_RELEASE = "wait_home_release"
-    WAIT_STAGE_PRESS = "wait_stage_press"
-    STAGING = "staging"
-    WAIT_STAGE_RELEASE = "wait_stage_release"
-    PREVIEW = "preview"
-    WAIT_ROLLOUT_RELEASE = "wait_rollout_release"
-    WAIT_ROLLOUT_PRESS = "wait_rollout_press"
-    ROLLOUT = "rollout"
-    STOPPED = "stopped"
-
-
 @dataclass(frozen=True, slots=True)
 class DeploymentConfig:
     checkpoint: Path
-    reference_dataset: Path
-    reference_episode: int = 0
     collector_config: Path = Path("config/tape_grasping.yaml")
     mode: DeploymentMode = DeploymentMode.SHADOW
     device: str = "cuda"
     action_scale: float = 0.2
     inference_steps: int | None = None
-    duration_s: float = 5.0
+    server_ip: str = DEFAULT_SERVER_IP
+    client_ip: str | None = None
+    rigid_id: int = DEFAULT_RIGID_BODY_ID
     action_timeout_s: float = 0.5
     max_frame_age_s: float = 0.15
     state_margin_fraction: float = 0.05
@@ -81,12 +67,6 @@ class DeploymentConfig:
             raise FileNotFoundError(
                 f"collector config does not exist: {self.collector_config}"
             )
-        if not self.reference_dataset.is_dir():
-            raise FileNotFoundError(
-                f"reference dataset does not exist: {self.reference_dataset}"
-            )
-        if self.reference_episode < 0:
-            raise ValueError("reference_episode must be non-negative")
         if self.inference_steps is not None and self.inference_steps <= 0:
             raise ValueError("inference_steps must be positive when provided")
         if self.mode is DeploymentMode.HARDWARE and not self.hardware_confirmed:
@@ -95,12 +75,11 @@ class DeploymentConfig:
                 "at the teleop home pose"
             )
         positive = (
-            self.duration_s,
             self.action_timeout_s,
             self.max_frame_age_s,
         )
         if not all(math.isfinite(value) and value > 0 for value in positive):
-            raise ValueError("duration and timeout values must be finite and positive")
+            raise ValueError("timeout values must be finite and positive")
         if not math.isfinite(self.action_scale) or not 0 <= self.action_scale <= 1:
             raise ValueError("action_scale must be finite and in [0, 1]")
         if (
@@ -115,10 +94,10 @@ class _EventLog:
         directory.mkdir(parents=True, exist_ok=False)
         self.directory = directory
         self._lock = threading.Lock()
+        self._closed = False
         self._file = (directory / "events.jsonl").open("x")
         payload = asdict(config)
         payload["checkpoint"] = str(config.checkpoint)
-        payload["reference_dataset"] = str(config.reference_dataset)
         payload["collector_config"] = str(config.collector_config)
         payload["mode"] = config.mode.value
         payload["log_dir"] = str(directory)
@@ -132,11 +111,14 @@ class _EventLog:
             **values,
         }
         with self._lock:
+            if self._closed:
+                return
             self._file.write(json.dumps(record, separators=(",", ":")) + "\n")
             self._file.flush()
 
     def close(self) -> None:
         with self._lock:
+            self._closed = True
             self._file.close()
 
 
@@ -163,191 +145,119 @@ class _VideoLog:
         self._container.close()
 
 
-class _Runtime:
-    def __init__(
-        self,
-        log: _EventLog,
-        *,
-        initial_joints: np.ndarray,
-        staging_target: np.ndarray,
-        hardware: bool,
-    ) -> None:
-        self.log = log
-        self.stop = threading.Event()
-        self.lock = threading.Lock()
-        self.joints = np.asarray(initial_joints, dtype=np.float32).copy()
-        self.staging_target = np.asarray(staging_target, dtype=np.float32).copy()
-        self.action = np.zeros(7, dtype=np.float32)
-        self.action_time = 0.0
-        self.started_at = 0.0
-        self.phase = (
-            DeploymentPhase.WAIT_HOME_RELEASE
-            if hardware
-            else DeploymentPhase.PREVIEW
-        )
-        self.stop_reason = ""
-        self.error = ""
-
-    def set_phase(self, phase: DeploymentPhase, event: str) -> None:
-        with self.lock:
-            self.phase = phase
-        self.log.write(event, phase=phase.value)
-
-    def start_trial(self) -> None:
-        with self.lock:
-            self.phase = DeploymentPhase.ROLLOUT
-            self.started_at = time.monotonic()
-            self.action_time = 0.0
-        self.log.write("trial_started", phase=DeploymentPhase.ROLLOUT.value)
-
-    def set_action(self, action: np.ndarray) -> None:
-        with self.lock:
-            self.action = np.asarray(action, dtype=np.float32).copy()
-            self.action_time = time.monotonic()
-
-    def finish(self, reason: str) -> None:
-        with self.lock:
-            if not self.stop_reason:
-                self.stop_reason = reason
-            self.phase = DeploymentPhase.STOPPED
-        self.log.write("stop_requested", reason=reason)
-        self.stop.set()
-
-    def fail(self, source: str, error: BaseException | str) -> None:
-        detail = f"{source}: {error}"
-        with self.lock:
-            if not self.error:
-                self.error = detail
-                self.stop_reason = "error"
-            self.phase = DeploymentPhase.STOPPED
-        self.log.write("error", source=source, detail=str(error))
-        self.stop.set()
-
-
 class _ControlWorker(threading.Thread):
-    def __init__(
-        self,
-        runtime: _Runtime,
-        keyboard,
-        config: DeploymentConfig,
-        *,
-        limits: SafetyLimits,
-    ) -> None:
+    def __init__(self, runtime, keyboard, config, *, limits, state_low, state_high):
         super().__init__(name="deployment-control")
         self.runtime = runtime
         self.keyboard = keyboard
         self.config = config
         self.limits = limits
+        self.state_low = state_low
+        self.state_high = state_high
         self.ready = threading.Event()
+        self.controller = RelativePoseController()
+        self.teleop_generation = -1
 
-    def run(self) -> None:
+    def step(self, events, *, now, dt):
+        """Resolve inputs and produce one command; never run policy inference here."""
+        runtime = self.runtime
+        with runtime.lock:
+            for key, value in events:
+                runtime.input(key, value, now)
+            if runtime.stop.is_set():
+                return None
+            # Invalid shared state is fatal, including while paused.
+            state = state_from_joints(runtime.joints)
+            action = np.zeros(7, dtype=np.float32)
+            action[GRASP_INDEX] = runtime.grasp
+            if runtime.active and runtime.source is ActionSource.TELEOP:
+                pose = runtime.pose
+                if (
+                    pose is None
+                    or not pose.tracking_valid
+                    or now - pose.received_monotonic_ns / 1e9 > POSE_TIMEOUT
+                ):
+                    runtime.pause(runtime.pose_error or "OptiTrack pose stale")
+                else:
+                    try:
+                        position = np.asarray(pose.position_m, dtype=float)
+                        quaternion = np.asarray(pose.quaternion_xyzw, dtype=float)
+                        if not np.isfinite(position).all() or position.shape != (3,):
+                            raise ValueError("invalid controller position")
+                        if self.teleop_generation != runtime.generation:
+                            self.controller.anchor(runtime.joints, position, quaternion)
+                            self.teleop_generation = runtime.generation
+                        action[:6] = self.controller.twist(
+                            runtime.joints, position, quaternion
+                        )
+                    except (ValueError, RuntimeError) as exc:
+                        runtime.pause(f"teleop: {exc}")
+                        action[:6] = 0
+            elif runtime.active:
+                violations = state_bound_violations(
+                    state,
+                    self.state_low,
+                    self.state_high,
+                    margin_fraction=self.config.state_margin_fraction,
+                )
+                if violations:
+                    runtime.pause(f"state outside training bounds: {violations}")
+                elif runtime.action_expired(now, self.config.action_timeout_s):
+                    runtime.pause("policy action stale")
+                elif runtime.action_time > 0:
+                    action = runtime.action.copy()
+
+            command = plan_joint_command(
+                runtime.joints, action, dt=dt, limits=self.limits
+            )
+            if runtime.active and self.config.mode is not DeploymentMode.SHADOW:
+                runtime.joints = command.joint_position.copy()
+            runtime.grasp = command.grasp
+            return command
+
+    def run(self):
+        from giraf.drivers.keyboard import keyboard_session_events
+
+        runtime = self.runtime
         mab = dxl = sync_write = None
         try:
             if self.config.mode is DeploymentMode.HARDWARE:
-                from giraf.drivers.dynamixel import (
-                    GRIPPER,
-                    dynamixel_connect,
-                )
+                from giraf.drivers.dynamixel import GRIPPER, dynamixel_connect
                 from giraf.drivers.dynamixel_config import TORQUE_ENABLE
                 from giraf.drivers.mab_worker import MabWorker
 
-                print("[DEPLOY] Connecting Dynamixel motors...", flush=True)
+                print("[DEPLOY] Connecting motors at physical home...", flush=True)
                 dxl, sync_write = dynamixel_connect()
                 if not dxl.WRITE(GRIPPER, TORQUE_ENABLE, 1):
                     raise RuntimeError("could not enable gripper torque")
-                print("[DEPLOY] Starting isolated MAB worker...", flush=True)
-                mab = MabWorker()
-                mab.start()
-                print("[DEPLOY] Motors ready and holding the home target.", flush=True)
+                if not runtime.stop.is_set():
+                    mab = MabWorker()
+                    mab.start()
 
+            # Discard motion inputs during startup; never discard a quit request.
+            _, keys = keyboard_session_events(self.keyboard)
+            with runtime.lock:
+                runtime.initialize_keys(bool(keys["clutch"]))
+                if keys["quit_requested"]:
+                    runtime.finish("quit_key")
             self.ready.set()
+            if not runtime.stop.is_set():
+                print(
+                    "[DEPLOY] Controls ready: teleop paused; fresh SPACE press to enable.",
+                    flush=True,
+                )
             period = 1.0 / CONTROL_HZ
             last = time.monotonic()
-            while not self.runtime.stop.is_set():
-                loop_start = time.monotonic()
-                dt = min(max(loop_start - last, 1e-6), 0.02)
-                last = loop_start
-
-                from giraf.drivers.keyboard import keyboard_status
-
-                clutch = bool(keyboard_status(self.keyboard)["clutch"])
-                with self.runtime.lock:
-                    phase = self.runtime.phase
-                    started_at = self.runtime.started_at
-                    action_time = self.runtime.action_time
-                    action = self.runtime.action.copy()
-                    joints = self.runtime.joints.copy()
-                    staging_target = self.runtime.staging_target.copy()
-
-                if phase is DeploymentPhase.WAIT_HOME_RELEASE and not clutch:
-                    self.runtime.set_phase(
-                        DeploymentPhase.WAIT_STAGE_PRESS, "home_deadman_armed"
-                    )
-                    phase = DeploymentPhase.WAIT_STAGE_PRESS
-                elif phase is DeploymentPhase.WAIT_STAGE_PRESS and clutch:
-                    self.runtime.set_phase(DeploymentPhase.STAGING, "staging_started")
-                    phase = DeploymentPhase.STAGING
-                elif phase is DeploymentPhase.STAGING and not clutch:
-                    self.runtime.finish("staging_deadman_released")
+            while not runtime.stop.is_set():
+                now = time.monotonic()
+                dt = min(max(now - last, 1e-6), 0.02)
+                last = now
+                events, keys = keyboard_session_events(self.keyboard)
+                command = self.step(events, now=now, dt=dt)
+                if command is None or runtime.stop.is_set():
                     break
-                elif phase is DeploymentPhase.WAIT_STAGE_RELEASE and not clutch:
-                    self.runtime.set_phase(DeploymentPhase.PREVIEW, "staging_accepted")
-                    phase = DeploymentPhase.PREVIEW
-                elif phase is DeploymentPhase.WAIT_ROLLOUT_RELEASE and not clutch:
-                    self.runtime.set_phase(
-                        DeploymentPhase.WAIT_ROLLOUT_PRESS, "rollout_deadman_armed"
-                    )
-                    phase = DeploymentPhase.WAIT_ROLLOUT_PRESS
-
-                if phase is DeploymentPhase.ROLLOUT and not clutch:
-                    self.runtime.finish("deadman_released")
-                    break
-                if (
-                    phase is DeploymentPhase.ROLLOUT
-                    and loop_start - started_at >= self.config.duration_s
-                ):
-                    self.runtime.finish("duration_complete")
-                    break
-                if phase is DeploymentPhase.ROLLOUT:
-                    freshness_origin = action_time or started_at
-                    if loop_start - freshness_origin > self.config.action_timeout_s:
-                        self.runtime.fail(
-                            "control",
-                            f"policy action stale for {loop_start - freshness_origin:.3f}s",
-                        )
-                        break
-
-                staging = phase is DeploymentPhase.STAGING and clutch
-                active = (
-                    phase is DeploymentPhase.ROLLOUT
-                    and clutch
-                    and action_time > 0.0
-                )
-                if staging:
-                    command = plan_staging_command(
-                        joints, staging_target, dt=dt, limits=self.limits
-                    )
-                else:
-                    command_action = (
-                        action if active else np.zeros(7, dtype=np.float32)
-                    )
-                    command = plan_joint_command(
-                        joints, command_action, dt=dt, limits=self.limits
-                    )
-                if (staging or active) and self.config.mode is not DeploymentMode.SHADOW:
-                    with self.runtime.lock:
-                        self.runtime.joints = command.joint_position.copy()
-
-                if staging and np.allclose(
-                    command.joint_position, staging_target, rtol=0.0, atol=1e-6
-                ):
-                    self.runtime.set_phase(
-                        DeploymentPhase.WAIT_STAGE_RELEASE, "staging_complete"
-                    )
-
                 command_accepted = None
                 if self.config.mode is DeploymentMode.HARDWARE:
-                    assert mab is not None and dxl is not None and sync_write is not None
                     from giraf.drivers.dynamixel import dynamixel_drive
 
                     mab.command(*command.can_position_target)
@@ -356,16 +266,13 @@ class _ControlWorker(threading.Thread):
                     )
                     if not command_accepted:
                         raise RuntimeError("Dynamixel command failed")
-
-                self.runtime.log.write(
+                with runtime.lock:
+                    source, active = runtime.source.value, runtime.active
+                runtime.log.write(
                     "control",
-                    phase=phase.value,
-                    staging=staging,
+                    source=source,
                     active=active,
-                    clutch=clutch,
-                    action_age_s=None
-                    if action_time == 0.0
-                    else loop_start - action_time,
+                    clutch=bool(keys["clutch"]),
                     action=command.action.tolist(),
                     joint_velocity=command.joint_velocity.tolist(),
                     joint_position=command.joint_position.tolist(),
@@ -373,35 +280,175 @@ class _ControlWorker(threading.Thread):
                     dynamixel_target_ticks=list(command.dynamixel_target_ticks),
                     command_accepted=command_accepted,
                 )
-                self.runtime.stop.wait(
-                    max(0.0, period - (time.monotonic() - loop_start))
-                )
-        except BaseException as exc:  # hardware failures must stop the rollout
-            self.runtime.fail("control", exc)
+                runtime.stop.wait(max(0.0, period - (time.monotonic() - now)))
+        except BaseException as exc:
+            runtime.fail("control", exc)
         finally:
             self.ready.set()
             if dxl is not None:
                 try:
-                    from giraf.drivers.dynamixel import (
-                        dynamixel_disconnect,
-                    )
+                    from giraf.drivers.dynamixel import dynamixel_disconnect
 
-                    dynamixel_disconnect(dxl)
-                    dxl.close_port()
+                    try:
+                        dynamixel_disconnect(dxl)
+                    finally:
+                        dxl.close_port()
                 except BaseException as exc:
-                    self.runtime.fail("Dynamixel shutdown", exc)
+                    runtime.fail("Dynamixel shutdown", exc)
             if mab is not None:
                 try:
                     mab.stop()
                 except BaseException as exc:
-                    self.runtime.fail("MAB shutdown", exc)
+                    runtime.fail("MAB shutdown", exc)
+
+
+def _optitrack_loop(runtime, config):
+    from giraf.drivers.optitrack import OptiTrackDriver
+
+    while not runtime.stop.is_set():
+        driver = None
+        try:
+            driver = OptiTrackDriver(
+                config.server_ip, config.rigid_id, client_ip=config.client_ip
+            )
+            driver.connect()
+            while not runtime.stop.is_set():
+                try:
+                    pose = driver.get_latest_pose(timeout=0.25)
+                except TimeoutError:
+                    continue
+                with runtime.lock:
+                    runtime.pose = pose
+                    runtime.pose_error = ""
+        except Exception as exc:
+            with runtime.lock:
+                runtime.pose = None
+                runtime.pose_error = f"OptiTrack unavailable: {exc}"
+                if runtime.active and runtime.source is ActionSource.TELEOP:
+                    runtime.pause(runtime.pose_error)
+            runtime.log.write("optitrack_error", detail=str(exc))
+        finally:
+            if driver is not None:
+                driver.close()
+        runtime.stop.wait(1.0)
+
+
+class _PolicyWorker(threading.Thread):
+    """Keep the original camera-paced, synchronous chunk execution off control."""
+
+    def __init__(self, runtime, config, collector_config, policy, frame_queue, video):
+        # A blocked model call must not prevent motor shutdown or process exit.
+        super().__init__(name="deployment-policy", daemon=True)
+        self.runtime = runtime
+        self.config = config
+        self.collector_config = collector_config
+        self.policy = policy
+        self.frame_queue = frame_queue
+        self.video = video
+        self.io_lock = threading.Lock()
+        self.generation = -1
+        self.actions_remaining = 0
+
+    def infer(self, image, sequence, frame_age):
+        runtime, policy, config = self.runtime, self.policy, self.config
+        with runtime.lock:
+            generation = runtime.generation
+            if not runtime.accepts(generation):
+                return
+            if frame_age > config.max_frame_age_s:
+                runtime.pause(f"camera frame stale by {frame_age:.3f}s")
+                return
+            state = state_from_joints(runtime.joints)
+        try:
+            if generation != self.generation:
+                policy.reset()
+                torch.manual_seed(config.seed)
+                self.actions_remaining = 0
+                self.generation = generation
+            violations = state_bound_violations(
+                state,
+                policy.normalizer.state_low,
+                policy.normalizer.state_high,
+                margin_fraction=config.state_margin_fraction,
+            )
+            if violations:
+                raise ValueError(f"state outside training bounds: {violations}")
+            started = time.monotonic()
+            replanning = self.actions_remaining == 0
+            if replanning:
+                with runtime.lock:
+                    if not runtime.hold_for_replan(generation, started):
+                        return
+            raw_action = policy.act({"camera_rgb": image, "state": state})
+            latency = time.monotonic() - started
+            if runtime.stop.is_set():
+                return
+            if replanning:
+                self.actions_remaining = policy.config.action_horizon
+            self.actions_remaining -= 1
+            safe_action = guard_policy_action(
+                raw_action, scale=config.action_scale, allow_grasp=config.allow_grasp
+            )
+            with runtime.lock:
+                if not runtime.accepts(generation):
+                    return  # a late prediction must not undo a pause or handoff
+                now = time.monotonic()
+                if runtime.action_expired(now, config.action_timeout_s):
+                    runtime.pause("policy action stale", generation=generation)
+                    return
+                runtime.publish(
+                    generation, safe_action, now, allow_grasp=config.allow_grasp
+                )
+                applied = runtime.action.copy()
+            runtime.log.write(
+                "policy",
+                generation=generation,
+                sequence=sequence,
+                frame_age_s=frame_age,
+                inference_latency_s=latency,
+                replanning=replanning,
+                state=state.tolist(),
+                raw_action=np.asarray(raw_action).tolist(),
+                safe_action=applied.tolist(),
+            )
+        except Exception as exc:
+            with runtime.lock:
+                runtime.pause(f"policy: {exc}", generation=generation)
+
+    def run(self):
+        runtime = self.runtime
+        while not runtime.stop.is_set():
+            try:
+                with self.io_lock:
+                    if runtime.stop.is_set():
+                        return
+                    rgb, image, sequence, frame_age = _read_frame(
+                        self.frame_queue, self.collector_config
+                    )
+                    if runtime.stop.is_set():
+                        return
+                    if self.video is not None:
+                        try:
+                            self.video.write(rgb)
+                        except Exception as exc:
+                            runtime.log.write("video_error", detail=str(exc))
+                            self.video = None
+            except Exception as exc:
+                with runtime.lock:
+                    if runtime.active and runtime.source is ActionSource.POLICY:
+                        runtime.pause(f"camera: {exc}")
+                runtime.stop.wait(0.05)
+                continue
+            self.infer(image, sequence, frame_age)
 
 
 def _timestamp_ns(value) -> int:
     return int(round(value.total_seconds() * 1_000_000_000))
 
 
-def _read_frame(frame_queue, config: CollectorConfig) -> tuple[np.ndarray, np.ndarray, int, float]:
+def _read_frame(
+    frame_queue, config: CollectorConfig
+) -> tuple[np.ndarray, np.ndarray, int, float]:
     import cv2
 
     message = frame_queue.get(timedelta(seconds=0.25))
@@ -416,7 +463,9 @@ def _read_frame(frame_queue, config: CollectorConfig) -> tuple[np.ndarray, np.nd
     captured_ns = _timestamp_ns(message.getTimestamp())
     frame_age_s = received - captured_ns / 1_000_000_000.0
     if frame_age_s < -0.05 or frame_age_s > 10.0:
-        raise RuntimeError("DepthAI capture timestamp is not on the host monotonic clock")
+        raise RuntimeError(
+            "DepthAI capture timestamp is not on the host monotonic clock"
+        )
     bgr = message.getCvFrame()
     camera = config.camera
     if bgr.shape != (camera.height, camera.width, 3):
@@ -424,7 +473,12 @@ def _read_frame(frame_queue, config: CollectorConfig) -> tuple[np.ndarray, np.nd
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
     width, height = config.dataset.resize_dim
     resized = cv2.resize(rgb, (width, height), interpolation=cv2.INTER_AREA)
-    return rgb, resized.astype(np.uint8, copy=False), int(message.getSequenceNum()), frame_age_s
+    return (
+        rgb,
+        resized.astype(np.uint8, copy=False),
+        int(message.getSequenceNum()),
+        frame_age_s,
+    )
 
 
 def _default_log_dir() -> Path:
@@ -432,99 +486,67 @@ def _default_log_dir() -> Path:
 
 
 def run(config: DeploymentConfig) -> Path:
-    """Run one guarded live rollout and return its log directory."""
+    """Run a persistent session; connect motors once and retain targets on pause."""
+    from giraf.drivers.camera import camera_connect, camera_disconnect
+    from giraf.drivers.keyboard import (
+        keyboard_connect,
+        keyboard_control,
+        keyboard_disconnect,
+        keyboard_status,
+    )
 
     collector_config = load_config(config.collector_config)
-    reference = load_reference_start(
-        config.reference_dataset, config.reference_episode
-    )
-    resize_width, resize_height = collector_config.dataset.resize_dim
-    expected_reference_shape = (resize_height, resize_width, 3)
-    if reference.camera_rgb.shape != expected_reference_shape:
-        raise ValueError(
-            f"reference RGB shape is {reference.camera_rgb.shape}, expected "
-            f"{expected_reference_shape} from {config.collector_config}"
-        )
-    limits = SafetyLimits()
-    validate_staging_target(reference.joints, limits=limits)
     log_dir = config.log_dir or _default_log_dir()
     log = _EventLog(log_dir, config)
-    reference_path = log_dir / "reference_start.png"
-    hardware = config.mode is DeploymentMode.HARDWARE
-    runtime = _Runtime(
-        log,
-        initial_joints=INITIAL_JOINTS if hardware else reference.joints,
-        staging_target=reference.joints,
-        hardware=hardware,
-    )
-    keyboard = camera_pipeline = video = control = None
-    keyboard_thread = None
+    runtime = Session(log)
+    keyboard = camera_pipeline = video = control = policy_worker = None
+    workers = []
     old_handlers = {}
 
-    def request_stop(signum, _frame) -> None:
-        # Keep the signal handler lock-free: it can interrupt a log write on the
-        # main thread. The final event records the reason during normal cleanup.
+    def request_stop(signum, _frame):
+        # Signals can interrupt a log write: do not acquire locks here.
         runtime.stop_reason = f"signal_{signum}"
         runtime.stop.set()
 
-    try:
-        log.write("startup")
-        import cv2
+    def guarded_worker(source, function, *args):
+        try:
+            function(*args)
+        except BaseException as exc:
+            runtime.fail(source, exc)
 
-        if not cv2.imwrite(
-            str(reference_path),
-            cv2.cvtColor(reference.camera_rgb, cv2.COLOR_RGB2BGR),
-        ):
-            raise RuntimeError(f"could not save reference image: {reference_path}")
+    try:
+        for selected_signal in (signal.SIGINT, signal.SIGTERM):
+            old_handlers[selected_signal] = signal.getsignal(selected_signal)
+            signal.signal(selected_signal, request_stop)
+        log.write("startup")
         print(f"[DEPLOY] Loading {config.checkpoint} on {config.device}...", flush=True)
         torch.manual_seed(config.seed)
         policy = DiffusionPolicy.load(config.checkpoint, device=config.device)
         if policy.config.action_space != "twist":
-            raise SystemExit(
-                "deployment executes twist actions; checkpoint action_space is "
-                f"{policy.config.action_space!r}"
-            )
+            raise ValueError("deployment requires a twist-action checkpoint")
         if policy.normalizer is None:
-            raise RuntimeError("checkpoint does not contain a training normalizer")
+            raise ValueError("checkpoint does not contain a training normalizer")
         if config.inference_steps is not None:
             if config.inference_steps > policy.config.diffusion_steps:
                 raise ValueError(
-                    "inference_steps cannot exceed the checkpoint diffusion_steps"
+                    "inference_steps cannot exceed checkpoint diffusion_steps"
                 )
             policy.config = replace(
                 policy.config, inference_steps=config.inference_steps
             )
-        reference_violations = state_bound_violations(
-            reference.state,
-            policy.normalizer.state_low,
-            policy.normalizer.state_high,
-            margin_fraction=config.state_margin_fraction,
-        )
-        if reference_violations:
-            raise RuntimeError(
-                "reference start is outside checkpoint training bounds in dimensions "
-                f"{reference_violations}"
-            )
-        log.write(
-            "reference_loaded",
-            dataset=str(reference.dataset),
-            episode=reference.episode,
-            step=reference.step,
-            joints=reference.joints.tolist(),
-            state=reference.state.tolist(),
-        )
+        if runtime.stop.is_set():
+            if runtime.error:
+                raise RuntimeError(runtime.error)
+            return log_dir
 
-        from giraf.drivers.camera import camera_connect, camera_disconnect
-        from giraf.drivers.keyboard import keyboard_connect, keyboard_control
-
-        print("[DEPLOY] Opening keyboard and camera...", flush=True)
-        keyboard = keyboard_connect()
+        keyboard = keyboard_connect(session_events=True)
         keyboard_thread = threading.Thread(
-            target=keyboard_control,
-            args=(keyboard, runtime.stop),
+            target=guarded_worker,
+            args=("keyboard", keyboard_control, keyboard, runtime.stop),
             name="deployment-keyboard",
         )
         keyboard_thread.start()
+        workers.append(keyboard_thread)
         camera_pipeline, frame_queue = camera_connect(
             frame_size=(collector_config.camera.width, collector_config.camera.height),
             frame_rate=collector_config.camera.fps,
@@ -538,253 +560,120 @@ def run(config: DeploymentConfig) -> Path:
                 height=collector_config.camera.height,
                 fps=collector_config.camera.fps,
             )
+        if keyboard_status(keyboard)["quit_requested"]:
+            runtime.finish("quit_key")
+        if runtime.stop.is_set():
+            if runtime.error:
+                raise RuntimeError(runtime.error)
+            return log_dir
 
-        for selected_signal in (signal.SIGINT, signal.SIGTERM):
-            old_handlers[selected_signal] = signal.getsignal(selected_signal)
-            signal.signal(selected_signal, request_stop)
-
-        control = _ControlWorker(runtime, keyboard, config, limits=limits)
-        if hardware:
+        optitrack = threading.Thread(
+            target=guarded_worker,
+            args=("OptiTrack worker", _optitrack_loop, runtime, config),
+            name="deployment-optitrack",
+            daemon=True,
+        )
+        optitrack.start()
+        workers.append(optitrack)
+        policy_worker = _PolicyWorker(
+            runtime, config, collector_config, policy, frame_queue, video
+        )
+        policy_worker.start()
+        workers.append(policy_worker)
+        control = _ControlWorker(
+            runtime,
+            keyboard,
+            config,
+            limits=SafetyLimits(),
+            state_low=policy.normalizer.state_low,
+            state_high=policy.normalizer.state_high,
+        )
+        if config.mode is DeploymentMode.HARDWARE:
             print(
-                "[HARDWARE] Using the current physical pose as MAB encoder zero. "
-                "It must be the same teleop home pose used for data collection.",
+                "[HARDWARE] Physical robot must be at teleop home for encoder zero.",
                 flush=True,
             )
         control.start()
-        if not control.ready.wait(timeout=20.0):
-            raise TimeoutError("control worker did not become ready within 20s")
-        if runtime.error:
-            raise RuntimeError(runtime.error)
-
+        workers.append(control)
+        startup_deadline = time.monotonic() + 20
         print(
-            f"[DEPLOY] mode={config.mode.value} scale={config.action_scale:.2f} "
-            f"duration={config.duration_s:.1f}s grasp={config.allow_grasp} "
-            f"inference_steps={policy.config.inference_steps}",
+            f"[DEPLOY] backend={config.mode.value} scale={config.action_scale:.2f} "
+            f"policy_grasp={config.allow_grasp} inference_steps={policy.config.inference_steps}\n"
+            "[DEPLOY] D: teleop/policy | SPACE: hold to run, release to pause | "
+            "B: teleop grasp | Q / Ctrl+C: shutdown\n"
+            "[DEPLOY] Each mode switch requires a fresh SPACE press. No rollout duration limit.",
             flush=True,
         )
-        print(
-            f"[DEPLOY] reference={reference.dataset} episode={reference.episode} "
-            f"q0={np.round(reference.joints, 4)}",
-            flush=True,
-        )
-        print(f"[DEPLOY] reference image: {reference_path}", flush=True)
-
-        last_status = 0.0
-        last_phase = None
-        actions_remaining = 0
-        while not runtime.stop.is_set():
-            rgb, image, sequence, frame_age = _read_frame(frame_queue, collector_config)
-            if video is not None:
-                video.write(rgb)
-            if frame_age > config.max_frame_age_s:
-                raise RuntimeError(f"camera frame is stale by {frame_age:.3f}s")
-
-            from giraf.drivers.keyboard import keyboard_status
-
-            clutch = bool(keyboard_status(keyboard)["clutch"])
-            with runtime.lock:
-                phase = runtime.phase
-                joints = runtime.joints.copy()
-
-            if phase is not last_phase:
-                print()
-                if phase is DeploymentPhase.WAIT_HOME_RELEASE:
-                    print(
-                        "[STAGE] Robot must be physically at teleop home; "
-                        "release SPACE to arm staging.",
-                        flush=True,
-                    )
-                elif phase is DeploymentPhase.WAIT_STAGE_PRESS:
-                    print(
-                        "[STAGE] Hold SPACE continuously to move slowly to the "
-                        "recorded start pose; release early to stop.",
-                        flush=True,
-                    )
-                elif phase is DeploymentPhase.WAIT_STAGE_RELEASE:
-                    print(
-                        "[STAGE] Recorded start pose reached. Release SPACE to "
-                        "accept it and run the preview.",
-                        flush=True,
-                    )
-                elif phase is DeploymentPhase.PREVIEW:
-                    print("[PREVIEW] Running one no-motion policy inference...", flush=True)
-                elif phase is DeploymentPhase.WAIT_ROLLOUT_RELEASE:
-                    print("[RUN] Release SPACE to arm the rollout.", flush=True)
-                elif phase is DeploymentPhase.WAIT_ROLLOUT_PRESS:
-                    print(
-                        "[RUN] Hold SPACE to begin; release it to stop. "
-                        "Ctrl-C also stops.",
-                        flush=True,
-                    )
-                last_phase = phase
-
-            if phase is DeploymentPhase.STAGING:
-                now = time.monotonic()
-                if now - last_status >= 0.25:
-                    remaining = reference.joints - joints
-                    print(
-                        f"\r[STAGE] q={np.round(joints, 3)} "
-                        f"remaining={np.round(remaining, 3)}   ",
-                        end="",
-                        flush=True,
-                    )
-                    last_status = now
-                continue
-
-            if phase is DeploymentPhase.PREVIEW:
-                state = state_from_joints(joints)
-                if not np.allclose(joints, reference.joints, rtol=0.0, atol=1e-5):
-                    raise RuntimeError("preview pose does not match the reference start")
-                preview_started = time.monotonic()
-                raw_preview = policy.act({"camera_rgb": image, "state": state})
-                preview_latency = time.monotonic() - preview_started
-                safe_preview = guard_policy_action(
-                    raw_preview,
-                    scale=config.action_scale,
-                    allow_grasp=config.allow_grasp,
-                    limits=limits,
-                )
-                preview_command = plan_joint_command(
-                    joints, safe_preview, dt=1.0 / CONTROL_HZ, limits=limits
-                )
-                log.write(
-                    "preview",
-                    sequence=sequence,
-                    frame_age_s=frame_age,
-                    inference_latency_s=preview_latency,
-                    state=state.tolist(),
-                    raw_action=np.asarray(raw_preview).tolist(),
-                    safe_action=safe_preview.tolist(),
-                    joint_velocity=preview_command.joint_velocity.tolist(),
-                    joint_position=preview_command.joint_position.tolist(),
-                )
-                print(f"[PREVIEW] raw={np.round(raw_preview, 4)}", flush=True)
-                print(f"[PREVIEW] safe={np.round(safe_preview, 4)}", flush=True)
-                print(
-                    f"[PREVIEW] qdot={np.round(preview_command.joint_velocity, 4)} "
-                    f"latency={preview_latency * 1000:.1f}ms",
-                    flush=True,
-                )
-                policy.reset()
-                actions_remaining = 0
-                torch.manual_seed(config.seed)
-                runtime.set_phase(
-                    DeploymentPhase.WAIT_ROLLOUT_RELEASE, "preview_complete"
-                )
-                continue
-
-            if phase is DeploymentPhase.WAIT_ROLLOUT_PRESS and clutch:
-                runtime.start_trial()
-                policy.reset()
-                actions_remaining = 0
-                torch.manual_seed(config.seed)
-                phase = DeploymentPhase.ROLLOUT
-
-            if phase is not DeploymentPhase.ROLLOUT:
-                continue
-
-            state = state_from_joints(joints)
-            violations = state_bound_violations(
-                state,
-                policy.normalizer.state_low,
-                policy.normalizer.state_high,
-                margin_fraction=config.state_margin_fraction,
-            )
-            if violations:
-                raise RuntimeError(
-                    f"state left training bounds in dimensions {violations}"
-                )
-
-            inference_started = time.monotonic()
-            replanning = actions_remaining == 0
-            if replanning:
-                # A synchronous diffusion sample can take longer than one 30 Hz
-                # action period. Hold zero while sampling rather than extending
-                # the previous velocity command for an unintended duration.
-                # Preserve the current gripper command; zeroing all seven
-                # channels would force the gripper open during every replan.
-                hold_action = np.zeros(7, dtype=np.float32)
+        last_status = ""
+        last_status_time = 0.0
+        while not runtime.stop.wait(0.02):
+            if keyboard_status(keyboard)["quit_requested"]:
                 with runtime.lock:
-                    hold_action[GRASP_INDEX] = runtime.action[GRASP_INDEX]
-                runtime.set_action(hold_action)
-            raw_action = policy.act({"camera_rgb": image, "state": state})
-            inference_latency = time.monotonic() - inference_started
-            if replanning:
-                actions_remaining = policy.config.action_horizon
-            actions_remaining -= 1
-            safe_action = guard_policy_action(
-                raw_action,
-                scale=config.action_scale,
-                allow_grasp=config.allow_grasp,
-                limits=limits,
-            )
-            runtime.set_action(safe_action)
-            log.write(
-                "policy",
-                sequence=sequence,
-                frame_age_s=frame_age,
-                inference_latency_s=inference_latency,
-                replanning=replanning,
-                state=state.tolist(),
-                raw_action=np.asarray(raw_action).tolist(),
-                safe_action=safe_action.tolist(),
-            )
+                    runtime.finish("quit_key")
+                break
+            if not control.ready.is_set() and time.monotonic() > startup_deadline:
+                raise TimeoutError("control worker did not become ready within 20s")
+            for worker in workers:
+                if not worker.is_alive() and not runtime.stop.is_set():
+                    raise RuntimeError(f"{worker.name} stopped unexpectedly")
             now = time.monotonic()
-            if now - last_status >= 0.25:
-                print(
-                    f"\r[RUN] t={now - runtime.started_at:5.2f}s "
-                    f"frame={sequence} infer={inference_latency * 1000:6.1f}ms "
-                    f"action={np.round(safe_action, 3)}   ",
-                    end="",
-                    flush=True,
-                )
-                last_status = now
+            if now - last_status_time >= 0.25:
+                status = runtime.status()
+                if status != last_status:
+                    print(f"[DEPLOY] {status}", flush=True)
+                    last_status = status
+                last_status_time = now
     except KeyboardInterrupt:
         runtime.finish("keyboard_interrupt")
     except BaseException as exc:
         runtime.fail("runner", exc)
     finally:
         runtime.stop.set()
+        # Motors stop independently of camera/model progress.
         if control is not None and control.is_alive():
-            control.join(timeout=8.0)
+            control.join(timeout=20.0)
             if control.is_alive():
                 runtime.fail("shutdown", "control worker did not stop")
-        if keyboard_thread is not None and keyboard_thread.is_alive():
-            keyboard_thread.join(timeout=2.0)
-        if camera_pipeline is not None:
-            try:
-                camera_disconnect(camera_pipeline)
-            except BaseException as exc:
-                runtime.fail("camera shutdown", exc)
-        if keyboard is not None:
-            try:
-                from giraf.drivers.keyboard import keyboard_disconnect
+        for worker in workers:
+            if worker is not control and worker.is_alive():
+                worker.join(timeout=2.0)
+                if worker.is_alive():
+                    log.write("worker_shutdown_pending", worker=worker.name)
 
-                keyboard_disconnect(keyboard)
-            except BaseException as exc:
-                runtime.fail("keyboard shutdown", exc)
-        if video is not None:
+        def cleanup(source, function, *args):
             try:
-                video.close()
+                function(*args)
             except BaseException as exc:
-                runtime.fail("video shutdown", exc)
+                runtime.fail(source, exc)
+
+        def close_camera_logs():
+            if video is not None:
+                cleanup("video shutdown", video.close)
+            if camera_pipeline is not None:
+                cleanup("camera shutdown", camera_disconnect, camera_pipeline)
+
+        # A late inference returns before touching video/camera again. Serialize
+        # cleanup with I/O, never with model inference; motors are already off.
+        if policy_worker is not None:
+            with policy_worker.io_lock:
+                close_camera_logs()
+        else:
+            close_camera_logs()
+        if keyboard is not None:
+            cleanup("keyboard shutdown", keyboard_disconnect, keyboard)
         for selected_signal, old_handler in old_handlers.items():
             signal.signal(selected_signal, old_handler)
         log.write(
             "finished",
-            reason=runtime.stop_reason or "runner_finished",
+            reason=runtime.stop_reason or "session_finished",
             error=runtime.error or None,
         )
         log.close()
-        print()
-        if runtime.error:
-            print(f"[DEPLOY][ERROR] {runtime.error}", flush=True)
-        else:
-            print(
-                f"[DEPLOY] Finished: {runtime.stop_reason or 'runner_finished'}",
-                flush=True,
-            )
-        print(f"[DEPLOY] Logs: {log_dir}", flush=True)
+        print(
+            f"[DEPLOY] Finished: {runtime.error or runtime.stop_reason}\n"
+            f"[DEPLOY] Logs: {log_dir}",
+            flush=True,
+        )
     if runtime.error:
         raise RuntimeError(runtime.error)
     return log_dir
@@ -793,18 +682,6 @@ def run(config: DeploymentConfig) -> Path:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", required=True, type=Path)
-    parser.add_argument(
-        "--reference-dataset",
-        required=True,
-        type=Path,
-        help="replay dataset containing the rollout's recorded initial pose",
-    )
-    parser.add_argument(
-        "--reference-episode",
-        type=int,
-        default=0,
-        help="episode whose first pose is used for staging (default: 0)",
-    )
     parser.add_argument(
         "--config", type=Path, default=Path("config/tape_grasping.yaml")
     )
@@ -821,7 +698,9 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="override checkpoint diffusion inference steps",
     )
-    parser.add_argument("--duration", type=float, default=5.0, help="seconds")
+    parser.add_argument("--server-ip", default=DEFAULT_SERVER_IP)
+    parser.add_argument("--client-ip", default=None)
+    parser.add_argument("--rigid-id", type=int, default=DEFAULT_RIGID_BODY_ID)
     parser.add_argument("--action-timeout", type=float, default=0.5, help="seconds")
     parser.add_argument("--max-frame-age", type=float, default=0.15, help="seconds")
     parser.add_argument("--state-margin", type=float, default=0.05)
@@ -848,14 +727,14 @@ def parse_config(argv: Sequence[str] | None = None) -> DeploymentConfig:
         parser.error("--mode hardware requires --confirm-hardware")
     return DeploymentConfig(
         checkpoint=args.checkpoint,
-        reference_dataset=args.reference_dataset,
-        reference_episode=args.reference_episode,
         collector_config=args.config,
         mode=mode,
         device=args.device,
         action_scale=args.action_scale,
         inference_steps=args.inference_steps,
-        duration_s=args.duration,
+        server_ip=args.server_ip,
+        client_ip=args.client_ip,
+        rigid_id=args.rigid_id,
         action_timeout_s=args.action_timeout,
         max_frame_age_s=args.max_frame_age,
         state_margin_fraction=args.state_margin,

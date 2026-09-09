@@ -9,7 +9,7 @@ signal semantics, compatibility, hardware checks, and known device limitations.
 
 ## Repository layout
 
-```text
+```text                                                                                                                              rbbr
 .
 ├── config/data_collection.yaml   # collection settings
 ├── src/giraf/
@@ -414,156 +414,134 @@ policy = DiffusionPolicy.load("checkpoints/tape_grasping/policy.pt", device="cpu
 
 ### Deployment
 
-Run the deployment prototype with `python -m giraf.deployment`; there is no
-`giraf-deploy` entry point. It loads one checkpoint and runs a bounded trial
-using live camera RGB and command-derived robot state.
+Run the deployment console with `python -m giraf.deployment`. It keeps one
+motor connection and shared commanded robot state while switching between
+OptiTrack teleop and a diffusion policy. No recorded episode or start-pose
+staging is required.
 
 **Compatibility:** `conv`, `resnet18`, and `dinov2` checkpoints use the shared
-policy loader and inference path. The saved encoder, center crop, image/state
-normalization, EMA weights when present, action horizon, and temporal ensembling
-are applied automatically. Training-time color jitter is disabled. DINOv2
-initialization uses `torch.hub`, so its backbone code and pretrained weights
-must be cached or downloadable on the deployment machine. Checkpoints must
-contain a normalizer and use `action_space="twist"`; `joint_position` policies
-are explicitly rejected before motors are opened.
+policy loader. Saved encoder settings, center crop, normalization, EMA weights
+when present, action horizon, and temporal ensembling remain in effect.
+Training-time color jitter is disabled. DINOv2's backbone code and pretrained
+weights must be cached or downloadable. Checkpoints must contain a normalizer
+and use `action_space="twist"`; incompatible checkpoints are rejected before
+motors are opened.
 
-#### Prepare and check command generation
+#### Start a session
 
-Run from the repository root. Sync the environment after pulling learning-code
-changes; the encoders require `torchvision`, including when loading an older
-conv checkpoint:
+From the repository root:
 
 ```bash
 uv sync --frozen --extra hardware
 uv run --frozen --extra hardware python -m giraf.deployment --help
-```
-
-All modes use the live camera and Linux keyboard input. Stop teleop and any
-other process using those devices before launching deployment. OptiTrack is
-not used by the standalone deployment runner.
-
-| Mode | Behavior |
-| --- | --- |
-| `shadow` (default) | Reports policy outputs with a fixed logical joint pose; motors are not opened. |
-| `dry-run` | Integrates bounded commands into a simulated joint pose; motors are not opened. |
-| `hardware` | Connects motors, stages to the recorded start, and executes bounded policy commands. |
-
-Dry-run uses live images even as the simulated joint pose changes. It checks
-command generation and limits; it does not simulate the visual consequences of
-motion or evaluate task success.
-
-For the September ResNet checkpoint, begin with:
-
-```bash
 uv run --frozen --extra hardware python -m giraf.deployment \
   --checkpoint checkpoints/tape_grasping/nautilus-policy-v2-resnet/best.pt \
-  --reference-dataset data/tape_grasping/sept03_trials.zarr \
-  --reference-episode 16 \
   --config config/tape_grasping.yaml \
   --device cuda \
   --mode dry-run \
-  --action-scale 0.2 \
-  --duration 5
+  --action-scale 0.2
 ```
 
-The runner prints a no-motion inference preview. Release SPACE to arm the
-trial, then hold SPACE to run it. Releasing SPACE during the trial stops the
-program; `Ctrl-C` also stops it. Use `--mode shadow` for a fixed logical pose.
+Stop standalone teleop and other processes using the camera or motors before
+launching. The console uses live camera RGB and Linux keyboard input in every
+backend, plus OptiTrack for teleop. Its connection options match teleop:
+`--server-ip` (default `172.24.68.77`), `--client-ip` (default automatic), and
+`--rigid-id` (default `40`). Missing/stale OptiTrack poses prevent teleop motion;
+policy can run without OptiTrack once the robot is positioned.
 
-Replace `--checkpoint` to try another model. `best.pt` is selected by validation
-action MSE; `policy.pt` is the latest saved model, and `policy_epoch_NNNN.pt`
-selects a particular epoch. Choose a zero-based `--reference-episode` from a
-dataset for the same task and a scene you can reproduce. The runner uses that
-episode's first recorded joint pose and saves its image for comparison; policy
-inference uses the live image. `--config` supplies camera settings and the
-dataset RGB resize, which should match training (224 x 224 here). The runner
-checks the reference image shape against this configuration.
+| Backend (`--mode`) | Behavior |
+| --- | --- |
+| `shadow` (default) | Reports commands using a fixed logical home pose; motors are not opened. |
+| `dry-run` | Integrates teleop and policy commands into a simulated joint pose; motors are not opened. |
+| `hardware` | Commands the physical motors from the same shared joint/gripper state. |
 
-These commands retain the checkpoint's inference schedule: this ResNet model
-uses 16 inference steps. Its 100 diffusion training steps are a separate
-setting. `--inference-steps N` overrides inference only and must not exceed the
-checkpoint's diffusion steps. Inspect preview and rollout latency before
-changing it; an override can change policy quality. The older conv trial used
-an explicit 10-step override, which is not a requirement for newer models.
+Dry-run still uses live images; it does not simulate the visual consequences of
+motion or evaluate task success. `--config` supplies camera settings and RGB
+resize dimensions, which should match training (224 x 224 for this example).
 
-#### Run on the robot
+For hardware, first put the robot physically at the same teleop home used for
+collection, then replace `--mode dry-run` with `--mode hardware` and add
+`--confirm-hardware`. The MAB driver zeros encoders on connection. The console
+initializes commanded joints to `[0, 0, 0.31, 0, 0, 0]`; this is not an automatic
+homing move. Keep the physical kill switch accessible.
 
-Before launching hardware mode, put the physical robot at the same teleop home
-pose used for collection. The MAB driver zeros its encoders on connection, and
-the runner initializes its commanded joints to `[0, 0, 0.31, 0, 0, 0]`. Starting
-at another physical pose would give the commands the wrong coordinate frame.
-Position the camera, object, and surroundings like the selected demonstration.
-Keep the physical kill switch reachable and remain at the terminal during motion.
+#### Teleop and policy handoff
 
-```bash
-uv run --frozen --extra hardware python -m giraf.deployment \
-  --checkpoint checkpoints/tape_grasping/nautilus-policy-v2-resnet/best.pt \
-  --reference-dataset data/tape_grasping/sept03_trials.zarr \
-  --reference-episode 16 \
-  --config config/tape_grasping.yaml \
-  --device cuda \
-  --mode hardware \
-  --action-scale 0.2 \
-  --duration 5 \
-  --confirm-hardware
-```
+The session starts paused in teleop. Wait for the console's **Controls ready**
+message before operating it; motion inputs entered during motor startup are
+discarded. Motor targets and calibration persist across every handoff.
 
-1. Begin with SPACE released. Motor connections initialize the home targets.
-2. Hold SPACE continuously to stage slowly to the recorded start. Releasing
-   before staging completes stops the program and closes the motor interfaces.
-3. When staging completes, release SPACE. Review the printed raw action,
-   guarded action, joint velocity, and inference latency from the preview.
-4. Hold SPACE again to start the rollout. The five-second duration starts here,
-   after staging and preview. Release SPACE or press `Ctrl-C` to stop.
+| Key | Behavior |
+| --- | --- |
+| SPACE held | Enables the selected mode after a fresh press. |
+| SPACE released | Pauses arm motion, holding joint targets and the last gripper command with motors enabled. |
+| D | Switches teleop/policy and pauses. If SPACE is held, release it and press again to enable the new mode. |
+| B | Toggles grasp in teleop, including while the arm is paused. Ignored in policy mode. |
+| Q or Ctrl+C | Ends the session and runs motor shutdown. |
 
-The default `--action-scale 0.2` scales the six twist channels and their hard
-velocity ceilings to 20%; it does not scale staging speeds or grasp. Increase
-the scale or `--duration` deliberately after reviewing a short trial. CUDA is
-the default device; `--device cpu` is available, but inference must still meet
-the configured freshness limits.
+1. Begin with SPACE released. Hold it to teleoperate using the existing
+   OptiTrack controls and gains. Each activation re-anchors the controller to
+   the current commanded robot pose.
+2. Position the robot and scene, then press D to select policy. Release SPACE
+   if held, then hold it again to start the policy from live RGB and current
+   command-derived state.
+3. Release SPACE to pause. Press it again to make a fresh plan: observation
+   history and queued policy actions are cleared at every activation.
+4. Press D to return to teleop. A fresh clutch press re-anchors teleop at the
+   current pose, without reconnecting or zeroing the motors.
 
-Grasp defaults to an **open command**, not an unpowered gripper. Add
-`--allow-grasp` to let the policy select open/closed after reviewing arm motion.
-There is a current limitation: each synchronous replan temporarily sets all
-seven action channels to zero. This holds the commanded arm pose during
-inference and also commands the gripper open, even with `--allow-grasp`.
-Brief holds can coexist with visually smooth motion. The command interruption
-does not establish how much the gripper physically moves or explain a failed
-manipulation on its own; inspect it when evaluating grasp behavior.
+Policy rollouts have no duration limit. There is no mandatory stationary
+preview. Old `--reference-dataset`, `--reference-episode`, and `--duration`
+arguments have been removed. This console does not record training episodes;
+use standalone teleop/collection for that workflow.
 
-#### Logs, limits, and handoff
+#### Inference and grasp
 
-Each invocation creates `deployment_runs/YYYYMMDD-HHMMSS/` containing:
+Active policy execution retains the existing camera-paced action consumption
+(30 Hz with the example configuration), checkpoint inference schedule, and
+100 Hz motor command loop. At each replan it holds zero arm velocity while
+sampling synchronously, preserving the current gripper command. Prediction
+and chunk execution do not overlap. Moving this loop to a worker lets keyboard
+handling and motor control continue through slow inference; results from a
+previous activation are discarded after a pause or switch.
 
-- `config.json`: checkpoint path and deployment options;
-- `events.jsonl`: staging, preview, policy outputs, inference latency, control
-  commands, and the final stop reason;
-- `camera.mp4`: live camera video, unless `--no-video` is set;
-- `reference_start.png`: the selected episode's starting image.
+The default `--action-scale 0.2` applies to policy twist channels and their
+hard velocity ceilings, not teleop or grasp. CUDA remains the default device.
+`--inference-steps N` overrides the checkpoint schedule and must not exceed its
+diffusion training steps; changing it can affect policy quality.
 
-Use `--log-dir PATH` for a custom, unused run directory. To review a run:
+Without `--allow-grasp`, the policy preserves the current gripper command,
+including a grasp set during teleop. With it, the policy selects open/closed
+while active. Pauses, mode switches, and replanning preserve grasp in either
+case; returning to teleop does not restore an old keyboard grasp state.
 
-```bash
-ls -lt deployment_runs
-tail -n 30 deployment_runs/YYYYMMDD-HHMMSS/events.jsonl
-```
+#### Pauses, faults, and logs
 
-The executor clamps twists, caps joint speeds, enforces joint limits, and
-checks rollout state against checkpoint training bounds (`--state-margin 0.05`
-by default). It stops on stale actions (`--action-timeout 0.5` seconds), stale
-frames (`--max-frame-age 0.15` seconds), deadman release, or the duration limit.
-State and staging completion are command-derived; measured joint arrival is
-not verified. There is no collision detection, contact sensing, or automatic
-task-success evaluation. Retain the run directory when reporting trial results.
+Joint-speed and physical joint limits apply to both action sources. Policy
+state is checked against training bounds (`--state-margin 0.05` by default).
+Leaving those bounds, stale actions (`--action-timeout 0.5` seconds), stale
+camera frames (`--max-frame-age 0.15` seconds), and invalid/failed policy
+predictions pause policy and retain motor targets. OptiTrack poses older than
+0.15 seconds pause teleop. Guard recovery never restarts motion automatically:
+release/press SPACE to retry, or use D and a fresh SPACE press for teleop recovery.
+Training-distribution bounds do not restrict teleop recovery.
 
-Matching a recorded start is a requirement of this prototype's initialization,
-not of diffusion policies in general. It supplies a known commanded pose and a
-familiar starting scene. Direct teleop/policy handoff is not implemented:
-releasing SPACE ends this runner rather than returning control to teleop.
-A future shared session could preserve motor calibration and joint/gripper
-state while switching action sources, resetting policy history, and
-re-anchoring teleop. Until then, each hardware launch requires physical home
-and staging again.
+Q, Ctrl+C, and SIGTERM shut down. Motor communication errors, keyboard/control
+worker failures, and invalid shared robot state also trigger shutdown because
+reliable holding is no longer assured. State remains command-derived, without
+measured arrival verification, collision detection, or task-success detection.
+
+Each session creates `deployment_runs/YYYYMMDD-HHMMSS/` (or an unused directory
+specified by `--log-dir`) containing:
+
+- `config.json`: checkpoint, connection settings, and deployment options;
+- `events.jsonl`: source switches, activations, pause reasons, policy outputs,
+  inference latency, control commands, and shutdown reason;
+- `camera.mp4`: camera frames consumed by the inference loop, unless `--no-video`.
+
+The video retains the existing capture behavior: synchronous replanning can
+skip frames, so use event timestamps to assess actual motion timing. There is
+no reference image output. Video/log files grow for the lifetime of the session.
 
 ### MuJoCo drop-in
 

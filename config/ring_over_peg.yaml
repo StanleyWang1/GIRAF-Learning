@@ -12,9 +12,9 @@ imu:
   max_batch_reports: 10
 
 dataset:
-  output_dir: data/rings_over_peg
-  zarr_name: boom_1m.zarr
-  episode_dir_name: boom_1m_videos
+  output_dir: data/ring_over_peg
+  zarr_name: boom_2m.zarr
+  episode_dir_name: boom_2m_videos
   aligned_hz: 30.0
   resize_dim: [224, 224]
   resize_mode: stretch
