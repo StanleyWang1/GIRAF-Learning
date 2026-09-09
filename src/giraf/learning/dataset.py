@@ -14,6 +14,34 @@ from .normalize import Normalizer
 from .policy import Batch
 
 
+def open_replay_group(path: str | Path) -> tuple[zarr.Group, zarr.ZipStore | None]:
+    """Open a read-only directory or ZIP; the caller owns the returned ZIP store."""
+
+    path = Path(path)
+    if path.suffix.lower() != ".zip":
+        return zarr.open_group(str(path), mode="r"), None
+
+    store = zarr.ZipStore(str(path), mode="r")
+    try:
+        group_path = None
+        if ".zgroup" not in store:
+            candidates = {
+                key.split("/", 1)[0]
+                for key in store.keys()
+                if key.count("/") == 1 and key.endswith("/.zgroup")
+            }
+            if len(candidates) != 1:
+                raise ValueError(
+                    "ZIP must contain a Zarr group at archive root or under "
+                    "exactly one top-level directory"
+                )
+            group_path = candidates.pop()
+        return zarr.open_group(store=store, mode="r", path=group_path), store
+    except Exception:
+        store.close()
+        raise
+
+
 def episode_windows(
     episode_ends: np.ndarray,
     valid: np.ndarray | None,
@@ -78,7 +106,8 @@ class ReplayDataset:
     """Re-iterable batch source over ``replay_buffer.zarr``.
 
     Low-dimensional arrays live in RAM. Images are read from Zarr per batch
-    unless ``preload_images`` is set. Each ``__iter__`` reshuffles with
+    unless ``preload_images`` is set or ``preloaded_camera`` is supplied.
+    Each ``__iter__`` reshuffles with
     ``seed + epoch`` so ``train(..., epochs=1)`` per epoch is deterministic.
     """
 
@@ -93,6 +122,7 @@ class ReplayDataset:
         seed: int = 0,
         start_epoch: int = 0,
         preload_images: bool = False,
+        preloaded_camera: np.ndarray | None = None,
         require_alignment_valid: bool = True,
         episodes: Sequence[int] | None = None,
         action_space: str = "twist",
@@ -109,7 +139,7 @@ class ReplayDataset:
         self.seed = seed
         self._epoch = start_epoch
 
-        root = zarr.open_group(str(self.path), mode="r")
+        root, self._store = open_replay_group(self.path)
         data = root["data"]
         if action_space == "twist":
             self.actions = np.asarray(data["action"][:], dtype=np.float32)
@@ -135,7 +165,15 @@ class ReplayDataset:
         ):
             raise ValueError("data/camera_rgb must be [T, H, W, 3]")
         self.image_shape = tuple(int(v) for v in self._camera.shape[1:])
-        if preload_images:
+        if preloaded_camera is not None:
+            if not isinstance(preloaded_camera, np.ndarray):
+                raise TypeError("preloaded_camera must be a NumPy ndarray")
+            if preloaded_camera.shape != self._camera.shape:
+                raise ValueError("preloaded_camera shape must match data/camera_rgb")
+            if preloaded_camera.dtype != np.uint8:
+                raise TypeError("preloaded_camera dtype must be uint8")
+            self._camera = preloaded_camera
+        elif preload_images:
             self._camera = np.asarray(self._camera[:], dtype=np.uint8)
 
         episode_ends = np.asarray(root["meta/episode_ends"][:], dtype=np.int64)
@@ -165,6 +203,15 @@ class ReplayDataset:
         )
         if len(self.obs_idx) == 0:
             raise ValueError("dataset contains no usable training windows")
+        # Lazy cameras need the ZIP open; all other arrays are already in RAM.
+        if self._store is not None and self.preloaded_camera is not None:
+            self._store.close()
+
+    @property
+    def preloaded_camera(self) -> np.ndarray | None:
+        """The shared image array, or None when images are read lazily."""
+
+        return self._camera if isinstance(self._camera, np.ndarray) else None
 
     @property
     def n_windows(self) -> int:

@@ -13,11 +13,10 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 import torch
-import zarr
 
 from giraf.data.schema import ACTION_SPACES
 
-from .dataset import ReplayDataset, split_episodes
+from .dataset import ReplayDataset, open_replay_group, split_episodes
 from .diffusion import DiffusionPolicy, DiffusionPolicyConfig
 from .pipeline import evaluate, mean_metrics, train
 
@@ -306,8 +305,12 @@ def run(config: TrainConfig) -> Path:
                 flush=True,
             )
 
-    root = zarr.open_group(str(config.dataset), mode="r")
-    dataset_episode_count = len(root["meta/episode_ends"])
+    root, store = open_replay_group(config.dataset)
+    try:
+        dataset_episode_count = len(root["meta/episode_ends"])
+    finally:
+        if store is not None:
+            store.close()
     train_episodes, val_episodes = split_episodes(
         dataset_episode_count, config.val_fraction, config.seed
     )
@@ -330,7 +333,8 @@ def run(config: TrainConfig) -> Path:
             observation_horizon=policy_config.observation_horizon,
             prediction_horizon=policy_config.prediction_horizon,
             shuffle=False,
-            preload_images=config.preload_images,
+            preload_images=False,
+            preloaded_camera=train_dataset.preloaded_camera,
             episodes=val_episodes,
             action_space=policy_config.action_space,
         )
