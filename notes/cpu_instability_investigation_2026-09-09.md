@@ -3,6 +3,36 @@
 Status: investigation in progress; no faulty CPU core identified and no cores
 disabled. A passing short test does not establish hardware health.
 
+## Active production run
+
+The user-requested run `src-boom-1m-and-2m-x100` was started on September 9 at
+12:34 Pacific time in detached tmux session `giraf-src-boom-monitor`.
+It uses the requested 500 epochs, LR floor ratio 0.5, checkpoint interval 20,
+and online W&B, with all logical CPUs available. Other requested training
+arguments are recorded in the run's `config.json` and `monitor_status.json`.
+
+`scripts/monitor_training.py` forwards the trainer arguments unchanged and runs
+the trainer under `scripts/train_diagnostics.gdb`. The run directory is
+`checkpoints/src-boom-1m-and-2m-x100/`:
+
+- `train.log`: trainer output, GDB native stacks, signal, faulting thread's last
+  logical CPU, raw physical core ID, SMT siblings, registers, instructions,
+  shared libraries, and a temperature snapshot on a stopped signal.
+- `cpu_temperatures.jsonl`: CPU temperature readings every two seconds.
+- `monitor_status.json`: command, process IDs, affinity, start/end time, status.
+- `exit_status.txt`: written when training ends; SIGSEGV maps to 139.
+
+W&B console interception is disabled while online metric logging remains enabled.
+GDB fault reporting was verified with a deliberately signaled test process;
+normal exit 0 and error exit 7 were also preserved. The complete monitor passed
+an integration check using the trainer's `--help` command. These are launcher
+checks, not evidence that training or the CPU is stable.
+
+```bash
+tmux attach -t giraf-src-boom-monitor
+tail -f checkpoints/src-boom-1m-and-2m-x100/train.log
+```
+
 ## Observations
 
 - Intel Core i9-14900KS; BIOS reports 2202; runtime microcode is 0x133.
@@ -27,10 +57,16 @@ disabled. A passing short test does not establish hardware health.
 
 ## Longer test
 
-An unrestricted 60-epoch diagnostic is running with the same dataset,
+An unrestricted diagnostic targeting 60 epochs ran with the same dataset,
 ResNet-18 encoder, batch size 256, seed 0, validation split, and preloading.
 Its scheduler uses a 60-epoch target instead of the production 500-epoch target;
 these are diagnostic checkpoints, not an exact continuation of production.
+
+It completed 14 epochs and crashed in epoch 15, in `libcuda.so.1` while launching
+a GroupNorm backward kernel. GDB reported logical CPU 8 for the stopped thread,
+raw physical core ID 16, with SMT siblings 8–9. This is a candidate for targeted
+retesting, not proof of a damaged core. The temperature monitor collected 214
+samples, with a maximum sampled temperature of 78 C across CPU sensors.
 
 - GDB log: `/tmp/giraf-train-allcores-long-gdb.log`
 - Metrics and checkpoints: `/tmp/giraf-train-allcores-long-20260909/`
@@ -77,9 +113,10 @@ sudo journalctl -k --since '2026-09-03' --no-pager -o short-iso \
 Also confirm Intel Default Settings and XMP disabled after the BIOS update.
 Firmware and microcode versions alone do not establish those settings.
 
-A CPU-only correctness sweep has been prepared in
-`checkpoints/training_debug/cpu-affinity-20260909/giraf_cpu_sweep.py` but has not
-yet run. It pins one worker at a time to one logical CPU per physical core,
+A CPU-only correctness sweep in
+`checkpoints/training_debug/cpu-affinity-20260909/giraf_cpu_sweep.py` completed
+ten seconds on each of 24 physical cores with no detected correctness failures,
+including CPU 8. It pins one worker at a time to one logical CPU per physical core,
 checks matrix products against exact integer arithmetic and compression/hash
 round trips, and samples temperatures. It is a short custom screen, not a
 replacement for extended CPU and memory testing. Keep it separate from training

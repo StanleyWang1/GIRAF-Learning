@@ -1,5 +1,5 @@
 # CONNECTION PARAMETERS
-PORT = "/dev/ttyACM1"
+PORT = "/dev/ttyUSB0"
 BAUDRATE = 1000000
 
 # XL-430-W250-T, Protocol 2.0
