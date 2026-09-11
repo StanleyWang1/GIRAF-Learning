@@ -265,6 +265,14 @@ actions `act()` returns.
 
 ### Training
 
+`--state-input full` is the default and uses all 15 state values. For a fresh
+run using only the five angular joints (base roll/pitch and three wrist angles),
+add `--state-input joint_angles`; this excludes boom extension and all FK
+position/orientation inputs while retaining RGB images. The selection is saved
+in the checkpoint and reused during inference. Existing checkpoints default to
+`full`; `--resume` keeps the checkpoint's selection, so changing modes requires
+a fresh run. Recorded data and action outputs are unchanged.
+
 Install the optional W&B client and authenticate once:
 
 ```bash

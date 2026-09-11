@@ -25,6 +25,7 @@ from .preprocess import augment_images, validate_images
 
 _CHECKPOINT_VERSION = 3
 _SUPPORTED_CHECKPOINT_VERSIONS = (2, _CHECKPOINT_VERSION)
+_JOINT_ANGLE_INDICES = (0, 1, 3, 4, 5)  # Exclude boom extension and all FK fields.
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +50,7 @@ class DiffusionPolicyConfig:
     ema_decay: float = 0.999
     eval_seed: int = 0
     device: str = "auto"
+    state_input: str = "full"
 
     def __post_init__(self) -> None:
         integer_values = (
@@ -68,6 +70,8 @@ class DiffusionPolicyConfig:
             raise ValueError("the executable action window exceeds prediction_horizon")
         if self.action_space not in ACTION_SPACES:
             raise ValueError(f"action_space must be one of {ACTION_SPACES}")
+        if self.state_input not in ("full", "joint_angles"):
+            raise ValueError("state_input must be 'full' or 'joint_angles'")
         if self.inference_steps > self.diffusion_steps:
             raise ValueError("inference_steps cannot exceed diffusion_steps")
         if self.timestep_features < 4 or self.timestep_features % 2:
@@ -125,7 +129,11 @@ class DiffusionPolicy:
         self.device = _resolve_device(self.config.device)
         self.model = DiffusionNetwork(
             observation_horizon=self.config.observation_horizon,
-            state_dim=STATE_DIM,
+            state_dim=(
+                STATE_DIM
+                if self.config.state_input == "full"
+                else len(_JOINT_ANGLE_INDICES)
+            ),
             action_dim=ACTION_DIM,
             vision_features=self.config.vision_features,
             down_dims=self.config.down_dims,
@@ -328,6 +336,7 @@ class DiffusionPolicy:
         raw_config.setdefault("crop_fraction", 1.0)
         raw_config.setdefault("color_jitter", 0.0)
         raw_config.setdefault("encoder", "conv")
+        raw_config.setdefault("state_input", "full")
         # Checkpoints predating temporal ensembling recorded only twist actions;
         # they keep the same replan cadence and now average overlapping chunks.
         raw_config.setdefault("action_space", "twist")
@@ -399,6 +408,8 @@ class DiffusionPolicy:
             raise ValueError("state values must be finite")
         if self.normalizer is not None:
             states = self.normalizer.normalize_states(states)
+        if self.config.state_input == "joint_angles":
+            states = states[..., _JOINT_ANGLE_INDICES]
         return images.contiguous(), states
 
     def _prepare_actions(

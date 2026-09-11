@@ -104,6 +104,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--wandb", action="store_true", help="log to Weights & Biases")
     parser.add_argument("--wandb-project", default="giraf")
     parser.add_argument(
+        "--state-input",
+        choices=("full", "joint_angles"),
+        default="full",
+        help="state inputs: full (15D) or five joint angles, excluding boom and FK",
+    )
+    parser.add_argument(
         "--action-space",
         choices=ACTION_SPACES,
         default="twist",
@@ -149,6 +155,7 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
         learning_rate=args.learning_rate,
         device=args.device,
         encoder=args.encoder,
+        state_input=args.state_input,
         action_space=args.action_space,
         prediction_horizon=args.prediction_horizon,
         action_horizon=args.action_horizon,
@@ -257,6 +264,7 @@ def _build_lr_scheduler(
 
 _RESUME_WATCHED_FIELDS = (
     "encoder",
+    "state_input",
     "action_space",
     "prediction_horizon",
     "action_horizon",
