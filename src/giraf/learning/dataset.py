@@ -12,6 +12,7 @@ from giraf.data.schema import ACTION_DIM, ACTION_SPACES, GRASP_INDEX, STATE_DIM
 
 from .normalize import Normalizer
 from .policy import Batch
+from .preprocess import IMU_INPUT_DIMS
 
 
 def open_replay_group(path: str | Path) -> tuple[zarr.Group, zarr.ZipStore | None]:
@@ -126,6 +127,7 @@ class ReplayDataset:
         require_alignment_valid: bool = True,
         episodes: Sequence[int] | None = None,
         action_space: str = "twist",
+        imu_input: str = "none",
     ) -> None:
         if batch_size <= 0:
             raise ValueError("batch_size must be positive")
@@ -133,6 +135,9 @@ class ReplayDataset:
             raise ValueError("start_epoch must be non-negative")
         if action_space not in ACTION_SPACES:
             raise ValueError(f"action_space must be one of {ACTION_SPACES}")
+        if imu_input not in IMU_INPUT_DIMS:
+            raise ValueError(f"imu_input must be one of {tuple(IMU_INPUT_DIMS)}")
+        self.imu_dim = IMU_INPUT_DIMS[imu_input]
         self.path = Path(path)
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -201,6 +206,25 @@ class ReplayDataset:
             observation_horizon=observation_horizon,
             prediction_horizon=prediction_horizon,
         )
+        self.imu = None
+        if self.imu_dim:
+            if "imu" not in data or "imu_sensor_valid" not in data:
+                raise ValueError(
+                    "IMU input requires data/imu and data/imu_sensor_valid"
+                )
+            self.imu = np.asarray(data["imu"][:], dtype=np.float32)
+            sensor_valid = np.asarray(data["imu_sensor_valid"][:])
+            if self.imu.shape != (n_steps, 10) or sensor_valid.shape != (n_steps, 3):
+                raise ValueError("IMU arrays must have shapes [T, 10] and [T, 3]")
+            sensor_count = 2 if self.imu_dim == 6 else 3
+            imu_valid = (sensor_valid[:, :sensor_count] == 1).all(axis=1)
+            imu_valid &= np.isfinite(self.imu[:, :self.imu_dim]).all(axis=1)
+            if self.imu_dim == 10:
+                norms = np.linalg.norm(self.imu[:, 6:], axis=1)
+                imu_valid &= (norms >= 0.9) & (norms <= 1.1)
+            # Drop entire observation windows, preserving the original time axis.
+            keep = imu_valid[self.obs_idx].all(axis=1)
+            self.obs_idx, self.act_idx = self.obs_idx[keep], self.act_idx[keep]
         if len(self.obs_idx) == 0:
             raise ValueError("dataset contains no usable training windows")
         # Lazy cameras need the ZIP open; all other arrays are already in RAM.
@@ -229,10 +253,13 @@ class ReplayDataset:
         return -(-self.n_windows // self.batch_size)
 
     def fit_normalizer(self) -> Normalizer:
-        """Fit a Normalizer on the rows in self.episodes (the training split)."""
+        """Fit on training episodes; IMU uses only retained observation rows."""
 
         mask = np.isin(self._episode_of_step, self.episodes)
-        return Normalizer.fit(self.actions[mask], self.states[mask])
+        imu = None
+        if self.imu is not None:
+            imu = self.imu[np.unique(self.obs_idx), :self.imu_dim]
+        return Normalizer.fit(self.actions[mask], self.states[mask], imu)
 
     def _images(self, indices: np.ndarray) -> np.ndarray:
         flat = indices.reshape(-1)
@@ -250,10 +277,13 @@ class ReplayDataset:
         for start in range(0, self.n_windows, self.batch_size):
             rows = order[start : start + self.batch_size]
             obs_idx, act_idx = self.obs_idx[rows], self.act_idx[rows]
+            observations = {
+                "camera_rgb": self._images(obs_idx),
+                "state": self.states[obs_idx],
+            }
+            if self.imu is not None:
+                observations["imu"] = self.imu[obs_idx]
             yield Batch(
-                observations={
-                    "camera_rgb": self._images(obs_idx),
-                    "state": self.states[obs_idx],
-                },
+                observations=observations,
                 actions=self.actions[act_idx],
             )

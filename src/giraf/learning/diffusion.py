@@ -21,7 +21,7 @@ from .network import DiffusionNetwork
 from .normalize import Normalizer
 from .plan_buffer import PlanBuffer
 from .policy import Batch, Metrics, Tensor
-from .preprocess import augment_images, validate_images
+from .preprocess import IMU_INPUT_DIMS, augment_images, validate_images
 
 _CHECKPOINT_VERSION = 3
 _SUPPORTED_CHECKPOINT_VERSIONS = (2, _CHECKPOINT_VERSION)
@@ -51,6 +51,7 @@ class DiffusionPolicyConfig:
     eval_seed: int = 0
     device: str = "auto"
     state_input: str = "full"
+    imu_input: str = "none"
 
     def __post_init__(self) -> None:
         integer_values = (
@@ -72,6 +73,8 @@ class DiffusionPolicyConfig:
             raise ValueError(f"action_space must be one of {ACTION_SPACES}")
         if self.state_input not in ("full", "joint_angles"):
             raise ValueError("state_input must be 'full' or 'joint_angles'")
+        if self.imu_input not in IMU_INPUT_DIMS:
+            raise ValueError(f"imu_input must be one of {tuple(IMU_INPUT_DIMS)}")
         if self.inference_steps > self.diffusion_steps:
             raise ValueError("inference_steps cannot exceed diffusion_steps")
         if self.timestep_features < 4 or self.timestep_features % 2:
@@ -126,6 +129,10 @@ class DiffusionPolicy:
     ) -> None:
         self.config = config or DiffusionPolicyConfig()
         self.normalizer = normalizer
+        self.imu_dim = IMU_INPUT_DIMS[self.config.imu_input]
+        if self.imu_dim and normalizer is not None:
+            if normalizer.imu_low is None or len(normalizer.imu_low) != self.imu_dim:
+                raise ValueError("normalizer IMU bounds must match imu_input")
         self.device = _resolve_device(self.config.device)
         self.model = DiffusionNetwork(
             observation_horizon=self.config.observation_horizon,
@@ -133,7 +140,7 @@ class DiffusionPolicy:
                 STATE_DIM
                 if self.config.state_input == "full"
                 else len(_JOINT_ANGLE_INDICES)
-            ),
+            ) + self.imu_dim,
             action_dim=ACTION_DIM,
             vision_features=self.config.vision_features,
             down_dims=self.config.down_dims,
@@ -168,6 +175,7 @@ class DiffusionPolicy:
         )
         self._images: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
         self._states: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
+        self._imus: deque[np.ndarray] = deque(maxlen=self.config.observation_horizon)
         self._plan_buffer = PlanBuffer()
 
     def reset(self) -> None:
@@ -175,6 +183,7 @@ class DiffusionPolicy:
 
         self._images.clear()
         self._states.clear()
+        self._imus.clear()
         self._plan_buffer.reset()
 
     def train_step(self, batch: Batch) -> Metrics:
@@ -275,6 +284,11 @@ class DiffusionPolicy:
         """Return one action, replanning and ensembling overlapping chunks."""
 
         image, state = self._validate_current_observation(observation)
+        if self.imu_dim:
+            # Validate before advancing any history, including between replans.
+            self._prepare_imu(observation, ())
+            imu = np.asarray(observation["imu"], dtype=np.float32).copy()
+            self._imus.append(imu)
         self._images.append(image)
         self._states.append(state)
         if self._plan_buffer.ready_to_replan(self.config.action_horizon):
@@ -283,12 +297,16 @@ class DiffusionPolicy:
             while len(images) < self.config.observation_horizon:
                 images.insert(0, images[0])
                 states.insert(0, states[0])
+            observations = {
+                "camera_rgb": np.stack(images)[None],
+                "state": np.stack(states)[None],
+            }
+            if self.imu_dim:
+                imus = list(self._imus)
+                imus = [imus[0]] * (len(images) - len(imus)) + imus
+                observations["imu"] = np.stack(imus)[None]
             prepared_images, prepared_states = self._prepare_observations(
-                {
-                    "camera_rgb": np.stack(images)[None],
-                    "state": np.stack(states)[None],
-                },
-                augment=False,
+                observations, augment=False,
             )
             plan = self._sample(prepared_images, prepared_states)
             self._plan_buffer.add(plan, ensemble=self.config.temporal_ensemble)
@@ -337,6 +355,7 @@ class DiffusionPolicy:
         raw_config.setdefault("color_jitter", 0.0)
         raw_config.setdefault("encoder", "conv")
         raw_config.setdefault("state_input", "full")
+        raw_config.setdefault("imu_input", "none")
         # Checkpoints predating temporal ensembling recorded only twist actions;
         # they keep the same replan cadence and now average overlapping chunks.
         raw_config.setdefault("action_space", "twist")
@@ -410,7 +429,34 @@ class DiffusionPolicy:
             states = self.normalizer.normalize_states(states)
         if self.config.state_input == "joint_angles":
             states = states[..., _JOINT_ANGLE_INDICES]
+        if self.imu_dim:
+            imu = self._prepare_imu(observations, expected_prefix)
+            states = torch.cat((states, imu), dim=-1)
         return images.contiguous(), states
+
+    def _prepare_imu(
+        self, observations: dict[str, Tensor], prefix: tuple[int, ...]
+    ) -> torch.Tensor:
+        """Select IMU features from the stored 10D layout and normalize them."""
+        if "imu" not in observations:
+            raise KeyError("IMU-enabled policy requires observation key 'imu'")
+        imu = torch.as_tensor(
+            observations["imu"], dtype=torch.float32, device=self.device
+        )
+        if imu.shape != (*prefix, 10):
+            raise ValueError(
+                f"imu shape is {tuple(imu.shape)}, expected {(*prefix, 10)}"
+            )
+        imu = imu[..., :self.imu_dim]
+        if not torch.isfinite(imu).all():
+            raise ValueError("selected IMU values must be finite")
+        if self.imu_dim == 10:
+            norms = torch.linalg.vector_norm(imu[..., 6:], dim=-1)
+            if ((norms < 0.9) | (norms > 1.1)).any():
+                raise ValueError("IMU quaternion norm must be within 0.9..1.1")
+        if self.normalizer is not None:
+            imu = self.normalizer.normalize_imu(imu)
+        return imu
 
     def _prepare_actions(
         self, value: Tensor, batch_size: int, *, strict: bool

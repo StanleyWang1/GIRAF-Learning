@@ -229,6 +229,7 @@ Batches carry raw physical units straight from the ReplayBuffer:
 ```text
 observations["camera_rgb"]  uint8 [B, 2, H, W, 3] or float32 [B, 2, 3, H, W]
 observations["state"]       float32 [B, 2, 15]
+observations["imu"]         float32 [B, 2, 10]  (only with IMU input enabled)
 actions                     float32 [B, 16, 7]  (m/s, rad/s, grasp in {0, 1})
 ```
 
@@ -275,6 +276,31 @@ position/orientation inputs while retaining RGB images. The selection is saved
 in the checkpoint and reused during inference. Existing checkpoints default to
 `full`; `--resume` keeps the checkpoint's selection, so changing modes requires
 a fresh run. Recorded data and action outputs are unchanged.
+
+`--imu-input` independently selects optional camera-aligned IMU features:
+
+| Mode | Features |
+| --- | --- |
+| `none` (default) | No IMU; preserves existing training behavior and older datasets/checkpoints |
+| `accel_gyro` | 6 values: acceleration XYZ (includes gravity) and gyro XYZ |
+| `full` | 10 values: acceleration, gyro, and game rotation quaternion XYZW |
+
+For example, add `--state-input joint_angles --imu-input full` to a fresh
+`giraf-train` command. IMU remains a separate observation field and is
+concatenated with selected state features inside the policy; no extra encoder
+is used. Accel/gyro scaling is fitted only on retained training observations;
+quaternion components keep their native scale and sign. Selection and scaling
+are saved in checkpoints; `--resume` uses the checkpoint's IMU mode.
+
+IMU modes require `data/imu` and `data/imu_sensor_valid`. Windows are skipped
+if any required IMU observation is invalid, without joining across gaps;
+`accel_gyro` does not require a valid quaternion. Existing robot-alignment
+filtering is unchanged. No full-rate IMU resampling is performed.
+
+For `act()`, supply the same 10D `imu` layout alongside image/state; the caller
+must ensure selected sensors are fresh and camera-aligned. The live deployment
+runner does not yet supply IMU and rejects IMU-enabled checkpoints at startup.
+Game rotation heading is arbitrary and can drift; evaluate across device sessions.
 
 Install the optional W&B client and authenticate once:
 

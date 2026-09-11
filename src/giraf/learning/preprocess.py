@@ -1,8 +1,10 @@
-"""Camera-observation validation, scaling, cropping, and augmentation."""
+"""Observation preprocessing and supported IMU feature selections."""
 
 from __future__ import annotations
 
 import torch
+
+IMU_INPUT_DIMS = {"none": 0, "accel_gyro": 6, "full": 10}
 
 
 def validate_images(images: torch.Tensor, observation_horizon: int) -> torch.Tensor:

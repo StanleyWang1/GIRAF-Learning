@@ -556,6 +556,8 @@ def run(config: DeploymentConfig) -> Path:
         print(f"[DEPLOY] Loading {config.checkpoint} on {config.device}...", flush=True)
         torch.manual_seed(config.seed)
         policy = DiffusionPolicy.load(config.checkpoint, device=config.device)
+        if policy.config.imu_input != "none":
+            raise ValueError("live deployment does not yet supply IMU observations")
         if policy.config.action_space != "twist":
             raise ValueError("deployment requires a twist-action checkpoint")
         if policy.normalizer is None:

@@ -19,6 +19,7 @@ from giraf.data.schema import ACTION_SPACES
 from .dataset import ReplayDataset, open_replay_group, split_episodes
 from .diffusion import DiffusionPolicy, DiffusionPolicyConfig
 from .pipeline import evaluate, mean_metrics, train
+from .preprocess import IMU_INPUT_DIMS
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="state inputs: full (15D) or five joint angles, excluding boom and FK",
     )
     parser.add_argument(
+        "--imu-input",
+        choices=tuple(IMU_INPUT_DIMS),
+        default="none",
+        help="IMU inputs: none (default), accel_gyro (6D), full (10D, includes quaternion)",
+    )
+    parser.add_argument(
         "--action-space",
         choices=ACTION_SPACES,
         default="twist",
@@ -156,6 +163,7 @@ def parse_config(argv: Sequence[str] | None = None) -> TrainConfig:
         device=args.device,
         encoder=args.encoder,
         state_input=args.state_input,
+        imu_input=args.imu_input,
         action_space=args.action_space,
         prediction_horizon=args.prediction_horizon,
         action_horizon=args.action_horizon,
@@ -265,6 +273,7 @@ def _build_lr_scheduler(
 _RESUME_WATCHED_FIELDS = (
     "encoder",
     "state_input",
+    "imu_input",
     "action_space",
     "prediction_horizon",
     "action_horizon",
@@ -332,6 +341,7 @@ def run(config: TrainConfig) -> Path:
         preload_images=config.preload_images,
         episodes=train_episodes,
         action_space=policy_config.action_space,
+        imu_input=policy_config.imu_input,
     )
     val_dataset = None
     if val_episodes:
@@ -345,6 +355,7 @@ def run(config: TrainConfig) -> Path:
             preloaded_camera=train_dataset.preloaded_camera,
             episodes=val_episodes,
             action_space=policy_config.action_space,
+            imu_input=policy_config.imu_input,
         )
     if config.resume is not None and val_dataset is not None:
         print(

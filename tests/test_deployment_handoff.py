@@ -479,7 +479,8 @@ class SessionIntegrationTests(unittest.TestCase):
                     reset=Mock(),
                     act=act,
                     config=SimpleNamespace(
-                        action_space="twist", action_horizon=8, inference_steps=16
+                        action_space="twist", action_horizon=8, inference_steps=16,
+                        imu_input="none",
                     ),
                     normalizer=SimpleNamespace(
                         state_low=np.full(15, -100.0), state_high=np.full(15, 100.0)
