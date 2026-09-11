@@ -19,7 +19,8 @@ from giraf.deployment.runner import (
     DeploymentConfig,
     DeploymentMode,
     _ControlWorker,
-    _PolicyWorker,
+    _optitrack_loop,
+    _PolicyLoop,
     build_parser,
     run,
 )
@@ -97,7 +98,7 @@ class HandoffTests(unittest.TestCase):
         )
 
     def infer_worker(self, policy):
-        return _PolicyWorker(self.runtime, self.config, None, policy, None, None)
+        return _PolicyLoop(self.runtime, self.config, None, policy, None, None)
 
     def test_startup_held_and_both_switch_directions_need_fresh_clutch(self):
         self.runtime.initialize_keys(True)
@@ -269,6 +270,23 @@ class HandoffTests(unittest.TestCase):
         self.assertTrue(self.runtime.active)
         self.assertEqual(self.runtime.source, ActionSource.TELEOP)
 
+    def test_timed_out_prediction_retains_inference_timing(self):
+        self.policy_on()
+
+        def act(_):
+            self.step(elapsed=1)  # watchdog pauses before the result arrives
+            return np.zeros(7)
+
+        self.infer_worker(self.fake_policy(act)).infer(np.zeros((8, 8, 3)), 1, 0.01)
+        records = self.runtime.log.write.call_args_list
+        finished = [
+            call.kwargs for call in records if call.args[0] == "inference_finished"
+        ]
+        self.assertEqual(len(finished), 1)
+        self.assertFalse(finished[0]["activation_current"])
+        self.assertGreaterEqual(finished[0]["inference_latency_s"], 0)
+        self.assertFalse(any(call.args[0] == "policy" for call in records))
+
     def test_nonfinite_shared_state_is_fatal(self):
         self.runtime.joints[0] = np.nan
         with self.assertRaises(ValueError):
@@ -279,6 +297,64 @@ class HandoffTests(unittest.TestCase):
         self.assertFalse(hasattr(args, "reference_dataset"))
         self.assertFalse(hasattr(args, "duration"))
         self.assertEqual(args.rigid_id, 40)
+
+
+class OptiTrackPollingTests(unittest.TestCase):
+    def test_policy_skips_pose_polling_and_teleop_resumes_on_same_connection(self):
+        runtime = Session(Mock())
+        runtime.source = ActionSource.POLICY
+        driver = Mock()
+        sample = pose(time.monotonic())
+        driver.get_latest_pose.return_value = sample
+        waits = []
+
+        def wait(timeout):
+            waits.append(timeout)
+            if len(waits) == 1:
+                driver.get_latest_pose.assert_not_called()
+                runtime.source = ActionSource.TELEOP
+            else:
+                runtime.stop.set()
+            return runtime.stop.is_set()
+
+        with (
+            patch("giraf.drivers.optitrack.OptiTrackDriver", return_value=driver),
+            patch.object(runtime.stop, "wait", side_effect=wait),
+        ):
+            _optitrack_loop(runtime, config())
+        driver.connect.assert_called_once()
+        driver.get_latest_pose.assert_called_once()
+        self.assertIs(runtime.pose, sample)
+        driver.close.assert_called_once()
+
+    def test_cached_pose_yields_instead_of_spinning(self):
+        runtime = Session(Mock())
+        driver = Mock()
+        sample = pose(time.monotonic())
+        waits = []
+
+        def cached_pose(**_kwargs):
+            # Bound the test even if polling regresses to a tight loop.
+            if driver.get_latest_pose.call_count >= 10:
+                runtime.stop.set()
+            return sample
+
+        def wait(timeout):
+            waits.append(timeout)
+            runtime.stop.set()
+            return True
+
+        driver.get_latest_pose.side_effect = cached_pose
+        with (
+            patch("giraf.drivers.optitrack.OptiTrackDriver", return_value=driver),
+            patch.object(runtime.stop, "wait", side_effect=wait),
+        ):
+            _optitrack_loop(runtime, config())
+        driver.get_latest_pose.assert_called_once()
+        self.assertIs(runtime.pose, sample)
+        self.assertGreater(waits[0], 0)
+        self.assertLessEqual(waits[0], 0.01)
+        driver.close.assert_called_once()
 
 
 class KeyboardTests(unittest.TestCase):
@@ -393,6 +469,7 @@ class SessionIntegrationTests(unittest.TestCase):
                 mab.command.side_effect = lambda *_: started.set()
 
                 def act(_observation):
+                    self.assertIs(threading.current_thread(), threading.main_thread())
                     predicting.set()
                     if not release.wait(5):
                         raise RuntimeError("test timed out waiting for shutdown")

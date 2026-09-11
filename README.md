@@ -4,8 +4,11 @@ GIRAF Learning contains the robot drivers, teleoperation and demonstration
 collection stack, and a compact PyTorch diffusion-policy foundation. Hardware,
 data, and learning code are separate packages with explicit boundaries.
 
-See [IMU collection](notes/imu_collection.md) for the v2 recording schema,
+See [IMU collection](notes/imu/imu_collection.md) for the v2 recording schema,
 signal semantics, compatibility, hardware checks, and known device limitations.
+
+See the [notes index](notes/README.md) for training setup, IMU testing, and
+SRC-03 hardware troubleshooting.
 
 ## Repository layout
 
@@ -455,7 +458,9 @@ launching. The console uses live camera RGB and Linux keyboard input in every
 backend, plus OptiTrack for teleop. Its connection options match teleop:
 `--server-ip` (default `172.24.68.77`), `--client-ip` (default automatic), and
 `--rigid-id` (default `40`). Missing/stale OptiTrack poses prevent teleop motion;
-policy can run without OptiTrack once the robot is positioned.
+policy can run without OptiTrack once the robot is positioned. Pose polling is
+suspended while policy is selected; the NatNet receiver stays connected for
+teleop handoff.
 
 | Backend (`--mode`) | Behavior |
 | --- | --- |
@@ -509,9 +514,12 @@ Active policy execution retains the existing camera-paced action consumption
 (30 Hz with the example configuration), checkpoint inference schedule, and
 100 Hz motor command loop. At each replan it holds zero arm velocity while
 sampling synchronously, preserving the current gripper command. Prediction
-and chunk execution do not overlap. Moving this loop to a worker lets keyboard
-handling and motor control continue through slow inference; results from a
-previous activation are discarded after a pause or switch.
+and chunk execution do not overlap. Camera acquisition and inference run on the
+main thread, matching the original deployment path. Keyboard handling, motor
+control, and supervision run separately, so pauses and motor shutdown do not
+wait for an inference result. Process cleanup completes once the current model
+call returns. Results from a previous activation are discarded after a pause
+or switch.
 
 The default `--action-scale 0.2` applies to policy twist channels and their
 hard velocity ceilings, not teleop or grasp. CUDA remains the default device.

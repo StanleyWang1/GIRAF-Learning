@@ -12,7 +12,7 @@ imu:
   max_batch_reports: 10
 
 dataset:
-  output_dir: data/ring_over_peg_redo
+  output_dir: data/cable_routing
   zarr_name: boom_40in.zarr
   episode_dir_name: boom_40in_videos
   aligned_hz: 30.0

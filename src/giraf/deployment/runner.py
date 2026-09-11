@@ -313,6 +313,14 @@ def _optitrack_loop(runtime, config):
             )
             driver.connect()
             while not runtime.stop.is_set():
+                with runtime.lock:
+                    teleop_selected = runtime.source is ActionSource.TELEOP
+                if not teleop_selected:
+                    # Keep NatNet connected for handoff, but do not consume poses
+                    # or update robot-session state while policy is selected.
+                    runtime.stop.wait(1.0 / CONTROL_HZ)
+                    continue
+                poll_started = time.monotonic()
                 try:
                     pose = driver.get_latest_pose(timeout=0.25)
                 except TimeoutError:
@@ -320,6 +328,13 @@ def _optitrack_loop(runtime, config):
                 with runtime.lock:
                     runtime.pose = pose
                     runtime.pose_error = ""
+                # get_latest_pose returns its cached sample immediately. Without
+                # a wait this spins on Python and runtime.lock alongside inference,
+                # even in policy mode. Match consumption to the control frequency;
+                # NatNet continues receiving poses independently in the driver.
+                runtime.stop.wait(
+                    max(0.0, 1.0 / CONTROL_HZ - (time.monotonic() - poll_started))
+                )
         except Exception as exc:
             with runtime.lock:
                 runtime.pose = None
@@ -333,19 +348,16 @@ def _optitrack_loop(runtime, config):
         runtime.stop.wait(1.0)
 
 
-class _PolicyWorker(threading.Thread):
-    """Keep the original camera-paced, synchronous chunk execution off control."""
+class _PolicyLoop:
+    """Run camera-paced, synchronous inference on the main thread, as before handoff."""
 
     def __init__(self, runtime, config, collector_config, policy, frame_queue, video):
-        # A blocked model call must not prevent motor shutdown or process exit.
-        super().__init__(name="deployment-policy", daemon=True)
         self.runtime = runtime
         self.config = config
         self.collector_config = collector_config
         self.policy = policy
         self.frame_queue = frame_queue
         self.video = video
-        self.io_lock = threading.Lock()
         self.generation = -1
         self.actions_remaining = 0
 
@@ -379,8 +391,31 @@ class _PolicyWorker(threading.Thread):
                 with runtime.lock:
                     if not runtime.hold_for_replan(generation, started):
                         return
-            raw_action = policy.act({"camera_rgb": image, "state": state})
-            latency = time.monotonic() - started
+            if replanning:
+                runtime.log.write(
+                    "inference_started", generation=generation, sequence=sequence
+                )
+            inference_error = None
+            try:
+                raw_action = policy.act({"camera_rgb": image, "state": state})
+            except Exception as exc:
+                inference_error = str(exc)
+                raise
+            finally:
+                latency = time.monotonic() - started
+                # Record slow/failed samples even after the watchdog paused the
+                # activation. The policy event below only records accepted actions.
+                if replanning or inference_error is not None:
+                    with runtime.lock:
+                        activation_current = runtime.accepts(generation)
+                    runtime.log.write(
+                        "inference_finished",
+                        generation=generation,
+                        sequence=sequence,
+                        inference_latency_s=latency,
+                        activation_current=activation_current,
+                        error=inference_error,
+                    )
             if runtime.stop.is_set():
                 return
             if replanning:
@@ -419,20 +454,19 @@ class _PolicyWorker(threading.Thread):
         runtime = self.runtime
         while not runtime.stop.is_set():
             try:
-                with self.io_lock:
-                    if runtime.stop.is_set():
-                        return
-                    rgb, image, sequence, frame_age = _read_frame(
-                        self.frame_queue, self.collector_config
-                    )
-                    if runtime.stop.is_set():
-                        return
-                    if self.video is not None:
-                        try:
-                            self.video.write(rgb)
-                        except Exception as exc:
-                            runtime.log.write("video_error", detail=str(exc))
-                            self.video = None
+                if runtime.stop.is_set():
+                    return
+                rgb, image, sequence, frame_age = _read_frame(
+                    self.frame_queue, self.collector_config
+                )
+                if runtime.stop.is_set():
+                    return
+                if self.video is not None:
+                    try:
+                        self.video.write(rgb)
+                    except Exception as exc:
+                        runtime.log.write("video_error", detail=str(exc))
+                        self.video = None
             except Exception as exc:
                 with runtime.lock:
                     if runtime.active and runtime.source is ActionSource.POLICY:
@@ -499,7 +533,7 @@ def run(config: DeploymentConfig) -> Path:
     log_dir = config.log_dir or _default_log_dir()
     log = _EventLog(log_dir, config)
     runtime = Session(log)
-    keyboard = camera_pipeline = video = control = policy_worker = None
+    keyboard = camera_pipeline = video = control = policy_loop = None
     workers = []
     old_handlers = {}
 
@@ -575,11 +609,9 @@ def run(config: DeploymentConfig) -> Path:
         )
         optitrack.start()
         workers.append(optitrack)
-        policy_worker = _PolicyWorker(
+        policy_loop = _PolicyLoop(
             runtime, config, collector_config, policy, frame_queue, video
         )
-        policy_worker.start()
-        workers.append(policy_worker)
         control = _ControlWorker(
             runtime,
             keyboard,
@@ -604,25 +636,38 @@ def run(config: DeploymentConfig) -> Path:
             "[DEPLOY] Each mode switch requires a fresh SPACE press. No rollout duration limit.",
             flush=True,
         )
-        last_status = ""
-        last_status_time = 0.0
-        while not runtime.stop.wait(0.02):
-            if keyboard_status(keyboard)["quit_requested"]:
-                with runtime.lock:
-                    runtime.finish("quit_key")
-                break
-            if not control.ready.is_set() and time.monotonic() > startup_deadline:
-                raise TimeoutError("control worker did not become ready within 20s")
-            for worker in workers:
-                if not worker.is_alive() and not runtime.stop.is_set():
-                    raise RuntimeError(f"{worker.name} stopped unexpectedly")
-            now = time.monotonic()
-            if now - last_status_time >= 0.25:
-                status = runtime.status()
-                if status != last_status:
-                    print(f"[DEPLOY] {status}", flush=True)
-                    last_status = status
-                last_status_time = now
+
+        def supervise():
+            last_status = ""
+            last_status_time = 0.0
+            while not runtime.stop.wait(0.02):
+                if keyboard_status(keyboard)["quit_requested"]:
+                    with runtime.lock:
+                        runtime.finish("quit_key")
+                    break
+                if not control.ready.is_set() and time.monotonic() > startup_deadline:
+                    raise TimeoutError("control worker did not become ready within 20s")
+                for worker in workers:
+                    if not worker.is_alive() and not runtime.stop.is_set():
+                        raise RuntimeError(f"{worker.name} stopped unexpectedly")
+                now = time.monotonic()
+                if now - last_status_time >= 0.25:
+                    status = runtime.status()
+                    if status != last_status:
+                        print(f"[DEPLOY] {status}", flush=True)
+                        last_status = status
+                    last_status_time = now
+
+        supervisor = threading.Thread(
+            target=guarded_worker,
+            args=("supervisor", supervise),
+            name="deployment-supervisor",
+        )
+        supervisor.start()
+        workers.append(supervisor)
+        # Loading and inference share the main thread, matching the original
+        # deployment path. Keyboard/control/supervision still run during sampling.
+        policy_loop.run()
     except KeyboardInterrupt:
         runtime.finish("keyboard_interrupt")
     except BaseException as exc:
@@ -652,13 +697,9 @@ def run(config: DeploymentConfig) -> Path:
             if camera_pipeline is not None:
                 cleanup("camera shutdown", camera_disconnect, camera_pipeline)
 
-        # A late inference returns before touching video/camera again. Serialize
-        # cleanup with I/O, never with model inference; motors are already off.
-        if policy_worker is not None:
-            with policy_worker.io_lock:
-                close_camera_logs()
-        else:
-            close_camera_logs()
+        # Camera/inference and cleanup share this thread. Motor shutdown has
+        # already run independently if Q or a guard ended control during sampling.
+        close_camera_logs()
         if keyboard is not None:
             cleanup("keyboard shutdown", keyboard_disconnect, keyboard)
         for selected_signal, old_handler in old_handlers.items():
