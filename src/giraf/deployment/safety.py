@@ -36,14 +36,6 @@ class SafetyLimits:
         2.0,
         2.0,
     )
-    staging_joint_speed: tuple[float, float, float, float, float, float] = (
-        0.15,
-        0.15,
-        0.05,
-        0.25,
-        0.25,
-        0.25,
-    )
     roll_limit: float = math.pi / 2
     pitch_min: float = 0.0
     pitch_max: float = math.pi / 2
@@ -57,7 +49,6 @@ class SafetyLimits:
             *self.linear_velocity,
             *self.angular_velocity,
             *self.joint_speed,
-            *self.staging_joint_speed,
         )
         if min(positive) <= 0:
             raise ValueError("velocity limits must be positive")
@@ -103,25 +94,24 @@ def guard_policy_action(
         raise ValueError("action scale must be finite and in [0, 1]")
     limits = limits or SafetyLimits()
     guarded = _finite_vector(action, ACTION_DIM, "policy action").copy()
-    guarded[:3] = np.clip(
-        guarded[:3], -np.asarray(limits.linear_velocity), limits.linear_velocity
-    ) * scale
-    guarded[3:6] = np.clip(
-        guarded[3:6], -np.asarray(limits.angular_velocity), limits.angular_velocity
-    ) * scale
-    guarded[GRASP_INDEX] = (
-        float(guarded[GRASP_INDEX] >= 0.5) if allow_grasp else 0.0
+    guarded[:3] = (
+        np.clip(
+            guarded[:3], -np.asarray(limits.linear_velocity), limits.linear_velocity
+        )
+        * scale
     )
+    guarded[3:6] = (
+        np.clip(
+            guarded[3:6], -np.asarray(limits.angular_velocity), limits.angular_velocity
+        )
+        * scale
+    )
+    guarded[GRASP_INDEX] = float(guarded[GRASP_INDEX] >= 0.5) if allow_grasp else 0.0
     return guarded.astype(np.float32)
 
 
 def boom_motor_position(extension: float) -> float:
-    return (
-        -0.0508 * extension**3
-        - 0.4122 * extension**2
-        - 15.2992 * extension
-        + 4.7840
-    )
+    return -0.0508 * extension**3 - 0.4122 * extension**2 - 15.2992 * extension + 4.7840
 
 
 def boom_extension(motor_position: float) -> float:
@@ -142,7 +132,9 @@ def model_joints(joints) -> np.ndarray:
 
 
 def end_effector_pose(joints) -> tuple[np.ndarray, np.ndarray]:
-    transform = np.asarray(num_forward_transform(model_joints(joints)), dtype=np.float64)
+    transform = np.asarray(
+        num_forward_transform(model_joints(joints)), dtype=np.float64
+    )
     if transform.shape != (4, 4) or not np.isfinite(transform).all():
         raise RuntimeError("invalid forward kinematics")
     return transform[:3, 3].copy(), transform[:3, :3].copy()
@@ -252,58 +244,6 @@ def plan_joint_command(
         current + dt * velocity,
         dt=dt,
         action=guarded,
-        limits=limits,
-    )
-
-
-def validate_staging_target(
-    target,
-    *,
-    limits: SafetyLimits | None = None,
-) -> np.ndarray:
-    """Validate a recorded start pose against independent hardware limits."""
-
-    limits = limits or SafetyLimits()
-    target = _finite_vector(target, 6, "staging target")
-    if not -limits.roll_limit <= target[0] <= limits.roll_limit:
-        raise ValueError("staging target violates the roll limit")
-    if not limits.pitch_min <= target[1] <= limits.pitch_max:
-        raise ValueError("staging target violates the pitch limit")
-    boom = boom_motor_position(float(target[2]))
-    if (
-        target[2] < limits.boom_extension_min
-        or not limits.boom_motor_min <= boom <= limits.boom_motor_max
-    ):
-        raise ValueError("staging target violates the boom limit")
-    for tick, tick_limits in zip(
-        wrist_ticks(target), (MOTOR21_LIMITS, MOTOR22_LIMITS, MOTOR23_LIMITS)
-    ):
-        if not tick_limits[0] <= tick <= tick_limits[1]:
-            raise ValueError("staging target violates a wrist limit")
-    return target.astype(np.float32)
-
-
-def plan_staging_command(
-    joints,
-    target,
-    *,
-    dt: float,
-    limits: SafetyLimits | None = None,
-) -> JointCommand:
-    """Move directly toward a validated start pose at conservative speeds."""
-
-    if not math.isfinite(dt) or not 0.0 < dt <= 0.02:
-        raise ValueError("dt must be finite and in (0, 0.02]")
-    limits = limits or SafetyLimits()
-    current = _finite_vector(joints, 6, "joints")
-    target = validate_staging_target(target, limits=limits).astype(np.float64)
-    max_step = np.asarray(limits.staging_joint_speed) * dt
-    proposed = current + np.clip(target - current, -max_step, max_step)
-    return _command_from_position(
-        current,
-        proposed,
-        dt=dt,
-        action=np.zeros(ACTION_DIM, dtype=np.float64),
         limits=limits,
     )
 

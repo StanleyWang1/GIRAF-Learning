@@ -12,7 +12,7 @@ from enum import Enum
 
 import numpy as np
 
-from giraf.data.schema import GRASP_INDEX
+from giraf.data.schema import ACTION_DIM, GRASP_INDEX
 
 INITIAL_JOINTS = np.array((0.0, 0.0, 0.31, 0.0, 0.0, 0.0), dtype=np.float32)
 
@@ -35,7 +35,7 @@ class Session:
         self.clutch = True  # unknown until the initial keyboard snapshot
         self.generation = 0
         self.reason = "release SPACE, then press to enable teleop"
-        self.action = np.zeros(7, dtype=np.float32)
+        self.action = np.zeros(ACTION_DIM, dtype=np.float32)
         self.action_time = 0.0
         self.started_at = 0.0
         self.pose = None
@@ -52,6 +52,7 @@ class Session:
             generation is not None and generation != self.generation
         ):
             return
+        ended_generation = self.generation
         self.active = False
         self.armed = not self.clutch
         self.generation += 1
@@ -64,6 +65,9 @@ class Session:
             source=self.source.value,
             reason=reason,
             generation=self.generation,
+            ended_generation=ended_generation,
+            joints=self.joints.tolist(),
+            grasp=self.grasp,
         )
 
     def input(self, key: str, value: bool, now: float) -> None:
@@ -92,7 +96,11 @@ class Session:
                 self.action_time = 0.0
                 self.reason = "active"
                 self.log.write(
-                    "activated", source=self.source.value, generation=self.generation
+                    "activated",
+                    source=self.source.value,
+                    generation=self.generation,
+                    joints=self.joints.tolist(),
+                    grasp=self.grasp,
                 )
         elif key == "grasp" and self.source is ActionSource.TELEOP:
             self.grasp = not self.grasp
@@ -125,17 +133,33 @@ class Session:
         return True
 
     def finish(self, reason: str) -> None:
-        self.active = False
-        self.generation += 1
-        self.stop_reason = self.stop_reason or reason
-        self.stop.set()
-        self.log.write("stop_requested", reason=reason)
+        with self.lock:
+            if self.stop.is_set():
+                return
+            ended_generation = self.generation
+            self.active = False
+            self.generation += 1
+            self.stop_reason = reason
+            self.stop.set()
+            self.log.write(
+                "stop_requested",
+                reason=reason,
+                generation=self.generation,
+                ended_generation=ended_generation,
+                joints=self.joints.tolist(),
+                grasp=self.grasp,
+            )
 
     def fail(self, source: str, error: BaseException | str) -> None:
         with self.lock:
             self.error = self.error or f"{source}: {error}"
+            self.log.write(
+                "error",
+                source=source,
+                detail=str(error),
+                generation=self.generation,
+            )
             self.finish("error")
-            self.log.write("error", source=source, detail=str(error))
 
     def action_expired(self, now: float, timeout: float) -> bool:
         return now - (self.action_time or self.started_at) > timeout
