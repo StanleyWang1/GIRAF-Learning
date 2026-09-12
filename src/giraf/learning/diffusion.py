@@ -16,12 +16,12 @@ from torch import nn
 
 from giraf.data.schema import ACTION_DIM, ACTION_SPACES, GRASP_INDEX, STATE_DIM
 
-from .environment import Observation
 from .network import DiffusionNetwork
 from .normalize import Normalizer
 from .plan_buffer import PlanBuffer
-from .policy import Batch, Metrics, Tensor
+from .policy import Batch, Metrics, Observation, Tensor
 from .preprocess import IMU_INPUT_DIMS, augment_images, validate_images
+from .status import POLICY_CONTRACT_FINAL
 
 _CHECKPOINT_VERSION = 3
 _SUPPORTED_CHECKPOINT_VERSIONS = (2, _CHECKPOINT_VERSION)
@@ -117,9 +117,11 @@ class DiffusionPolicy:
     actions and states to [-1, 1] internally and returns denormalized actions
     from ``act()``. Without one, actions must already lie in [-1, 1].
 
-    TODO: the observation/action contract (15D command-derived state, 7D twist
-    plus grasp) is provisional and may change once real demonstrations exist.
+    The observation/action contract remains explicitly provisional until
+    ``POLICY_CONTRACT_FINAL`` is changed at its single definition.
     """
+
+    contract_final = POLICY_CONTRACT_FINAL
 
     def __init__(
         self,
@@ -140,7 +142,8 @@ class DiffusionPolicy:
                 STATE_DIM
                 if self.config.state_input == "full"
                 else len(_JOINT_ANGLE_INDICES)
-            ) + self.imu_dim,
+            )
+            + self.imu_dim,
             action_dim=ACTION_DIM,
             vision_features=self.config.vision_features,
             down_dims=self.config.down_dims,
@@ -306,7 +309,8 @@ class DiffusionPolicy:
                 imus = [imus[0]] * (len(images) - len(imus)) + imus
                 observations["imu"] = np.stack(imus)[None]
             prepared_images, prepared_states = self._prepare_observations(
-                observations, augment=False,
+                observations,
+                augment=False,
             )
             plan = self._sample(prepared_images, prepared_states)
             self._plan_buffer.add(plan, ensemble=self.config.temporal_ensemble)
@@ -447,7 +451,7 @@ class DiffusionPolicy:
             raise ValueError(
                 f"imu shape is {tuple(imu.shape)}, expected {(*prefix, 10)}"
             )
-        imu = imu[..., :self.imu_dim]
+        imu = imu[..., : self.imu_dim]
         if not torch.isfinite(imu).all():
             raise ValueError("selected IMU values must be finite")
         if self.imu_dim == 10:

@@ -201,7 +201,7 @@ class _Logger:
     """Append one JSON line per epoch to metrics.jsonl, optionally mirrored to wandb."""
 
     def __init__(self, config: TrainConfig) -> None:
-        self._file = (config.output_dir / "metrics.jsonl").open("a")
+        self._file = (config.output_dir / "metrics.jsonl").open("x", encoding="utf-8")
         self._run = None
         if config.wandb:
             import wandb  # optional dependency: uv sync --extra train
@@ -283,6 +283,13 @@ _RESUME_WATCHED_FIELDS = (
     "diffusion_steps",
 )
 
+_PRELAUNCH_LOGS = {
+    "cpu_temperatures.jsonl",
+    "monitor_status.json",
+    "monitor_status.tmp",
+    "train.log",
+}
+
 
 def _ignored_resume_flags(
     cli_policy: DiffusionPolicyConfig, checkpoint_policy: DiffusionPolicyConfig
@@ -296,11 +303,27 @@ def _ignored_resume_flags(
     ]
 
 
+def _claim_output_dir(directory: Path) -> Path:
+    """Reserve a run directory without conflicting with external log capture."""
+
+    directory.mkdir(parents=True, exist_ok=True)
+    unexpected = sorted(
+        path.name for path in directory.iterdir() if path.name not in _PRELAUNCH_LOGS
+    )
+    if unexpected:
+        raise FileExistsError(
+            f"training output directory is not fresh: {directory} contains {unexpected}"
+        )
+    config_path = directory / "config.json"
+    with config_path.open("x", encoding="utf-8") as claim:
+        claim.write('{"status":"initializing"}\n')
+    return config_path
+
+
 def run(config: TrainConfig) -> Path:
     """Train, checkpoint, and return the path of the final policy."""
 
     torch.manual_seed(config.seed)
-    config.output_dir.mkdir(parents=True, exist_ok=True)
     if (
         config.resume is not None
         and config.resume.resolve().parent == config.output_dir.resolve()
@@ -309,6 +332,7 @@ def run(config: TrainConfig) -> Path:
             "a resumed legacy checkpoint must use a new --output-dir so the "
             "original metrics and checkpoints remain untouched"
         )
+    config_path = _claim_output_dir(config.output_dir)
     if config.resume is None:
         policy = None
         policy_config = config.policy
@@ -373,11 +397,11 @@ def run(config: TrainConfig) -> Path:
     config_payload = _json_safe(asdict(config))
     config_payload["train_episodes"] = train_episodes
     config_payload["val_episodes"] = val_episodes
-    (config.output_dir / "config.json").write_text(
-        json.dumps(config_payload, indent=2) + "\n"
+    config_path.write_text(
+        json.dumps(config_payload, indent=2) + "\n", encoding="utf-8"
     )
     (config.output_dir / "normalizer.json").write_text(
-        json.dumps(policy.normalizer.to_dict(), indent=2) + "\n"
+        json.dumps(policy.normalizer.to_dict(), indent=2) + "\n", encoding="utf-8"
     )
     print(
         f"[TRAIN] {train_dataset.n_windows} windows, {len(train_dataset)} "
@@ -428,7 +452,11 @@ def run(config: TrainConfig) -> Path:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    run(parse_config(argv))
+    try:
+        run(parse_config(argv))
+    except (OSError, RuntimeError, ValueError) as exc:
+        print(f"[TRAIN][FATAL] {exc}", flush=True)
+        return 1
     return 0
 
 

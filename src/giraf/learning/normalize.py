@@ -89,8 +89,12 @@ class Normalizer:
             if imu.shape[1] == 10:
                 imu_low[6:], imu_high[6:] = -1.0, 1.0
         return cls(
-            action_low, action_high, states.min(axis=0), states.max(axis=0),
-            imu_low, imu_high,
+            action_low,
+            action_high,
+            states.min(axis=0),
+            states.max(axis=0),
+            imu_low,
+            imu_high,
         )
 
     @staticmethod

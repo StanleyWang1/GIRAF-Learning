@@ -218,7 +218,7 @@ class ReplayDataset:
                 raise ValueError("IMU arrays must have shapes [T, 10] and [T, 3]")
             sensor_count = 2 if self.imu_dim == 6 else 3
             imu_valid = (sensor_valid[:, :sensor_count] == 1).all(axis=1)
-            imu_valid &= np.isfinite(self.imu[:, :self.imu_dim]).all(axis=1)
+            imu_valid &= np.isfinite(self.imu[:, : self.imu_dim]).all(axis=1)
             if self.imu_dim == 10:
                 norms = np.linalg.norm(self.imu[:, 6:], axis=1)
                 imu_valid &= (norms >= 0.9) & (norms <= 1.1)
@@ -258,7 +258,7 @@ class ReplayDataset:
         mask = np.isin(self._episode_of_step, self.episodes)
         imu = None
         if self.imu is not None:
-            imu = self.imu[np.unique(self.obs_idx), :self.imu_dim]
+            imu = self.imu[np.unique(self.obs_idx), : self.imu_dim]
         return Normalizer.fit(self.actions[mask], self.states[mask], imu)
 
     def _images(self, indices: np.ndarray) -> np.ndarray:

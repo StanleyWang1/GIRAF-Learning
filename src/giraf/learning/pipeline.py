@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
 
 import numpy as np
 
-from .environment import Environment
 from .policy import Batch, Metrics, Policy
 
 
@@ -21,7 +19,6 @@ def train(
     """Run a minimal training loop and return step metrics.
 
     ``giraf.learning.train_cli`` wraps this with checkpoints and logging.
-    TODO: evaluation rollouts once a simulator backend exists.
     """
 
     if epochs <= 0:
@@ -66,39 +63,3 @@ def evaluate(policy: Policy, batches: Iterable[Batch]) -> Metrics:
     if not history:
         raise ValueError("evaluate requires at least one batch")
     return mean_metrics(history, weights=weights)
-
-
-@dataclass(frozen=True, slots=True)
-class RolloutSummary:
-    reward: float
-    steps: int
-    terminated: bool
-    truncated: bool
-
-
-def rollout(
-    policy: Policy,
-    environment: Environment,
-    *,
-    max_steps: int,
-    seed: int | None = None,
-) -> RolloutSummary:
-    """Evaluate a policy through the shared environment contract."""
-
-    if max_steps <= 0:
-        raise ValueError("max_steps must be positive")
-    reset_policy = getattr(policy, "reset", None)
-    if callable(reset_policy):
-        reset_policy()
-    observation = environment.reset(seed=seed)
-    reward = 0.0
-    terminated = truncated = False
-    steps = 0
-    for steps in range(1, max_steps + 1):
-        result = environment.step(policy.act(observation))
-        reward += float(result.reward)
-        observation = result.observation
-        terminated, truncated = result.terminated, result.truncated
-        if terminated or truncated:
-            break
-    return RolloutSummary(reward, steps, terminated, truncated)

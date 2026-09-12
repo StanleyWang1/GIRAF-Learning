@@ -9,10 +9,9 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 import torch
 
-from .environment import Observation
-
 type Metrics = dict[str, float]
 type Tensor = np.ndarray | torch.Tensor
+type Observation = dict[str, np.ndarray]
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +24,7 @@ class Batch:
 
 @runtime_checkable
 class Policy(Protocol):
-    """Contract used by training and rollout code."""
+    """Contract used by training and deployment code."""
 
     def act(self, observation: Observation) -> np.ndarray: ...
 
