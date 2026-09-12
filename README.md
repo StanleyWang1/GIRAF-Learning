@@ -12,14 +12,14 @@ SRC-03 hardware troubleshooting.
 
 ## Repository layout
 
-```text                                                                                                                              rbbr
+```text
 .
 ├── config/data_collection.yaml   # collection settings
 ├── src/giraf/
 │   ├── data/                     # capture, alignment, Zarr storage, replay
 │   ├── deployment/               # guarded live policy trials and rollout logs
 │   ├── drivers/                  # camera, input, OptiTrack, and motor adapters
-│   ├── learning/                 # policy/environment contracts and loops
+│   ├── learning/                 # diffusion policy, datasets, and training loops
 │   ├── viewer/                   # read-only local dataset web viewer
 │   ├── kinematics.py             # GIRAF kinematic model
 │   ├── settings.py               # shared runtime constants
@@ -47,7 +47,7 @@ source .venv/bin/activate
 ```
 
 Linux and Windows install PyTorch from the CUDA 13.0 index (about 3 GB of
-wheels). Tests and all tooling also run on CPU. Add `--extra train` for
+wheels). Learning and tooling also run on CPU. Add `--extra train` for
 Weights & Biases logging.
 
 Install the device libraries on a machine connected to the robot:
@@ -136,9 +136,10 @@ Source-resolution video is retained when enabled. Zarr stores only aligned,
 resized observations; the intermediate 100 Hz control stream is not retained.
 Images remain RGB `uint8` on disk so normalization stays a training concern.
 
-All data settings live in `config/data_collection.yaml`. Fixed action and state
-fields live in `giraf.data.schema`; diffusion shape metadata is derived from
-those fields and the resolved collector configuration:
+Shared runtime settings live in `config/data_collection.yaml`. Task-specific
+files use `extends: data_collection.yaml` and override only their output paths.
+Fixed action and state fields live in `giraf.data.schema`; diffusion shape
+metadata is derived from those fields and the resolved collector configuration:
 
 ```python
 from giraf.data import diffusion_shape_meta, load_config
@@ -238,7 +239,7 @@ inside the policy and is stored in the checkpoint, so `act()` returns
 denormalized actions `[vx, vy, vz, wx, wy, wz, grasp]`. RGB scaling also
 happens inside the policy. `act()` keeps its own two-frame observation
 history; `DiffusionPolicy.reset()` clears it at an episode boundary and
-`rollout()` calls it when a policy provides it. The required policy contract
+deployment calls it at every policy activation. The required policy contract
 remains `act`, `train_step`, and `save`.
 
 ### Encoders
@@ -491,7 +492,7 @@ teleop handoff.
 | Backend (`--mode`) | Behavior |
 | --- | --- |
 | `shadow` (default) | Reports commands using a fixed logical home pose; motors are not opened. |
-| `dry-run` | Integrates teleop and policy commands into a simulated joint pose; motors are not opened. |
+| `dry-run` | Integrates commands into a local joint pose; motors are not opened. |
 | `hardware` | Commands the physical motors from the same shared joint/gripper state. |
 
 Dry-run still uses live images; it does not simulate the visual consequences of
@@ -560,13 +561,17 @@ case; returning to teleop does not restore an old keyboard grasp state.
 #### Pauses, faults, and logs
 
 Joint-speed and physical joint limits apply to both action sources. Policy
-state is checked against training bounds (`--state-margin 0.05` by default).
-Leaving those bounds, stale actions (`--action-timeout 0.5` seconds), stale
-camera frames (`--max-frame-age 0.15` seconds), and invalid/failed policy
-predictions pause policy and retain motor targets. OptiTrack poses older than
-0.15 seconds pause teleop. Guard recovery never restarts motion automatically:
-release/press SPACE to retry, or use D and a fresh SPACE press for teleop recovery.
-Training-distribution bounds do not restrict teleop recovery.
+state is compared with expanded training bounds (`--state-margin 0.05`) and
+distribution excursions are logged and printed, but do not block execution by
+default. Add `--enforce-training-bounds` when an experiment should pause on
+those excursions. This distinction lets deployment operate outside the
+recorded distribution without weakening finite-value checks or physical limits.
+
+Stale actions (`--action-timeout 0.5` seconds), stale camera frames
+(`--max-frame-age 0.15` seconds), and invalid/failed policy predictions pause
+policy and retain motor targets. OptiTrack poses older than 0.15 seconds pause
+teleop. Guard recovery never restarts motion automatically: release/press SPACE
+to retry, or use D and a fresh SPACE press for teleop recovery.
 
 Q, Ctrl+C, and SIGTERM shut down. Motor communication errors, keyboard/control
 worker failures, and invalid shared robot state also trigger shutdown because
@@ -577,32 +582,27 @@ Each session creates `deployment_runs/YYYYMMDD-HHMMSS/` (or an unused directory
 specified by `--log-dir`) containing:
 
 - `config.json`: checkpoint, connection settings, and deployment options;
-- `events.jsonl`: source switches, activations, pause reasons, policy outputs,
-  inference latency, control commands, and shutdown reason;
-- `camera.mp4`: camera frames consumed by the inference loop, unless `--no-video`.
+- `events.jsonl`: session-level mode changes, pauses, faults, and shutdown;
+- `episodes/episode_NNNN/episode.json`: finalized rollout metadata;
+- `episodes/episode_NNNN/data.jsonl`: activation, inference, policy, and 100 Hz
+  control records for exactly one policy activation;
+- `episodes/episode_NNNN/camera.mp4`: frames from that rollout, unless
+  `--no-video`.
 
-The video retains the existing capture behavior: synchronous replanning can
-skip frames, so use event timestamps to assess actual motion timing. There is
-no reference image output. Video/log files grow for the lifetime of the session.
+Holding SPACE in policy mode starts a rollout; releasing it, switching mode, a
+guard pause, a fault, or shutdown finalizes that rollout. Videos are opened on
+the first rollout frame and closed at its boundary. A video write failure pauses
+the rollout rather than continuing with incomplete evidence. Synchronous
+replanning can skip camera frames, so use the timestamps in `data.jsonl` when
+assessing motion timing. `episode.json` records start/end state, duration, frame
+count, termination reason, and `video_complete` status.
 
-### MuJoCo drop-in
+The provisional policy-contract decision remains machine-readable in
+`giraf.learning.status`:
 
-Automated simulation evaluation still requires a MuJoCo backend.
-
-Pass the existing Gym/Gymnasium-style MuJoCo environment directly to the
-adapter:
-
-```python
-from giraf.learning import SimEnvironment, rollout
-
-environment = SimEnvironment(mujoco_environment)
-summary = rollout(policy, environment, max_steps=500, seed=0)
-environment.close()
+```text
+POLICY_CONTRACT_FINAL = False
 ```
-
-The backend must expose `reset(seed=...)`, `step(action)`, and `close()`, and
-must emit observation mappings containing `camera_rgb` and `state`. Both the
-five-value Gymnasium step result and legacy four-value Gym result are accepted.
 
 ## Verification
 
@@ -611,12 +611,12 @@ smoke run: lint, then train a tiny policy for one epoch on any collected
 dataset and reload the checkpoint.
 
 ```bash
-uvx ruff check src
+uvx ruff check src scripts
 uv run giraf-train --dataset data/demos/replay_buffer.zarr \
   --output-dir /tmp/giraf-smoke --epochs 1 --batch-size 8 \
   --down-dims 8 16 --diffusion-steps 4 --device cpu
 uv run python -c "from giraf.learning import DiffusionPolicy; \
-  DiffusionPolicy.load('/tmp/giraf-smoke/best.pt', device='cpu')"
+  DiffusionPolicy.load('/tmp/giraf-smoke/policy.pt', device='cpu')"
 uv run --extra hardware giraf-teleop --help
 ```
 
