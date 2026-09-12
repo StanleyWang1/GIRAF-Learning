@@ -1,6 +1,6 @@
-"""Explicit opt-in camera/IMU recording check. Never opens or commands motors.
+"""Explicit opt-in camera/IMU recording check; never commands motors.
 
-Run: .venv/bin/python tests/imu_hardware_smoke.py --seconds 15
+Run: ``uv run --extra hardware python scripts/imu_hardware_smoke.py --seconds 15``.
 Temporary recordings contain synthetic control state, not demonstrations.
 """
 
@@ -144,8 +144,9 @@ def main():
         )
         print(json.dumps(summaries[-1], indent=2), flush=True)
         time.sleep(2)
-    (directory / "summary.json").write_text(json.dumps(summaries, indent=2) + "\n")
-    print(f"Results: {directory / 'summary.json'}")
+    result = directory / "summary.json"
+    result.write_text(json.dumps(summaries, indent=2) + "\n", encoding="utf-8")
+    print(f"Results: {result}")
 
 
 if __name__ == "__main__":

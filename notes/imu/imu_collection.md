@@ -122,16 +122,16 @@ numeric values as gaps.
 
 ## Verification
 
-Hardware-free regression tests:
+Hardware-free source check:
 
 ```bash
-.venv/bin/python -m unittest discover -s tests -v
+uvx ruff check src scripts
 ```
 
 Explicit live comparison (never opens motors):
 
 ```bash
-.venv/bin/python tests/imu_hardware_smoke.py --seconds 15
+uv run --extra hardware python scripts/imu_hardware_smoke.py --seconds 15
 ```
 
 Add `--parent-stall-s 3` to reproduce a three-second teleop-process stall while
@@ -153,5 +153,6 @@ After isolating alignment from teleop, a live 15-second test with an injected
 three-second parent-process GIL stall saved all 450 images at 30.01 Hz with zero
 image gaps or host IMU losses. All 450 IMU observations remained valid. The 89
 observations with stale synthetic control were correctly marked alignment-invalid
-and preserved. Hardware-free tests also cover a slow commit followed by a second
-episode, bounded catch-up copies, and rejection of genuine active-episode loss.
+and preserved. Earlier regression checks also covered a slow commit followed by
+a second episode, bounded catch-up copies, and rejection of genuine
+active-episode loss.

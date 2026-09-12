@@ -166,6 +166,7 @@ _SECTIONS = {
     "alignment": AlignmentConfig,
     "shared_memory": SharedMemoryConfig,
 }
+_ROOT_KEYS = {*_SECTIONS, "extends"}
 
 
 def _reject_unknown(section: dict[str, Any], allowed: set[str], name: str) -> None:
@@ -182,13 +183,39 @@ def _section(raw: dict[str, Any], name: str, cls: type) -> dict[str, Any]:
     return dict(section)
 
 
+def _load_raw(path: Path, parents: tuple[Path, ...] = ()) -> dict[str, Any]:
+    """Load YAML and resolve one optional relative base configuration."""
+
+    resolved = path.resolve()
+    if resolved in parents:
+        chain = " -> ".join(str(item) for item in (*parents, resolved))
+        raise ValueError(f"collector configuration inheritance cycle: {chain}")
+    raw = yaml.safe_load(resolved.read_text(encoding="utf-8")) or {}
+    if not isinstance(raw, dict):
+        raise TypeError("collector configuration root must be a mapping")
+    _reject_unknown(raw, _ROOT_KEYS, "root")
+
+    parent = raw.pop("extends", None)
+    if parent is None:
+        return raw
+    if not isinstance(parent, str) or not parent.strip():
+        raise TypeError("extends must be a non-empty path string")
+
+    base_path = Path(parent)
+    if not base_path.is_absolute():
+        base_path = resolved.parent / base_path
+    merged = _load_raw(base_path, (*parents, resolved))
+    for name, values in raw.items():
+        if not isinstance(values, dict):
+            raise TypeError(f"configuration section {name!r} must be a mapping")
+        merged[name] = {**merged.get(name, {}), **values}
+    return merged
+
+
 def load_config(path: str | Path) -> CollectorConfig:
     """Load a strict YAML configuration file; unknown keys are errors."""
 
-    raw = yaml.safe_load(Path(path).read_text()) or {}
-    if not isinstance(raw, dict):
-        raise TypeError("collector configuration root must be a mapping")
-    _reject_unknown(raw, set(_SECTIONS), "root")
+    raw = _load_raw(Path(path))
 
     sections = {name: _section(raw, name, cls) for name, cls in _SECTIONS.items()}
     dataset = sections["dataset"]

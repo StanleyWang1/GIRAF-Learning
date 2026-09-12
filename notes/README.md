@@ -25,9 +25,9 @@ otherwise. Dated reports describe findings at the time they were written.
 - [Kernel panic investigation — 2026-09-09](hardware/src-03/kernel_panic_2026-09-09.md):
   kernel logs, CPU topology, and preserved training evidence.
 - [BIOS update — 2026-09-07](hardware/src-03/bios-update/README.md): update
-  procedure and provenance, with the original firmware archive, extracted
-  firmware, and USB preparation script kept together in the same folder.
+  procedure, download location, checksums, and USB preparation script.
 
 Keep future training guides in `training/`, IMU guides and reports in `imu/`,
-and machine-specific investigations in `hardware/<hostname>/`. Keep supporting
-files beside their reports and retain dates on investigation notes.
+and machine-specific investigations in `hardware/<hostname>/`. Keep small text
+artifacts beside their reports, link large vendor binaries, and retain dates on
+investigation notes.

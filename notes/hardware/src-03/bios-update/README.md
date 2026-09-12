@@ -101,6 +101,9 @@ value, ZIP integrity test passed, and CAP extracted. Extracted CAP SHA-256
 (locally calculated for verifying a subsequent USB copy):
 `1f04a9a30b81df6b2dbcf5887b6147a819a387e79e8941394f92de898c8d8d28`
 
+The vendor archive and extracted CAP are intentionally not committed. Download
+the archive from the official URL above and verify both checksums before reuse.
+
 Firmware has not been flashed. No BIOS or CPU settings have been changed.
 
 ASUS lists an Intel IPU 2026.1 microcode/memory-compatibility update and ME

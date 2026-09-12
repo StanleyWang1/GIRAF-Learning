@@ -43,7 +43,7 @@ giraf-view = "giraf.viewer.main:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/giraf"]
 
-# CUDA 13.0 wheels for the RTX 5070 Ti (sm_120). macOS falls back to PyPI.
+# CUDA 13.0 wheels on Linux/Windows; macOS falls back to PyPI.
 [tool.uv.sources]
 torch = [
     { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
