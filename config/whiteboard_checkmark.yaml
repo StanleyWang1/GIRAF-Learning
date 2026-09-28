@@ -1,0 +1,7 @@
+# Cable-stringing collection output; runtime settings come from the shared base.
+extends: data_collection.yaml
+
+dataset:
+  output_dir: data/whiteboard_checkmark
+  zarr_name: whiteboard_checkmark_boom_40in.zarr
+  episode_dir_name: whiteboard_checkmark_boom_40in_videos

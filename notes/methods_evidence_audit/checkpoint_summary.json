@@ -1,0 +1,5408 @@
+{
+  "checkpoints/ring_over_peg_redo/nautilus-boom-40in-baseline/policy_epoch_0500.pt": {
+    "policy": {
+      "observation_horizon": 2,
+      "prediction_horizon": 16,
+      "action_horizon": 8,
+      "action_space": "twist",
+      "temporal_ensemble": true,
+      "diffusion_steps": 100,
+      "inference_steps": 16,
+      "vision_features": 128,
+      "down_dims": [
+        64,
+        128,
+        256
+      ],
+      "timestep_features": 128,
+      "kernel_size": 5,
+      "crop_fraction": 0.9,
+      "color_jitter": 0.1,
+      "encoder": "resnet18",
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-06,
+      "gradient_clip_norm": 1.0,
+      "ema_decay": 0.999,
+      "eval_seed": 0,
+      "device": "cuda",
+      "state_input": "full",
+      "imu_input": "none"
+    },
+    "normalizer": {
+      "action_low": [
+        -0.21531927585601807,
+        -0.1821330189704895,
+        -0.1365283876657486,
+        -0.6025373935699463,
+        -0.4067458212375641,
+        -0.6977568864822388,
+        0.0
+      ],
+      "action_high": [
+        0.16089047491550446,
+        0.14359204471111298,
+        0.1981952041387558,
+        0.3982911705970764,
+        0.48171213269233704,
+        0.7510513663291931,
+        1.0
+      ],
+      "state_low": [
+        -0.5182591676712036,
+        0.37643566727638245,
+        0.5936065912246704,
+        -1.602934718132019,
+        -0.6958960890769958,
+        -1.005408525466919,
+        0.5677909255027771,
+        -0.32477277517318726,
+        0.3689621686935425,
+        -0.7208274602890015,
+        0.5884384512901306,
+        -0.5088489651679993,
+        -0.040549103170633316,
+        -0.6791017651557922,
+        0.511403501033783
+      ],
+      "state_high": [
+        0.29734504222869873,
+        0.933535635471344,
+        1.1002542972564697,
+        -0.45666438341140747,
+        0.8885560035705566,
+        0.6611447930335999,
+        1.1544114351272583,
+        0.2578692138195038,
+        0.7075406908988953,
+        0.7200208306312561,
+        0.9999998211860657,
+        0.6271474957466125,
+        0.7667348384857178,
+        0.6275300979614258,
+        0.9992778897285461
+      ]
+    },
+    "model_shapes": {
+      "image_encoder.backbone.0.weight": [
+        64,
+        3,
+        7,
+        7
+      ],
+      "image_encoder.backbone.1.weight": [
+        64
+      ],
+      "image_encoder.backbone.1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.5.0.conv1.weight": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.0.weight": [
+        128,
+        64,
+        1,
+        1
+      ],
+      "image_encoder.backbone.5.0.downsample.1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv1.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.6.0.conv1.weight": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.0.weight": [
+        256,
+        128,
+        1,
+        1
+      ],
+      "image_encoder.backbone.6.0.downsample.1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv1.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.7.0.conv1.weight": [
+        512,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn2.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.0.weight": [
+        512,
+        256,
+        1,
+        1
+      ],
+      "image_encoder.backbone.7.0.downsample.1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv1.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn2.bias": [
+        512
+      ],
+      "image_encoder.spatial_softmax.project.weight": [
+        32,
+        512,
+        1,
+        1
+      ],
+      "image_encoder.spatial_softmax.project.bias": [
+        32
+      ],
+      "image_encoder.project.weight": [
+        128,
+        64
+      ],
+      "image_encoder.project.bias": [
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.weight": [
+        512,
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.bias": [
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.weight": [
+        128,
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.first.block.0.weight": [
+        64,
+        7,
+        5
+      ],
+      "noise_predictor.downs.0.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.downs.0.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.residual.weight": [
+        64,
+        7,
+        1
+      ],
+      "noise_predictor.downs.0.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.downs.0.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.2.weight": [
+        64,
+        64,
+        3
+      ],
+      "noise_predictor.downs.0.2.bias": [
+        64
+      ],
+      "noise_predictor.downs.1.0.first.block.0.weight": [
+        128,
+        64,
+        5
+      ],
+      "noise_predictor.downs.1.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.downs.1.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.0.residual.weight": [
+        128,
+        64,
+        1
+      ],
+      "noise_predictor.downs.1.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.downs.1.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.2.weight": [
+        128,
+        128,
+        3
+      ],
+      "noise_predictor.downs.1.2.bias": [
+        128
+      ],
+      "noise_predictor.downs.2.0.first.block.0.weight": [
+        256,
+        128,
+        5
+      ],
+      "noise_predictor.downs.2.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.downs.2.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.downs.2.0.residual.weight": [
+        256,
+        128,
+        1
+      ],
+      "noise_predictor.downs.2.0.residual.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.downs.2.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.0.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.middle.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.middle.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.ups.0.0.first.block.0.weight": [
+        128,
+        512,
+        5
+      ],
+      "noise_predictor.ups.0.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.ups.0.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.0.residual.weight": [
+        128,
+        512,
+        1
+      ],
+      "noise_predictor.ups.0.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.ups.0.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.2.weight": [
+        128,
+        128,
+        4
+      ],
+      "noise_predictor.ups.0.2.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.first.block.0.weight": [
+        64,
+        256,
+        5
+      ],
+      "noise_predictor.ups.1.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.ups.1.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.residual.weight": [
+        64,
+        256,
+        1
+      ],
+      "noise_predictor.ups.1.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.ups.1.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.2.weight": [
+        64,
+        64,
+        4
+      ],
+      "noise_predictor.ups.1.2.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.output.0.block.0.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.weight": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.bias": [
+        64
+      ],
+      "noise_predictor.output.1.weight": [
+        7,
+        64,
+        1
+      ],
+      "noise_predictor.output.1.bias": [
+        7
+      ]
+    },
+    "optimizer_groups": [
+      {
+        "lr": 5e-05,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 1e-06,
+        "amsgrad": false,
+        "maximize": false,
+        "foreach": null,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": true,
+        "initial_lr": 0.0001
+      }
+    ],
+    "last_metrics": {
+      "epoch": 500,
+      "loss": 0.008952870140278554,
+      "gradient_norm": 0.09373363670275872,
+      "lr": 5e-05,
+      "val_loss": 0.12040694505961473,
+      "val_action_mse": 0.025130701955438647,
+      "epoch_seconds": 121.24933403544128
+    },
+    "best_validation": {
+      "epoch": 268,
+      "loss": 0.012005810386849097,
+      "gradient_norm": 0.10459911700293242,
+      "lr": 7.226607062176166e-05,
+      "val_loss": 0.08830558161843907,
+      "val_action_mse": 0.024983853548457308,
+      "epoch_seconds": 121.75937680248171
+    }
+  },
+  "checkpoints/ring_over_peg_redo/nautilus-boom-40in-joint-angles/policy_epoch_0500.pt": {
+    "policy": {
+      "observation_horizon": 2,
+      "prediction_horizon": 16,
+      "action_horizon": 8,
+      "action_space": "twist",
+      "temporal_ensemble": true,
+      "diffusion_steps": 100,
+      "inference_steps": 16,
+      "vision_features": 128,
+      "down_dims": [
+        64,
+        128,
+        256
+      ],
+      "timestep_features": 128,
+      "kernel_size": 5,
+      "crop_fraction": 0.9,
+      "color_jitter": 0.1,
+      "encoder": "resnet18",
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-06,
+      "gradient_clip_norm": 1.0,
+      "ema_decay": 0.999,
+      "eval_seed": 0,
+      "device": "cuda",
+      "state_input": "joint_angles",
+      "imu_input": "none"
+    },
+    "normalizer": {
+      "action_low": [
+        -0.21531927585601807,
+        -0.1821330189704895,
+        -0.1365283876657486,
+        -0.6025373935699463,
+        -0.4067458212375641,
+        -0.6977568864822388,
+        0.0
+      ],
+      "action_high": [
+        0.16089047491550446,
+        0.14359204471111298,
+        0.1981952041387558,
+        0.3982911705970764,
+        0.48171213269233704,
+        0.7510513663291931,
+        1.0
+      ],
+      "state_low": [
+        -0.5182591676712036,
+        0.37643566727638245,
+        0.5936065912246704,
+        -1.602934718132019,
+        -0.6958960890769958,
+        -1.005408525466919,
+        0.5677909255027771,
+        -0.32477277517318726,
+        0.3689621686935425,
+        -0.7208274602890015,
+        0.5884384512901306,
+        -0.5088489651679993,
+        -0.040549103170633316,
+        -0.6791017651557922,
+        0.511403501033783
+      ],
+      "state_high": [
+        0.29734504222869873,
+        0.933535635471344,
+        1.1002542972564697,
+        -0.45666438341140747,
+        0.8885560035705566,
+        0.6611447930335999,
+        1.1544114351272583,
+        0.2578692138195038,
+        0.7075406908988953,
+        0.7200208306312561,
+        0.9999998211860657,
+        0.6271474957466125,
+        0.7667348384857178,
+        0.6275300979614258,
+        0.9992778897285461
+      ]
+    },
+    "model_shapes": {
+      "image_encoder.backbone.0.weight": [
+        64,
+        3,
+        7,
+        7
+      ],
+      "image_encoder.backbone.1.weight": [
+        64
+      ],
+      "image_encoder.backbone.1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.5.0.conv1.weight": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.0.weight": [
+        128,
+        64,
+        1,
+        1
+      ],
+      "image_encoder.backbone.5.0.downsample.1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv1.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.6.0.conv1.weight": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.0.weight": [
+        256,
+        128,
+        1,
+        1
+      ],
+      "image_encoder.backbone.6.0.downsample.1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv1.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.7.0.conv1.weight": [
+        512,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn2.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.0.weight": [
+        512,
+        256,
+        1,
+        1
+      ],
+      "image_encoder.backbone.7.0.downsample.1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv1.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn2.bias": [
+        512
+      ],
+      "image_encoder.spatial_softmax.project.weight": [
+        32,
+        512,
+        1,
+        1
+      ],
+      "image_encoder.spatial_softmax.project.bias": [
+        32
+      ],
+      "image_encoder.project.weight": [
+        128,
+        64
+      ],
+      "image_encoder.project.bias": [
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.weight": [
+        512,
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.bias": [
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.weight": [
+        128,
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.first.block.0.weight": [
+        64,
+        7,
+        5
+      ],
+      "noise_predictor.downs.0.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.downs.0.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.residual.weight": [
+        64,
+        7,
+        1
+      ],
+      "noise_predictor.downs.0.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.downs.0.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.2.weight": [
+        64,
+        64,
+        3
+      ],
+      "noise_predictor.downs.0.2.bias": [
+        64
+      ],
+      "noise_predictor.downs.1.0.first.block.0.weight": [
+        128,
+        64,
+        5
+      ],
+      "noise_predictor.downs.1.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.downs.1.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.0.residual.weight": [
+        128,
+        64,
+        1
+      ],
+      "noise_predictor.downs.1.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.downs.1.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.2.weight": [
+        128,
+        128,
+        3
+      ],
+      "noise_predictor.downs.1.2.bias": [
+        128
+      ],
+      "noise_predictor.downs.2.0.first.block.0.weight": [
+        256,
+        128,
+        5
+      ],
+      "noise_predictor.downs.2.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.downs.2.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.downs.2.0.residual.weight": [
+        256,
+        128,
+        1
+      ],
+      "noise_predictor.downs.2.0.residual.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.downs.2.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.0.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.middle.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.middle.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.ups.0.0.first.block.0.weight": [
+        128,
+        512,
+        5
+      ],
+      "noise_predictor.ups.0.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.ups.0.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.0.residual.weight": [
+        128,
+        512,
+        1
+      ],
+      "noise_predictor.ups.0.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.ups.0.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.2.weight": [
+        128,
+        128,
+        4
+      ],
+      "noise_predictor.ups.0.2.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.first.block.0.weight": [
+        64,
+        256,
+        5
+      ],
+      "noise_predictor.ups.1.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.ups.1.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.residual.weight": [
+        64,
+        256,
+        1
+      ],
+      "noise_predictor.ups.1.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.ups.1.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.2.weight": [
+        64,
+        64,
+        4
+      ],
+      "noise_predictor.ups.1.2.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.output.0.block.0.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.weight": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.bias": [
+        64
+      ],
+      "noise_predictor.output.1.weight": [
+        7,
+        64,
+        1
+      ],
+      "noise_predictor.output.1.bias": [
+        7
+      ]
+    },
+    "optimizer_groups": [
+      {
+        "lr": 5e-05,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 1e-06,
+        "amsgrad": false,
+        "maximize": false,
+        "foreach": null,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": true,
+        "initial_lr": 0.0001
+      }
+    ]
+  },
+  "checkpoints/src-cable-stringing-boom-40in-baseline/policy_epoch_0500.pt": {
+    "policy": {
+      "observation_horizon": 2,
+      "prediction_horizon": 16,
+      "action_horizon": 8,
+      "action_space": "twist",
+      "temporal_ensemble": true,
+      "diffusion_steps": 100,
+      "inference_steps": 16,
+      "vision_features": 128,
+      "down_dims": [
+        64,
+        128,
+        256
+      ],
+      "timestep_features": 128,
+      "kernel_size": 5,
+      "crop_fraction": 0.9,
+      "color_jitter": 0.1,
+      "encoder": "resnet18",
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-06,
+      "gradient_clip_norm": 1.0,
+      "ema_decay": 0.999,
+      "eval_seed": 0,
+      "device": "cuda",
+      "state_input": "full",
+      "imu_input": "none"
+    },
+    "normalizer": {
+      "action_low": [
+        -0.2323162853717804,
+        -0.1480107605457306,
+        -0.16155068576335907,
+        -0.9158695936203003,
+        -0.43014150857925415,
+        -0.7843085527420044,
+        0.0
+      ],
+      "action_high": [
+        0.26507365703582764,
+        0.1691567450761795,
+        0.11570040136575699,
+        0.48736637830734253,
+        0.3611927628517151,
+        0.5797188878059387,
+        1.0
+      ],
+      "state_low": [
+        -0.7180461883544922,
+        0.42037075757980347,
+        0.38664311170578003,
+        -1.5399670600891113,
+        -0.8563905358314514,
+        -0.8069368004798889,
+        0.32407400012016296,
+        -0.34847700595855713,
+        0.46895724534988403,
+        -0.6401007771492004,
+        0.3225313127040863,
+        -0.48618996143341064,
+        -0.2098889797925949,
+        -0.8495045304298401,
+        0.5266493558883667
+      ],
+      "state_high": [
+        0.5606511235237122,
+        1.353441834449768,
+        1.0932179689407349,
+        -0.5498234033584595,
+        1.1078968048095703,
+        1.194498896598816,
+        1.1271637678146362,
+        0.2686787545681,
+        0.9655476808547974,
+        0.9037526249885559,
+        0.9999997019767761,
+        0.7491416931152344,
+        0.543308675289154,
+        0.5157775282859802,
+        0.9999983310699463
+      ]
+    },
+    "model_shapes": {
+      "image_encoder.backbone.0.weight": [
+        64,
+        3,
+        7,
+        7
+      ],
+      "image_encoder.backbone.1.weight": [
+        64
+      ],
+      "image_encoder.backbone.1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.5.0.conv1.weight": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.0.weight": [
+        128,
+        64,
+        1,
+        1
+      ],
+      "image_encoder.backbone.5.0.downsample.1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv1.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.6.0.conv1.weight": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.0.weight": [
+        256,
+        128,
+        1,
+        1
+      ],
+      "image_encoder.backbone.6.0.downsample.1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv1.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.7.0.conv1.weight": [
+        512,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn2.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.0.weight": [
+        512,
+        256,
+        1,
+        1
+      ],
+      "image_encoder.backbone.7.0.downsample.1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv1.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn2.bias": [
+        512
+      ],
+      "image_encoder.spatial_softmax.project.weight": [
+        32,
+        512,
+        1,
+        1
+      ],
+      "image_encoder.spatial_softmax.project.bias": [
+        32
+      ],
+      "image_encoder.project.weight": [
+        128,
+        64
+      ],
+      "image_encoder.project.bias": [
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.weight": [
+        512,
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.bias": [
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.weight": [
+        128,
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.first.block.0.weight": [
+        64,
+        7,
+        5
+      ],
+      "noise_predictor.downs.0.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.downs.0.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.residual.weight": [
+        64,
+        7,
+        1
+      ],
+      "noise_predictor.downs.0.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.downs.0.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.2.weight": [
+        64,
+        64,
+        3
+      ],
+      "noise_predictor.downs.0.2.bias": [
+        64
+      ],
+      "noise_predictor.downs.1.0.first.block.0.weight": [
+        128,
+        64,
+        5
+      ],
+      "noise_predictor.downs.1.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.downs.1.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.0.residual.weight": [
+        128,
+        64,
+        1
+      ],
+      "noise_predictor.downs.1.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.downs.1.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.2.weight": [
+        128,
+        128,
+        3
+      ],
+      "noise_predictor.downs.1.2.bias": [
+        128
+      ],
+      "noise_predictor.downs.2.0.first.block.0.weight": [
+        256,
+        128,
+        5
+      ],
+      "noise_predictor.downs.2.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.downs.2.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.downs.2.0.residual.weight": [
+        256,
+        128,
+        1
+      ],
+      "noise_predictor.downs.2.0.residual.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.downs.2.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.0.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.middle.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.middle.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.ups.0.0.first.block.0.weight": [
+        128,
+        512,
+        5
+      ],
+      "noise_predictor.ups.0.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.ups.0.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.0.residual.weight": [
+        128,
+        512,
+        1
+      ],
+      "noise_predictor.ups.0.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.ups.0.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.2.weight": [
+        128,
+        128,
+        4
+      ],
+      "noise_predictor.ups.0.2.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.first.block.0.weight": [
+        64,
+        256,
+        5
+      ],
+      "noise_predictor.ups.1.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.ups.1.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.residual.weight": [
+        64,
+        256,
+        1
+      ],
+      "noise_predictor.ups.1.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.ups.1.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.2.weight": [
+        64,
+        64,
+        4
+      ],
+      "noise_predictor.ups.1.2.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.output.0.block.0.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.weight": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.bias": [
+        64
+      ],
+      "noise_predictor.output.1.weight": [
+        7,
+        64,
+        1
+      ],
+      "noise_predictor.output.1.bias": [
+        7
+      ]
+    },
+    "optimizer_groups": [
+      {
+        "lr": 5e-05,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 1e-06,
+        "amsgrad": false,
+        "maximize": false,
+        "foreach": null,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": true,
+        "initial_lr": 0.0001
+      }
+    ],
+    "last_metrics": {
+      "epoch": 500,
+      "loss": 0.008298118167632576,
+      "gradient_norm": 0.09516261873597448,
+      "lr": 5e-05,
+      "val_loss": 0.11479539831768217,
+      "val_action_mse": 0.028356622028875785,
+      "epoch_seconds": 93.3349553290027
+    },
+    "best_validation": {
+      "epoch": 473,
+      "loss": 0.008393979594044601,
+      "gradient_norm": 0.0927895837637226,
+      "lr": 5.036060430179439e-05,
+      "val_loss": 0.1129685560299772,
+      "val_action_mse": 0.02801748747542066,
+      "epoch_seconds": 93.58191122900462
+    }
+  },
+  "checkpoints/nautilus-cable-stringing-boom-40in-joint-angles/policy_epoch_0500.pt": {
+    "policy": {
+      "observation_horizon": 2,
+      "prediction_horizon": 16,
+      "action_horizon": 8,
+      "action_space": "twist",
+      "temporal_ensemble": true,
+      "diffusion_steps": 100,
+      "inference_steps": 16,
+      "vision_features": 128,
+      "down_dims": [
+        64,
+        128,
+        256
+      ],
+      "timestep_features": 128,
+      "kernel_size": 5,
+      "crop_fraction": 0.9,
+      "color_jitter": 0.1,
+      "encoder": "resnet18",
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-06,
+      "gradient_clip_norm": 1.0,
+      "ema_decay": 0.999,
+      "eval_seed": 0,
+      "device": "cuda",
+      "state_input": "joint_angles",
+      "imu_input": "none"
+    },
+    "normalizer": {
+      "action_low": [
+        -0.2323162853717804,
+        -0.1480107605457306,
+        -0.16155068576335907,
+        -0.9158695936203003,
+        -0.43014150857925415,
+        -0.7843085527420044,
+        0.0
+      ],
+      "action_high": [
+        0.26507365703582764,
+        0.1691567450761795,
+        0.11570040136575699,
+        0.48736637830734253,
+        0.3611927628517151,
+        0.5797188878059387,
+        1.0
+      ],
+      "state_low": [
+        -0.7180461883544922,
+        0.42037075757980347,
+        0.38664311170578003,
+        -1.5399670600891113,
+        -0.8563905358314514,
+        -0.8069368004798889,
+        0.32407400012016296,
+        -0.34847700595855713,
+        0.46895724534988403,
+        -0.6401007771492004,
+        0.3225313127040863,
+        -0.48618996143341064,
+        -0.2098889797925949,
+        -0.8495045304298401,
+        0.5266493558883667
+      ],
+      "state_high": [
+        0.5606511235237122,
+        1.353441834449768,
+        1.0932179689407349,
+        -0.5498234033584595,
+        1.1078968048095703,
+        1.194498896598816,
+        1.1271637678146362,
+        0.2686787545681,
+        0.9655476808547974,
+        0.9037526249885559,
+        0.9999997019767761,
+        0.7491416931152344,
+        0.543308675289154,
+        0.5157775282859802,
+        0.9999983310699463
+      ]
+    },
+    "model_shapes": {
+      "image_encoder.backbone.0.weight": [
+        64,
+        3,
+        7,
+        7
+      ],
+      "image_encoder.backbone.1.weight": [
+        64
+      ],
+      "image_encoder.backbone.1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.5.0.conv1.weight": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.0.weight": [
+        128,
+        64,
+        1,
+        1
+      ],
+      "image_encoder.backbone.5.0.downsample.1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv1.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.6.0.conv1.weight": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.0.weight": [
+        256,
+        128,
+        1,
+        1
+      ],
+      "image_encoder.backbone.6.0.downsample.1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv1.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.7.0.conv1.weight": [
+        512,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn2.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.0.weight": [
+        512,
+        256,
+        1,
+        1
+      ],
+      "image_encoder.backbone.7.0.downsample.1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv1.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn2.bias": [
+        512
+      ],
+      "image_encoder.spatial_softmax.project.weight": [
+        32,
+        512,
+        1,
+        1
+      ],
+      "image_encoder.spatial_softmax.project.bias": [
+        32
+      ],
+      "image_encoder.project.weight": [
+        128,
+        64
+      ],
+      "image_encoder.project.bias": [
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.weight": [
+        512,
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.bias": [
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.weight": [
+        128,
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.first.block.0.weight": [
+        64,
+        7,
+        5
+      ],
+      "noise_predictor.downs.0.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.downs.0.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.residual.weight": [
+        64,
+        7,
+        1
+      ],
+      "noise_predictor.downs.0.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.downs.0.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.2.weight": [
+        64,
+        64,
+        3
+      ],
+      "noise_predictor.downs.0.2.bias": [
+        64
+      ],
+      "noise_predictor.downs.1.0.first.block.0.weight": [
+        128,
+        64,
+        5
+      ],
+      "noise_predictor.downs.1.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.downs.1.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.0.residual.weight": [
+        128,
+        64,
+        1
+      ],
+      "noise_predictor.downs.1.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.downs.1.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.2.weight": [
+        128,
+        128,
+        3
+      ],
+      "noise_predictor.downs.1.2.bias": [
+        128
+      ],
+      "noise_predictor.downs.2.0.first.block.0.weight": [
+        256,
+        128,
+        5
+      ],
+      "noise_predictor.downs.2.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.downs.2.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.downs.2.0.residual.weight": [
+        256,
+        128,
+        1
+      ],
+      "noise_predictor.downs.2.0.residual.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.downs.2.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.0.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.middle.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.middle.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.ups.0.0.first.block.0.weight": [
+        128,
+        512,
+        5
+      ],
+      "noise_predictor.ups.0.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.ups.0.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.0.residual.weight": [
+        128,
+        512,
+        1
+      ],
+      "noise_predictor.ups.0.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.ups.0.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.2.weight": [
+        128,
+        128,
+        4
+      ],
+      "noise_predictor.ups.0.2.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.first.block.0.weight": [
+        64,
+        256,
+        5
+      ],
+      "noise_predictor.ups.1.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.ups.1.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.residual.weight": [
+        64,
+        256,
+        1
+      ],
+      "noise_predictor.ups.1.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.ups.1.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.2.weight": [
+        64,
+        64,
+        4
+      ],
+      "noise_predictor.ups.1.2.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.output.0.block.0.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.weight": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.bias": [
+        64
+      ],
+      "noise_predictor.output.1.weight": [
+        7,
+        64,
+        1
+      ],
+      "noise_predictor.output.1.bias": [
+        7
+      ]
+    },
+    "optimizer_groups": [
+      {
+        "lr": 5e-05,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 1e-06,
+        "amsgrad": false,
+        "maximize": false,
+        "foreach": null,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": true,
+        "initial_lr": 0.0001
+      }
+    ]
+  },
+  "checkpoints/src-whiteboard-boom-40in-baseline/policy_epoch_0500.pt": {
+    "policy": {
+      "observation_horizon": 2,
+      "prediction_horizon": 16,
+      "action_horizon": 8,
+      "action_space": "twist",
+      "temporal_ensemble": true,
+      "diffusion_steps": 100,
+      "inference_steps": 16,
+      "vision_features": 128,
+      "down_dims": [
+        64,
+        128,
+        256
+      ],
+      "timestep_features": 128,
+      "kernel_size": 5,
+      "crop_fraction": 0.9,
+      "color_jitter": 0.1,
+      "encoder": "resnet18",
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-06,
+      "gradient_clip_norm": 1.0,
+      "ema_decay": 0.999,
+      "eval_seed": 0,
+      "device": "cuda",
+      "state_input": "full",
+      "imu_input": "none"
+    },
+    "normalizer": {
+      "action_low": [
+        -0.3024173378944397,
+        -0.10069780796766281,
+        -0.2285161316394806,
+        -0.41345539689064026,
+        -0.7700139284133911,
+        -0.8275660276412964,
+        0.0
+      ],
+      "action_high": [
+        0.10716556757688522,
+        0.14801153540611267,
+        0.25035741925239563,
+        0.7342740297317505,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "state_low": [
+        -0.1888044774532318,
+        0.4600368142127991,
+        0.7677414417266846,
+        -1.6505632400512695,
+        -0.8876615166664124,
+        -0.4956461191177368,
+        0.7242419123649597,
+        -0.20723769068717957,
+        0.4566693902015686,
+        -0.5143544673919678,
+        0.6456319689750671,
+        -0.5332496762275696,
+        0.4180086851119995,
+        -0.6386353373527527,
+        0.2601891756057739
+      ],
+      "state_high": [
+        0.28096577525138855,
+        0.9065585732460022,
+        1.1975263357162476,
+        -1.1334015130996704,
+        0.548491895198822,
+        0.8231443166732788,
+        1.1480575799942017,
+        0.20141151547431946,
+        0.846916913986206,
+        0.7604243755340576,
+        0.9999998211860657,
+        0.36596935987472534,
+        0.9272950291633606,
+        0.4423576891422272,
+        0.8847119212150574
+      ]
+    },
+    "model_shapes": {
+      "image_encoder.backbone.0.weight": [
+        64,
+        3,
+        7,
+        7
+      ],
+      "image_encoder.backbone.1.weight": [
+        64
+      ],
+      "image_encoder.backbone.1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.5.0.conv1.weight": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.0.weight": [
+        128,
+        64,
+        1,
+        1
+      ],
+      "image_encoder.backbone.5.0.downsample.1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv1.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.6.0.conv1.weight": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.0.weight": [
+        256,
+        128,
+        1,
+        1
+      ],
+      "image_encoder.backbone.6.0.downsample.1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv1.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.7.0.conv1.weight": [
+        512,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn2.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.0.weight": [
+        512,
+        256,
+        1,
+        1
+      ],
+      "image_encoder.backbone.7.0.downsample.1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv1.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn2.bias": [
+        512
+      ],
+      "image_encoder.spatial_softmax.project.weight": [
+        32,
+        512,
+        1,
+        1
+      ],
+      "image_encoder.spatial_softmax.project.bias": [
+        32
+      ],
+      "image_encoder.project.weight": [
+        128,
+        64
+      ],
+      "image_encoder.project.bias": [
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.weight": [
+        512,
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.bias": [
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.weight": [
+        128,
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.first.block.0.weight": [
+        64,
+        7,
+        5
+      ],
+      "noise_predictor.downs.0.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.downs.0.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.residual.weight": [
+        64,
+        7,
+        1
+      ],
+      "noise_predictor.downs.0.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.downs.0.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.2.weight": [
+        64,
+        64,
+        3
+      ],
+      "noise_predictor.downs.0.2.bias": [
+        64
+      ],
+      "noise_predictor.downs.1.0.first.block.0.weight": [
+        128,
+        64,
+        5
+      ],
+      "noise_predictor.downs.1.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.downs.1.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.0.residual.weight": [
+        128,
+        64,
+        1
+      ],
+      "noise_predictor.downs.1.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.downs.1.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.2.weight": [
+        128,
+        128,
+        3
+      ],
+      "noise_predictor.downs.1.2.bias": [
+        128
+      ],
+      "noise_predictor.downs.2.0.first.block.0.weight": [
+        256,
+        128,
+        5
+      ],
+      "noise_predictor.downs.2.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.downs.2.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.downs.2.0.residual.weight": [
+        256,
+        128,
+        1
+      ],
+      "noise_predictor.downs.2.0.residual.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.downs.2.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.0.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.middle.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.condition.1.weight": [
+        512,
+        414
+      ],
+      "noise_predictor.middle.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.ups.0.0.first.block.0.weight": [
+        128,
+        512,
+        5
+      ],
+      "noise_predictor.ups.0.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.ups.0.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.0.residual.weight": [
+        128,
+        512,
+        1
+      ],
+      "noise_predictor.ups.0.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.condition.1.weight": [
+        256,
+        414
+      ],
+      "noise_predictor.ups.0.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.2.weight": [
+        128,
+        128,
+        4
+      ],
+      "noise_predictor.ups.0.2.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.first.block.0.weight": [
+        64,
+        256,
+        5
+      ],
+      "noise_predictor.ups.1.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.ups.1.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.residual.weight": [
+        64,
+        256,
+        1
+      ],
+      "noise_predictor.ups.1.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.condition.1.weight": [
+        128,
+        414
+      ],
+      "noise_predictor.ups.1.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.2.weight": [
+        64,
+        64,
+        4
+      ],
+      "noise_predictor.ups.1.2.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.output.0.block.0.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.weight": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.bias": [
+        64
+      ],
+      "noise_predictor.output.1.weight": [
+        7,
+        64,
+        1
+      ],
+      "noise_predictor.output.1.bias": [
+        7
+      ]
+    },
+    "optimizer_groups": [
+      {
+        "lr": 5e-05,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 1e-06,
+        "amsgrad": false,
+        "maximize": false,
+        "foreach": null,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": true,
+        "initial_lr": 0.0001
+      }
+    ],
+    "last_metrics": {
+      "epoch": 500,
+      "loss": 0.0068514052071367145,
+      "gradient_norm": 0.10351532376198858,
+      "lr": 5e-05,
+      "val_loss": 0.17743700724123207,
+      "val_action_mse": 0.05031039534582962,
+      "epoch_seconds": 60.35365874398849
+    },
+    "best_validation": {
+      "epoch": 158,
+      "loss": 0.01111130074908336,
+      "gradient_norm": 0.17996887962023417,
+      "lr": 8.882668142754123e-05,
+      "val_loss": 0.0915406164455816,
+      "val_action_mse": 0.04508257855944404,
+      "epoch_seconds": 60.481274640013
+    }
+  },
+  "checkpoints/src-whiteboard-boom-40in-joint-angles/policy_epoch_0500.pt": {
+    "policy": {
+      "observation_horizon": 2,
+      "prediction_horizon": 16,
+      "action_horizon": 8,
+      "action_space": "twist",
+      "temporal_ensemble": true,
+      "diffusion_steps": 100,
+      "inference_steps": 16,
+      "vision_features": 128,
+      "down_dims": [
+        64,
+        128,
+        256
+      ],
+      "timestep_features": 128,
+      "kernel_size": 5,
+      "crop_fraction": 0.9,
+      "color_jitter": 0.1,
+      "encoder": "resnet18",
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-06,
+      "gradient_clip_norm": 1.0,
+      "ema_decay": 0.999,
+      "eval_seed": 0,
+      "device": "cuda",
+      "state_input": "joint_angles",
+      "imu_input": "none"
+    },
+    "normalizer": {
+      "action_low": [
+        -0.3024173378944397,
+        -0.10069780796766281,
+        -0.2285161316394806,
+        -0.41345539689064026,
+        -0.7700139284133911,
+        -0.8275660276412964,
+        0.0
+      ],
+      "action_high": [
+        0.10716556757688522,
+        0.14801153540611267,
+        0.25035741925239563,
+        0.7342740297317505,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "state_low": [
+        -0.1888044774532318,
+        0.4600368142127991,
+        0.7677414417266846,
+        -1.6505632400512695,
+        -0.8876615166664124,
+        -0.4956461191177368,
+        0.7242419123649597,
+        -0.20723769068717957,
+        0.4566693902015686,
+        -0.5143544673919678,
+        0.6456319689750671,
+        -0.5332496762275696,
+        0.4180086851119995,
+        -0.6386353373527527,
+        0.2601891756057739
+      ],
+      "state_high": [
+        0.28096577525138855,
+        0.9065585732460022,
+        1.1975263357162476,
+        -1.1334015130996704,
+        0.548491895198822,
+        0.8231443166732788,
+        1.1480575799942017,
+        0.20141151547431946,
+        0.846916913986206,
+        0.7604243755340576,
+        0.9999998211860657,
+        0.36596935987472534,
+        0.9272950291633606,
+        0.4423576891422272,
+        0.8847119212150574
+      ]
+    },
+    "model_shapes": {
+      "image_encoder.backbone.0.weight": [
+        64,
+        3,
+        7,
+        7
+      ],
+      "image_encoder.backbone.1.weight": [
+        64
+      ],
+      "image_encoder.backbone.1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.0.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.0.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.0.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv1.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn1.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn1.bias": [
+        64
+      ],
+      "image_encoder.backbone.4.1.conv2.weight": [
+        64,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.4.1.bn2.weight": [
+        64
+      ],
+      "image_encoder.backbone.4.1.bn2.bias": [
+        64
+      ],
+      "image_encoder.backbone.5.0.conv1.weight": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.0.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.0.weight": [
+        128,
+        64,
+        1,
+        1
+      ],
+      "image_encoder.backbone.5.0.downsample.1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.0.downsample.1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv1.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn1.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn1.bias": [
+        128
+      ],
+      "image_encoder.backbone.5.1.conv2.weight": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.5.1.bn2.weight": [
+        128
+      ],
+      "image_encoder.backbone.5.1.bn2.bias": [
+        128
+      ],
+      "image_encoder.backbone.6.0.conv1.weight": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.0.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.0.weight": [
+        256,
+        128,
+        1,
+        1
+      ],
+      "image_encoder.backbone.6.0.downsample.1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.0.downsample.1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv1.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn1.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn1.bias": [
+        256
+      ],
+      "image_encoder.backbone.6.1.conv2.weight": [
+        256,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.6.1.bn2.weight": [
+        256
+      ],
+      "image_encoder.backbone.6.1.bn2.bias": [
+        256
+      ],
+      "image_encoder.backbone.7.0.conv1.weight": [
+        512,
+        256,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.0.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.bn2.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.0.weight": [
+        512,
+        256,
+        1,
+        1
+      ],
+      "image_encoder.backbone.7.0.downsample.1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.0.downsample.1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv1.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn1.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn1.bias": [
+        512
+      ],
+      "image_encoder.backbone.7.1.conv2.weight": [
+        512,
+        512,
+        3,
+        3
+      ],
+      "image_encoder.backbone.7.1.bn2.weight": [
+        512
+      ],
+      "image_encoder.backbone.7.1.bn2.bias": [
+        512
+      ],
+      "image_encoder.spatial_softmax.project.weight": [
+        32,
+        512,
+        1,
+        1
+      ],
+      "image_encoder.spatial_softmax.project.bias": [
+        32
+      ],
+      "image_encoder.project.weight": [
+        128,
+        64
+      ],
+      "image_encoder.project.bias": [
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.weight": [
+        512,
+        128
+      ],
+      "noise_predictor.timestep_encoder.1.bias": [
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.weight": [
+        128,
+        512
+      ],
+      "noise_predictor.timestep_encoder.3.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.first.block.0.weight": [
+        64,
+        7,
+        5
+      ],
+      "noise_predictor.downs.0.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.0.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.downs.0.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.0.residual.weight": [
+        64,
+        7,
+        1
+      ],
+      "noise_predictor.downs.0.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.downs.0.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.downs.0.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.downs.0.1.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.downs.0.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.0.2.weight": [
+        64,
+        64,
+        3
+      ],
+      "noise_predictor.downs.0.2.bias": [
+        64
+      ],
+      "noise_predictor.downs.1.0.first.block.0.weight": [
+        128,
+        64,
+        5
+      ],
+      "noise_predictor.downs.1.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.0.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.downs.1.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.0.residual.weight": [
+        128,
+        64,
+        1
+      ],
+      "noise_predictor.downs.1.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.downs.1.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.downs.1.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.downs.1.1.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.downs.1.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.1.2.weight": [
+        128,
+        128,
+        3
+      ],
+      "noise_predictor.downs.1.2.bias": [
+        128
+      ],
+      "noise_predictor.downs.2.0.first.block.0.weight": [
+        256,
+        128,
+        5
+      ],
+      "noise_predictor.downs.2.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.0.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.downs.2.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.downs.2.0.residual.weight": [
+        256,
+        128,
+        1
+      ],
+      "noise_predictor.downs.2.0.residual.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.downs.2.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.downs.2.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.downs.2.1.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.downs.2.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.0.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.0.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.0.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.0.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.middle.0.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.middle.1.first.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.first.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.first.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.0.weight": [
+        256,
+        256,
+        5
+      ],
+      "noise_predictor.middle.1.second.block.0.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.weight": [
+        256
+      ],
+      "noise_predictor.middle.1.second.block.1.bias": [
+        256
+      ],
+      "noise_predictor.middle.1.condition.1.weight": [
+        512,
+        394
+      ],
+      "noise_predictor.middle.1.condition.1.bias": [
+        512
+      ],
+      "noise_predictor.ups.0.0.first.block.0.weight": [
+        128,
+        512,
+        5
+      ],
+      "noise_predictor.ups.0.0.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.0.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.0.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.0.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.ups.0.0.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.0.residual.weight": [
+        128,
+        512,
+        1
+      ],
+      "noise_predictor.ups.0.0.residual.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.first.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.first.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.0.weight": [
+        128,
+        128,
+        5
+      ],
+      "noise_predictor.ups.0.1.second.block.0.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.weight": [
+        128
+      ],
+      "noise_predictor.ups.0.1.second.block.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.0.1.condition.1.weight": [
+        256,
+        394
+      ],
+      "noise_predictor.ups.0.1.condition.1.bias": [
+        256
+      ],
+      "noise_predictor.ups.0.2.weight": [
+        128,
+        128,
+        4
+      ],
+      "noise_predictor.ups.0.2.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.first.block.0.weight": [
+        64,
+        256,
+        5
+      ],
+      "noise_predictor.ups.1.0.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.0.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.0.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.0.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.ups.1.0.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.0.residual.weight": [
+        64,
+        256,
+        1
+      ],
+      "noise_predictor.ups.1.0.residual.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.first.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.first.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.ups.1.1.second.block.0.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.weight": [
+        64
+      ],
+      "noise_predictor.ups.1.1.second.block.1.bias": [
+        64
+      ],
+      "noise_predictor.ups.1.1.condition.1.weight": [
+        128,
+        394
+      ],
+      "noise_predictor.ups.1.1.condition.1.bias": [
+        128
+      ],
+      "noise_predictor.ups.1.2.weight": [
+        64,
+        64,
+        4
+      ],
+      "noise_predictor.ups.1.2.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.0.weight": [
+        64,
+        64,
+        5
+      ],
+      "noise_predictor.output.0.block.0.bias": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.weight": [
+        64
+      ],
+      "noise_predictor.output.0.block.1.bias": [
+        64
+      ],
+      "noise_predictor.output.1.weight": [
+        7,
+        64,
+        1
+      ],
+      "noise_predictor.output.1.bias": [
+        7
+      ]
+    },
+    "optimizer_groups": [
+      {
+        "lr": 5e-05,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 1e-06,
+        "amsgrad": false,
+        "maximize": false,
+        "foreach": null,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": true,
+        "initial_lr": 0.0001
+      }
+    ],
+    "last_metrics": {
+      "epoch": 500,
+      "loss": 0.006978672615217942,
+      "gradient_norm": 0.10475444579841914,
+      "lr": 5e-05,
+      "val_loss": 0.18279080817629453,
+      "val_action_mse": 0.04832073922154467,
+      "epoch_seconds": 60.196666406991426
+    },
+    "best_validation": {
+      "epoch": 108,
+      "loss": 0.01281843765431808,
+      "gradient_norm": 0.23902509411176046,
+      "lr": 9.460442091052924e-05,
+      "val_loss": 0.07193116602432809,
+      "val_action_mse": 0.044539319035041366,
+      "epoch_seconds": 60.35246369300876
+    }
+  }
+}

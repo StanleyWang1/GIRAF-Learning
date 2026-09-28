@@ -1,0 +1,35 @@
+{
+  "ring_over_peg_redo": {
+    "meta/episode_ends": true,
+    "data/state": true,
+    "data/action": true,
+    "data/timestamp_ns": true,
+    "data/alignment_valid": true,
+    "train_d3_range_m": [
+      0.5936065912246704,
+      1.1002542972564697
+    ]
+  },
+  "cable_stringing": {
+    "meta/episode_ends": true,
+    "data/state": true,
+    "data/action": true,
+    "data/timestamp_ns": true,
+    "data/alignment_valid": true,
+    "train_d3_range_m": [
+      0.38664311170578003,
+      1.0932179689407349
+    ]
+  },
+  "whiteboard_checkmark": {
+    "meta/episode_ends": true,
+    "data/state": true,
+    "data/action": true,
+    "data/timestamp_ns": true,
+    "data/alignment_valid": true,
+    "train_d3_range_m": [
+      0.7677414417266846,
+      1.1975263357162476
+    ]
+  }
+}

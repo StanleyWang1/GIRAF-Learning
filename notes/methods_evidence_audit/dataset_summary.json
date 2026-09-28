@@ -1,0 +1,505 @@
+{
+  "ring_over_peg_redo": {
+    "raw": {
+      "path": "data/ring_over_peg_redo/boom_40in.zarr",
+      "episodes": 218,
+      "steps": 124843,
+      "sample_span_seconds": 4152.744304,
+      "metadata_recording_seconds": 4165.858421381,
+      "nominal_seconds_at_30hz": 4161.433333333333,
+      "d3_min_m": 0.5936065912246704,
+      "d3_max_m": 1.1002542972564697,
+      "d3_finite": true,
+      "d3_quantiles_m": [
+        0.5936065912246704,
+        0.6604310870170593,
+        0.8215109705924988,
+        1.035207552909851,
+        1.1002542972564697
+      ],
+      "within_episode_d3_range_min_m": 0.005850553512573242,
+      "within_episode_d3_range_median_m": 0.22889584302902222,
+      "within_episode_d3_range_max_m": 0.4376465082168579,
+      "episodes_with_d3_range_over_1mm": 218,
+      "d3_equals_joint_command": true,
+      "camera_products": [
+        "OAK-D-S2-AF"
+      ],
+      "camera_device_ids": [
+        "19443010A11E3C2E00"
+      ],
+      "git_revisions": [
+        "2ffc15ca23e559db8a967ecab6b842cec4e7a10a"
+      ],
+      "state_fields": [
+        "base_roll_rad",
+        "base_pitch_rad",
+        "boom_extension_m",
+        "wrist_1_rad",
+        "wrist_2_rad",
+        "wrist_3_rad",
+        "eef_x_m",
+        "eef_y_m",
+        "eef_z_m",
+        "eef_rotation_col0_x",
+        "eef_rotation_col0_y",
+        "eef_rotation_col0_z",
+        "eef_rotation_col1_x",
+        "eef_rotation_col1_y",
+        "eef_rotation_col1_z"
+      ],
+      "attribute_keys": [
+        "action_fields",
+        "aligned_hz",
+        "git_revisions",
+        "grasp_semantics",
+        "image_layout",
+        "imu_alignment",
+        "imu_enabled",
+        "imu_fields",
+        "imu_missing",
+        "imu_sensor_order",
+        "imu_sessions",
+        "imu_validity",
+        "joint_fields",
+        "last_collector_config",
+        "max_imu_age_ms",
+        "motor_command_accepted_semantics",
+        "resize_dim",
+        "resize_mode",
+        "schema_version",
+        "state_fields",
+        "state_semantics"
+      ]
+    },
+    "cleaned": {
+      "path": "data/ring_over_peg_redo/boom_40in_cleaned.zarr",
+      "episodes": 213,
+      "steps": 119125,
+      "sample_span_seconds": 3962.376612,
+      "metadata_recording_seconds": 3974.9237243159996,
+      "nominal_seconds_at_30hz": 3970.8333333333335,
+      "d3_min_m": 0.5936065912246704,
+      "d3_max_m": 1.1002542972564697,
+      "d3_finite": true,
+      "d3_quantiles_m": [
+        0.5936065912246704,
+        0.6676335048675537,
+        0.8236405849456787,
+        1.0358938789367675,
+        1.1002542972564697
+      ],
+      "within_episode_d3_range_min_m": 0.021062254905700684,
+      "within_episode_d3_range_median_m": 0.22982925176620483,
+      "within_episode_d3_range_max_m": 0.4375222325325012,
+      "episodes_with_d3_range_over_1mm": 213,
+      "d3_equals_joint_command": true,
+      "camera_products": [
+        "OAK-D-S2-AF"
+      ],
+      "camera_device_ids": [
+        "19443010A11E3C2E00"
+      ],
+      "git_revisions": [
+        "2ffc15ca23e559db8a967ecab6b842cec4e7a10a"
+      ],
+      "state_fields": [
+        "base_roll_rad",
+        "base_pitch_rad",
+        "boom_extension_m",
+        "wrist_1_rad",
+        "wrist_2_rad",
+        "wrist_3_rad",
+        "eef_x_m",
+        "eef_y_m",
+        "eef_z_m",
+        "eef_rotation_col0_x",
+        "eef_rotation_col0_y",
+        "eef_rotation_col0_z",
+        "eef_rotation_col1_x",
+        "eef_rotation_col1_y",
+        "eef_rotation_col1_z"
+      ],
+      "attribute_keys": [
+        "action_fields",
+        "aligned_hz",
+        "clean",
+        "git_revisions",
+        "grasp_semantics",
+        "image_layout",
+        "imu_alignment",
+        "imu_enabled",
+        "imu_fields",
+        "imu_missing",
+        "imu_sensor_order",
+        "imu_sessions",
+        "imu_validity",
+        "joint_fields",
+        "last_collector_config",
+        "max_imu_age_ms",
+        "motor_command_accepted_semantics",
+        "resize_dim",
+        "resize_mode",
+        "schema_version",
+        "state_fields",
+        "state_semantics"
+      ]
+    },
+    "cleaning": {
+      "created_utc": "2026-09-11T01:24:28.452073+00:00",
+      "episode_ids_zero_based": true,
+      "invalid_rows_preserved": true,
+      "method": "manual failed-trial removal and selected tracking-off interval pruning",
+      "original_timestamps_preserved": true,
+      "raw_imu_policy": "source-bounded per-segment reports with up to 1 second pre-roll; may include pause reports in pre-roll",
+      "source": "/home/giraf/Documents/GIRAF-Learning/data/ring_over_peg_redo/boom_40in.zarr",
+      "split_at_internal_cuts": true,
+      "video_policy": "original videos unchanged; mapping references original frame ranges; no cleaned videos created"
+    },
+    "cleaning_list_keys": {
+      "failed_source_episodes": 12,
+      "output_episode_mapping": 213,
+      "pause_pruned_source_episodes": 7,
+      "removed_ranges": 19,
+      "segments": 213
+    },
+    "split": {
+      "train": 192,
+      "validation": 21,
+      "source_trials_in_both_splits": [
+        170
+      ]
+    }
+  },
+  "cable_stringing": {
+    "raw": {
+      "path": "data/cable_stringing/boom_40in.zarr",
+      "episodes": 121,
+      "steps": 120292,
+      "sample_span_seconds": 4004.331519,
+      "metadata_recording_seconds": 4010.8618774799997,
+      "nominal_seconds_at_30hz": 4009.733333333333,
+      "d3_min_m": 0.38664311170578003,
+      "d3_max_m": 1.0932179689407349,
+      "d3_finite": true,
+      "d3_quantiles_m": [
+        0.38664311170578003,
+        0.4573875942826271,
+        0.7776027023792267,
+        1.036096441745758,
+        1.0932179689407349
+      ],
+      "within_episode_d3_range_min_m": 0.31511807441711426,
+      "within_episode_d3_range_median_m": 0.4427892565727234,
+      "within_episode_d3_range_max_m": 0.6243604421615601,
+      "episodes_with_d3_range_over_1mm": 121,
+      "d3_equals_joint_command": true,
+      "camera_products": [
+        "OAK-D-S2-AF"
+      ],
+      "camera_device_ids": [
+        "19443010A11E3C2E00"
+      ],
+      "git_revisions": [
+        "baa852de674b0da29127826c0340bdac12d47a2d"
+      ],
+      "state_fields": [
+        "base_roll_rad",
+        "base_pitch_rad",
+        "boom_extension_m",
+        "wrist_1_rad",
+        "wrist_2_rad",
+        "wrist_3_rad",
+        "eef_x_m",
+        "eef_y_m",
+        "eef_z_m",
+        "eef_rotation_col0_x",
+        "eef_rotation_col0_y",
+        "eef_rotation_col0_z",
+        "eef_rotation_col1_x",
+        "eef_rotation_col1_y",
+        "eef_rotation_col1_z"
+      ],
+      "attribute_keys": [
+        "action_fields",
+        "aligned_hz",
+        "git_revisions",
+        "grasp_semantics",
+        "image_layout",
+        "imu_alignment",
+        "imu_enabled",
+        "imu_fields",
+        "imu_missing",
+        "imu_sensor_order",
+        "imu_sessions",
+        "imu_validity",
+        "joint_fields",
+        "last_collector_config",
+        "max_imu_age_ms",
+        "motor_command_accepted_semantics",
+        "resize_dim",
+        "resize_mode",
+        "schema_version",
+        "state_fields",
+        "state_semantics"
+      ]
+    },
+    "cleaned": {
+      "path": "data/cable_stringing/boom_40in_cleaned.zarr",
+      "episodes": 120,
+      "steps": 119188,
+      "sample_span_seconds": 3967.577513,
+      "metadata_recording_seconds": 3974.038519955,
+      "nominal_seconds_at_30hz": 3972.9333333333334,
+      "d3_min_m": 0.38664311170578003,
+      "d3_max_m": 1.0932179689407349,
+      "d3_finite": true,
+      "d3_quantiles_m": [
+        0.38664311170578003,
+        0.45721349388360977,
+        0.7776027023792267,
+        1.034718952178955,
+        1.0932179689407349
+      ],
+      "within_episode_d3_range_min_m": 0.31511807441711426,
+      "within_episode_d3_range_median_m": 0.442584365606308,
+      "within_episode_d3_range_max_m": 0.6243604421615601,
+      "episodes_with_d3_range_over_1mm": 120,
+      "d3_equals_joint_command": true,
+      "camera_products": [
+        "OAK-D-S2-AF"
+      ],
+      "camera_device_ids": [
+        "19443010A11E3C2E00"
+      ],
+      "git_revisions": [
+        "baa852de674b0da29127826c0340bdac12d47a2d"
+      ],
+      "state_fields": [
+        "base_roll_rad",
+        "base_pitch_rad",
+        "boom_extension_m",
+        "wrist_1_rad",
+        "wrist_2_rad",
+        "wrist_3_rad",
+        "eef_x_m",
+        "eef_y_m",
+        "eef_z_m",
+        "eef_rotation_col0_x",
+        "eef_rotation_col0_y",
+        "eef_rotation_col0_z",
+        "eef_rotation_col1_x",
+        "eef_rotation_col1_y",
+        "eef_rotation_col1_z"
+      ],
+      "attribute_keys": [
+        "action_fields",
+        "aligned_hz",
+        "clean",
+        "git_revisions",
+        "grasp_semantics",
+        "image_layout",
+        "imu_alignment",
+        "imu_enabled",
+        "imu_fields",
+        "imu_missing",
+        "imu_sensor_order",
+        "imu_sessions",
+        "imu_validity",
+        "joint_fields",
+        "last_collector_config",
+        "max_imu_age_ms",
+        "motor_command_accepted_semantics",
+        "resize_dim",
+        "resize_mode",
+        "schema_version",
+        "state_fields",
+        "state_semantics"
+      ]
+    },
+    "cleaning": {
+      "input_steps": 120292,
+      "output_steps": 119188,
+      "reason": "User requested whole-episode exclusion following review of a tracking interruption and clutch release. This is an explicit curation decision, not an integrity failure or a task-failure label.",
+      "report": "boom_40in_cleaned_report.json",
+      "source": "/home/giraf/Documents/GIRAF-Learning/data/cable_stringing/boom_40in.zarr"
+    },
+    "cleaning_list_keys": {
+      "removed_source_episodes": 1
+    },
+    "split": {
+      "train": 108,
+      "validation": 12,
+      "source_trials_in_both_splits": []
+    }
+  },
+  "whiteboard_checkmark": {
+    "raw": {
+      "path": "data/whiteboard_checkmark/whiteboard_checkmark_boom_40in.zarr",
+      "episodes": 211,
+      "steps": 79864,
+      "sample_span_seconds": 2654.1913200000004,
+      "metadata_recording_seconds": 2666.1259076320002,
+      "nominal_seconds_at_30hz": 2662.133333333333,
+      "d3_min_m": 0.7677414417266846,
+      "d3_max_m": 1.1975263357162476,
+      "d3_finite": true,
+      "d3_quantiles_m": [
+        0.7677414417266846,
+        0.8819561976194382,
+        1.0017971992492676,
+        1.1356326794624323,
+        1.1975263357162476
+      ],
+      "within_episode_d3_range_min_m": 0.006584525108337402,
+      "within_episode_d3_range_median_m": 0.08547645807266235,
+      "within_episode_d3_range_max_m": 0.27366483211517334,
+      "episodes_with_d3_range_over_1mm": 211,
+      "d3_equals_joint_command": true,
+      "camera_products": [
+        "OAK-D-S2-AF"
+      ],
+      "camera_device_ids": [
+        "19443010A11E3C2E00"
+      ],
+      "git_revisions": [
+        "8f3860a9e5a435e2edbb34a92543a686d3ae71a4"
+      ],
+      "state_fields": [
+        "base_roll_rad",
+        "base_pitch_rad",
+        "boom_extension_m",
+        "wrist_1_rad",
+        "wrist_2_rad",
+        "wrist_3_rad",
+        "eef_x_m",
+        "eef_y_m",
+        "eef_z_m",
+        "eef_rotation_col0_x",
+        "eef_rotation_col0_y",
+        "eef_rotation_col0_z",
+        "eef_rotation_col1_x",
+        "eef_rotation_col1_y",
+        "eef_rotation_col1_z"
+      ],
+      "attribute_keys": [
+        "action_fields",
+        "aligned_hz",
+        "git_revisions",
+        "grasp_semantics",
+        "image_layout",
+        "imu_alignment",
+        "imu_enabled",
+        "imu_fields",
+        "imu_missing",
+        "imu_sensor_order",
+        "imu_sessions",
+        "imu_validity",
+        "joint_fields",
+        "last_collector_config",
+        "max_imu_age_ms",
+        "motor_command_accepted_semantics",
+        "resize_dim",
+        "resize_mode",
+        "schema_version",
+        "state_fields",
+        "state_semantics"
+      ]
+    },
+    "cleaned": {
+      "path": "data/whiteboard_checkmark/whiteboard_checkmark_boom_40in_cleaned.zarr",
+      "episodes": 202,
+      "steps": 76776,
+      "sample_span_seconds": 2551.5931760000003,
+      "metadata_recording_seconds": 2562.994537857,
+      "nominal_seconds_at_30hz": 2559.2,
+      "d3_min_m": 0.7677414417266846,
+      "d3_max_m": 1.1975263357162476,
+      "d3_finite": true,
+      "d3_quantiles_m": [
+        0.7677414417266846,
+        0.8811341226100922,
+        1.00153249502182,
+        1.137049287557602,
+        1.1975263357162476
+      ],
+      "within_episode_d3_range_min_m": 0.026630759239196777,
+      "within_episode_d3_range_median_m": 0.08575448393821716,
+      "within_episode_d3_range_max_m": 0.27366483211517334,
+      "episodes_with_d3_range_over_1mm": 202,
+      "d3_equals_joint_command": true,
+      "camera_products": [
+        "OAK-D-S2-AF"
+      ],
+      "camera_device_ids": [
+        "19443010A11E3C2E00"
+      ],
+      "git_revisions": [
+        "8f3860a9e5a435e2edbb34a92543a686d3ae71a4"
+      ],
+      "state_fields": [
+        "base_roll_rad",
+        "base_pitch_rad",
+        "boom_extension_m",
+        "wrist_1_rad",
+        "wrist_2_rad",
+        "wrist_3_rad",
+        "eef_x_m",
+        "eef_y_m",
+        "eef_z_m",
+        "eef_rotation_col0_x",
+        "eef_rotation_col0_y",
+        "eef_rotation_col0_z",
+        "eef_rotation_col1_x",
+        "eef_rotation_col1_y",
+        "eef_rotation_col1_z"
+      ],
+      "attribute_keys": [
+        "action_fields",
+        "aligned_hz",
+        "clean",
+        "git_revisions",
+        "grasp_semantics",
+        "image_layout",
+        "imu_alignment",
+        "imu_enabled",
+        "imu_fields",
+        "imu_missing",
+        "imu_sensor_order",
+        "imu_sessions",
+        "imu_validity",
+        "joint_fields",
+        "last_collector_config",
+        "max_imu_age_ms",
+        "motor_command_accepted_semantics",
+        "resize_dim",
+        "resize_mode",
+        "schema_version",
+        "state_fields",
+        "state_semantics"
+      ]
+    },
+    "cleaning": {
+      "created_utc": "2026-09-13T06:57:53.736452+00:00",
+      "input_episodes": 211,
+      "input_steps": 79864,
+      "operation": "discard_explicit_source_episodes",
+      "output_episodes": 202,
+      "output_steps": 76776,
+      "prune_inactive": false,
+      "removed_steps": 3088,
+      "source": "/home/giraf/Documents/GIRAF-Learning/data/whiteboard_checkmark/whiteboard_checkmark_boom_40in.zarr",
+      "verification": "exact comparison of every retained array value, including RGB and full-rate IMU; rebuilt episode boundaries and validated metadata counts"
+    },
+    "cleaning_list_keys": {
+      "discarded_source_episodes": 9,
+      "output_episode_to_source_episode": 202,
+      "retained_source_episodes": 202
+    },
+    "split": {
+      "train": 182,
+      "validation": 20,
+      "source_trials_in_both_splits": []
+    }
+  }
+}

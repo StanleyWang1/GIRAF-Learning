@@ -1,0 +1,2704 @@
+{
+  "cable_stringing_baseline_40in": {
+    "config": {
+      "checkpoint": "checkpoints/src-cable-stringing-boom-40in-baseline/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-200655",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      0.6761902570724487,
+      0.8435155153274536
+    ],
+    "d3_range": [
+      0.5003633499145508,
+      1.015630841255188
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0000_pt/episode.json",
+        "initial_d3": 0.7666939496994019,
+        "min_d3": 0.5539222955703735,
+        "max_d3": 1.015630841255188,
+        "control_samples": 4625,
+        "grasp_true_samples": 2754
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0001/episode.json",
+        "initial_d3": 0.6761902570724487,
+        "min_d3": 0.5417681336402893,
+        "max_d3": 0.9933263659477234,
+        "control_samples": 4098,
+        "grasp_true_samples": 1889
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0002/episode.json",
+        "initial_d3": 0.8329876065254211,
+        "min_d3": 0.545249879360199,
+        "max_d3": 1.003570556640625,
+        "control_samples": 4107,
+        "grasp_true_samples": 2145
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0003/episode.json",
+        "initial_d3": 0.8424661755561829,
+        "min_d3": 0.5746164917945862,
+        "max_d3": 0.97652667760849,
+        "control_samples": 4691,
+        "grasp_true_samples": 2408
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0004/episode.json",
+        "initial_d3": 0.7456199526786804,
+        "min_d3": 0.5353043079376221,
+        "max_d3": 0.9527857303619385,
+        "control_samples": 3900,
+        "grasp_true_samples": 2018
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0005/episode.json",
+        "initial_d3": 0.8188987970352173,
+        "min_d3": 0.5072761178016663,
+        "max_d3": 0.9531452655792236,
+        "control_samples": 3637,
+        "grasp_true_samples": 1950
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0006/episode.json",
+        "initial_d3": 0.8289375901222229,
+        "min_d3": 0.5513153076171875,
+        "max_d3": 0.9826570749282837,
+        "control_samples": 3669,
+        "grasp_true_samples": 1789
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0007/episode.json",
+        "initial_d3": 0.833829402923584,
+        "min_d3": 0.5033218860626221,
+        "max_d3": 0.987115204334259,
+        "control_samples": 4114,
+        "grasp_true_samples": 2282
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0008/episode.json",
+        "initial_d3": 0.7638257741928101,
+        "min_d3": 0.5030511021614075,
+        "max_d3": 0.9669075012207031,
+        "control_samples": 4095,
+        "grasp_true_samples": 2189
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0009/episode.json",
+        "initial_d3": 0.8435155153274536,
+        "min_d3": 0.548555314540863,
+        "max_d3": 0.9574978947639465,
+        "control_samples": 3513,
+        "grasp_true_samples": 1709
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0010/episode.json",
+        "initial_d3": 0.8336173295974731,
+        "min_d3": 0.5360042452812195,
+        "max_d3": 0.9796775579452515,
+        "control_samples": 3859,
+        "grasp_true_samples": 1990
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0011/episode.json",
+        "initial_d3": 0.8373442888259888,
+        "min_d3": 0.5003633499145508,
+        "max_d3": 0.9907019138336182,
+        "control_samples": 3783,
+        "grasp_true_samples": 1905
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0012/episode.json",
+        "initial_d3": 0.814934492111206,
+        "min_d3": 0.5773645639419556,
+        "max_d3": 0.9586114883422852,
+        "control_samples": 3459,
+        "grasp_true_samples": 1705
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0013/episode.json",
+        "initial_d3": 0.791964054107666,
+        "min_d3": 0.5850616693496704,
+        "max_d3": 0.9450732469558716,
+        "control_samples": 3230,
+        "grasp_true_samples": 1588
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0014/episode.json",
+        "initial_d3": 0.8111809492111206,
+        "min_d3": 0.5141243934631348,
+        "max_d3": 0.9628503322601318,
+        "control_samples": 4071,
+        "grasp_true_samples": 2167
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0015/episode.json",
+        "initial_d3": 0.7875336408615112,
+        "min_d3": 0.5413757562637329,
+        "max_d3": 1.004150390625,
+        "control_samples": 7386,
+        "grasp_true_samples": 4008
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0016/episode.json",
+        "initial_d3": 0.789047122001648,
+        "min_d3": 0.5793664455413818,
+        "max_d3": 0.9848918914794922,
+        "control_samples": 3621,
+        "grasp_true_samples": 1605
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0017_pt/episode.json",
+        "initial_d3": 0.8059898614883423,
+        "min_d3": 0.5442913174629211,
+        "max_d3": 0.9583726525306702,
+        "control_samples": 5270,
+        "grasp_true_samples": 2682
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0018/episode.json",
+        "initial_d3": 0.7051388621330261,
+        "min_d3": 0.519442081451416,
+        "max_d3": 0.9738045334815979,
+        "control_samples": 4106,
+        "grasp_true_samples": 2059
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_40in/episodes/episode_0019/episode.json",
+        "initial_d3": 0.8033087253570557,
+        "min_d3": 0.5388354063034058,
+        "max_d3": 0.9675743579864502,
+        "control_samples": 3998,
+        "grasp_true_samples": 2000
+      }
+    ]
+  },
+  "cable_stringing_baseline_60in": {
+    "config": {
+      "checkpoint": "checkpoints/src-cable-stringing-boom-40in-baseline/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-203133",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.0756324529647827,
+      1.2899105548858643
+    ],
+    "d3_range": [
+      0.68115234375,
+      1.4032427072525024
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0000/episode.json",
+        "initial_d3": 1.0756324529647827,
+        "min_d3": 1.0756324529647827,
+        "max_d3": 1.3984336853027344,
+        "control_samples": 1733,
+        "grasp_true_samples": 878
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0001/episode.json",
+        "initial_d3": 1.0983854532241821,
+        "min_d3": 1.0983854532241821,
+        "max_d3": 1.2291131019592285,
+        "control_samples": 892,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0002/episode.json",
+        "initial_d3": 1.1829912662506104,
+        "min_d3": 1.1829912662506104,
+        "max_d3": 1.2712738513946533,
+        "control_samples": 1166,
+        "grasp_true_samples": 9
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0003/episode.json",
+        "initial_d3": 1.1255301237106323,
+        "min_d3": 0.95810467004776,
+        "max_d3": 1.2950615882873535,
+        "control_samples": 4406,
+        "grasp_true_samples": 938
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0004/episode.json",
+        "initial_d3": 1.1408497095108032,
+        "min_d3": 1.1408497095108032,
+        "max_d3": 1.2053356170654297,
+        "control_samples": 1064,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0005/episode.json",
+        "initial_d3": 1.2250031232833862,
+        "min_d3": 1.2250031232833862,
+        "max_d3": 1.2821078300476074,
+        "control_samples": 1114,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0006/episode.json",
+        "initial_d3": 1.157772183418274,
+        "min_d3": 1.157772183418274,
+        "max_d3": 1.194563627243042,
+        "control_samples": 1393,
+        "grasp_true_samples": 10
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0007/episode.json",
+        "initial_d3": 1.1713736057281494,
+        "min_d3": 1.1713736057281494,
+        "max_d3": 1.3131545782089233,
+        "control_samples": 1402,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0008/episode.json",
+        "initial_d3": 1.1873602867126465,
+        "min_d3": 0.9063075184822083,
+        "max_d3": 1.3012233972549438,
+        "control_samples": 3330,
+        "grasp_true_samples": 1015
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0009/episode.json",
+        "initial_d3": 1.0987837314605713,
+        "min_d3": 1.0987837314605713,
+        "max_d3": 1.1795051097869873,
+        "control_samples": 1207,
+        "grasp_true_samples": 19
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0010_S/episode.json",
+        "initial_d3": 1.1928526163101196,
+        "min_d3": 0.68115234375,
+        "max_d3": 1.3036589622497559,
+        "control_samples": 2575,
+        "grasp_true_samples": 1323
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0011/episode.json",
+        "initial_d3": 1.1137504577636719,
+        "min_d3": 1.1137504577636719,
+        "max_d3": 1.256441593170166,
+        "control_samples": 1282,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0012/episode.json",
+        "initial_d3": 1.2899105548858643,
+        "min_d3": 1.0920653343200684,
+        "max_d3": 1.4032427072525024,
+        "control_samples": 1263,
+        "grasp_true_samples": 811
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0013/episode.json",
+        "initial_d3": 1.2149217128753662,
+        "min_d3": 1.2149217128753662,
+        "max_d3": 1.2591304779052734,
+        "control_samples": 995,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/additional episodes/episode_0014/episode.json",
+        "initial_d3": 1.1760293245315552,
+        "min_d3": 1.0403578281402588,
+        "max_d3": 1.2874906063079834,
+        "control_samples": 1546,
+        "grasp_true_samples": 753
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/episodes/episode_0000/episode.json",
+        "initial_d3": 1.2311733961105347,
+        "min_d3": 0.8468115329742432,
+        "max_d3": 1.3410754203796387,
+        "control_samples": 2874,
+        "grasp_true_samples": 1142
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/episodes/episode_0001/episode.json",
+        "initial_d3": 1.2060004472732544,
+        "min_d3": 1.2060004472732544,
+        "max_d3": 1.3155014514923096,
+        "control_samples": 1253,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/episodes/episode_0002/episode.json",
+        "initial_d3": 1.212258219718933,
+        "min_d3": 1.212258219718933,
+        "max_d3": 1.2492574453353882,
+        "control_samples": 1502,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/episodes/episode_0003/episode.json",
+        "initial_d3": 1.1598284244537354,
+        "min_d3": 1.1598284244537354,
+        "max_d3": 1.2088747024536133,
+        "control_samples": 1054,
+        "grasp_true_samples": 31
+      },
+      {
+        "path": "deployment_runs/cable_stringing_baseline_60in/episodes/episode_0004/episode.json",
+        "initial_d3": 1.1082879304885864,
+        "min_d3": 1.1082879304885864,
+        "max_d3": 1.3069355487823486,
+        "control_samples": 2063,
+        "grasp_true_samples": 12
+      }
+    ]
+  },
+  "cable_stringing_joint_angles_40in": {
+    "config": {
+      "checkpoint": "checkpoints/nautilus-cable-stringing-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/cable_stringing.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-185055",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      0.5216466784477234,
+      0.827361524105072
+    ],
+    "d3_range": [
+      0.5163969993591309,
+      1.0068161487579346
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0000_pt/episode.json",
+        "initial_d3": 0.7018938660621643,
+        "min_d3": 0.5248298048973083,
+        "max_d3": 0.9660477042198181,
+        "control_samples": 5704,
+        "grasp_true_samples": 3403
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0001/episode.json",
+        "initial_d3": 0.5827203989028931,
+        "min_d3": 0.5827203989028931,
+        "max_d3": 1.0068161487579346,
+        "control_samples": 2387,
+        "grasp_true_samples": 809
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0002_F/episode.json",
+        "initial_d3": 0.8071421384811401,
+        "min_d3": 0.5396814346313477,
+        "max_d3": 0.9776445031166077,
+        "control_samples": 6551,
+        "grasp_true_samples": 3412
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0003/episode.json",
+        "initial_d3": 0.5927282571792603,
+        "min_d3": 0.5443642735481262,
+        "max_d3": 0.9634281396865845,
+        "control_samples": 3892,
+        "grasp_true_samples": 1814
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0004/episode.json",
+        "initial_d3": 0.7747712731361389,
+        "min_d3": 0.5205588936805725,
+        "max_d3": 0.9599996209144592,
+        "control_samples": 3903,
+        "grasp_true_samples": 1684
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0005/episode.json",
+        "initial_d3": 0.7695851922035217,
+        "min_d3": 0.5632632970809937,
+        "max_d3": 0.9784828424453735,
+        "control_samples": 3570,
+        "grasp_true_samples": 1622
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0006/episode.json",
+        "initial_d3": 0.8096801042556763,
+        "min_d3": 0.5297552943229675,
+        "max_d3": 0.958774983882904,
+        "control_samples": 4132,
+        "grasp_true_samples": 2316
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0007/episode.json",
+        "initial_d3": 0.8101177215576172,
+        "min_d3": 0.5717881917953491,
+        "max_d3": 1.0040007829666138,
+        "control_samples": 4791,
+        "grasp_true_samples": 2384
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0008/episode.json",
+        "initial_d3": 0.7445175647735596,
+        "min_d3": 0.5956642627716064,
+        "max_d3": 0.9820129871368408,
+        "control_samples": 3650,
+        "grasp_true_samples": 1840
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0009/episode.json",
+        "initial_d3": 0.7677379250526428,
+        "min_d3": 0.5420927405357361,
+        "max_d3": 0.9805588126182556,
+        "control_samples": 6707,
+        "grasp_true_samples": 1813
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0010_F/episode.json",
+        "initial_d3": 0.7998148202896118,
+        "min_d3": 0.5770917534828186,
+        "max_d3": 0.9791828393936157,
+        "control_samples": 5495,
+        "grasp_true_samples": 2804
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0011_pt/episode.json",
+        "initial_d3": 0.7345271110534668,
+        "min_d3": 0.5300072431564331,
+        "max_d3": 0.9735589027404785,
+        "control_samples": 5308,
+        "grasp_true_samples": 3026
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0012/episode.json",
+        "initial_d3": 0.6112332344055176,
+        "min_d3": 0.5316528081893921,
+        "max_d3": 0.9370023012161255,
+        "control_samples": 3549,
+        "grasp_true_samples": 1636
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0013/episode.json",
+        "initial_d3": 0.827361524105072,
+        "min_d3": 0.5684707164764404,
+        "max_d3": 0.9589580297470093,
+        "control_samples": 3256,
+        "grasp_true_samples": 1605
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0014/episode.json",
+        "initial_d3": 0.8115978837013245,
+        "min_d3": 0.571513831615448,
+        "max_d3": 0.9526893496513367,
+        "control_samples": 3429,
+        "grasp_true_samples": 1741
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0015/episode.json",
+        "initial_d3": 0.8229719400405884,
+        "min_d3": 0.5845350623130798,
+        "max_d3": 0.9700284600257874,
+        "control_samples": 3443,
+        "grasp_true_samples": 1629
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0016/episode.json",
+        "initial_d3": 0.7840760946273804,
+        "min_d3": 0.5878320932388306,
+        "max_d3": 0.9502471685409546,
+        "control_samples": 3390,
+        "grasp_true_samples": 1563
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0017/episode.json",
+        "initial_d3": 0.7550400495529175,
+        "min_d3": 0.5629411935806274,
+        "max_d3": 0.9609767198562622,
+        "control_samples": 5366,
+        "grasp_true_samples": 2541
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0018_pt/episode.json",
+        "initial_d3": 0.7836183905601501,
+        "min_d3": 0.5163969993591309,
+        "max_d3": 0.962183952331543,
+        "control_samples": 5426,
+        "grasp_true_samples": 3064
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_40in/episodes/episode_0019/episode.json",
+        "initial_d3": 0.5216466784477234,
+        "min_d3": 0.5216466784477234,
+        "max_d3": 0.9619210958480835,
+        "control_samples": 5115,
+        "grasp_true_samples": 2464
+      }
+    ]
+  },
+  "cable_stringing_joint_angles_60in": {
+    "config": {
+      "checkpoint": "checkpoints/nautilus-cable-stringing-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/cable_stringing.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-191338",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.024733543395996,
+      1.4170295000076294
+    ],
+    "d3_range": [
+      0.8260271549224854,
+      1.792636513710022
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0000_pt/episode.json",
+        "initial_d3": 1.1566036939620972,
+        "min_d3": 0.9160935878753662,
+        "max_d3": 1.534202218055725,
+        "control_samples": 8272,
+        "grasp_true_samples": 4327
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0001_F/episode.json",
+        "initial_d3": 1.1513711214065552,
+        "min_d3": 1.1513711214065552,
+        "max_d3": 1.792636513710022,
+        "control_samples": 1657,
+        "grasp_true_samples": 38
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0002_F/episode.json",
+        "initial_d3": 1.0650367736816406,
+        "min_d3": 0.9244441390037537,
+        "max_d3": 1.713089108467102,
+        "control_samples": 3617,
+        "grasp_true_samples": 1191
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0004_F/episode.json",
+        "initial_d3": 1.0894125699996948,
+        "min_d3": 0.8992890119552612,
+        "max_d3": 1.6821483373641968,
+        "control_samples": 2812,
+        "grasp_true_samples": 909
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0005_F/episode.json",
+        "initial_d3": 1.2402217388153076,
+        "min_d3": 1.2402217388153076,
+        "max_d3": 1.7409700155258179,
+        "control_samples": 1646,
+        "grasp_true_samples": 46
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0006_F/episode.json",
+        "initial_d3": 1.107691764831543,
+        "min_d3": 1.107691764831543,
+        "max_d3": 1.7149409055709839,
+        "control_samples": 1519,
+        "grasp_true_samples": 6
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0007/episode.json",
+        "initial_d3": 1.0954545736312866,
+        "min_d3": 0.8785148859024048,
+        "max_d3": 1.5207091569900513,
+        "control_samples": 4148,
+        "grasp_true_samples": 1880
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.3875219821929932,
+        "min_d3": 0.9445925951004028,
+        "max_d3": 1.5225318670272827,
+        "control_samples": 4424,
+        "grasp_true_samples": 2238
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0009_F/episode.json",
+        "initial_d3": 1.4170295000076294,
+        "min_d3": 1.4170295000076294,
+        "max_d3": 1.7544841766357422,
+        "control_samples": 1279,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0010_pt/episode.json",
+        "initial_d3": 1.1582125425338745,
+        "min_d3": 0.9883734583854675,
+        "max_d3": 1.462606430053711,
+        "control_samples": 3128,
+        "grasp_true_samples": 1603
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0011_pt/episode.json",
+        "initial_d3": 1.1256002187728882,
+        "min_d3": 0.8260271549224854,
+        "max_d3": 1.533096194267273,
+        "control_samples": 6765,
+        "grasp_true_samples": 3857
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0012_pt/episode.json",
+        "initial_d3": 1.1778241395950317,
+        "min_d3": 0.8777947425842285,
+        "max_d3": 1.5331710577011108,
+        "control_samples": 4898,
+        "grasp_true_samples": 2903
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0013_F/episode.json",
+        "initial_d3": 1.1585456132888794,
+        "min_d3": 1.1585456132888794,
+        "max_d3": 1.7223141193389893,
+        "control_samples": 1988,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0014_pt/episode.json",
+        "initial_d3": 1.024733543395996,
+        "min_d3": 0.8609716296195984,
+        "max_d3": 1.5143053531646729,
+        "control_samples": 4352,
+        "grasp_true_samples": 2533
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0015_F/episode.json",
+        "initial_d3": 1.1255872249603271,
+        "min_d3": 1.1255872249603271,
+        "max_d3": 1.6970032453536987,
+        "control_samples": 1405,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0016/episode.json",
+        "initial_d3": 1.057491421699524,
+        "min_d3": 0.8755022883415222,
+        "max_d3": 1.5574522018432617,
+        "control_samples": 2534,
+        "grasp_true_samples": 902
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0017_F/episode.json",
+        "initial_d3": 1.0593339204788208,
+        "min_d3": 0.8325289487838745,
+        "max_d3": 1.492737889289856,
+        "control_samples": 3108,
+        "grasp_true_samples": 1289
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0018/episode.json",
+        "initial_d3": 1.1337928771972656,
+        "min_d3": 0.8480722308158875,
+        "max_d3": 1.518066167831421,
+        "control_samples": 4542,
+        "grasp_true_samples": 2047
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0019_F/episode.json",
+        "initial_d3": 1.2047324180603027,
+        "min_d3": 0.8867461681365967,
+        "max_d3": 1.552908182144165,
+        "control_samples": 5637,
+        "grasp_true_samples": 2664
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in/episodes/episode_0020_F/episode.json",
+        "initial_d3": 1.0735507011413574,
+        "min_d3": 0.8672417402267456,
+        "max_d3": 1.5475538969039917,
+        "control_samples": 2917,
+        "grasp_true_samples": 1238
+      }
+    ]
+  },
+  "cable_stringing_joint_angles_60in_redo": {
+    "config": {
+      "checkpoint": "checkpoints/nautilus-cable-stringing-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/cable_stringing.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-202712",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.1204091310501099,
+      1.4524251222610474
+    ],
+    "d3_range": [
+      0.8549010753631592,
+      1.7306417226791382
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0000/episode.json",
+        "initial_d3": 1.1803897619247437,
+        "min_d3": 0.9822040796279907,
+        "max_d3": 1.4651437997817993,
+        "control_samples": 3708,
+        "grasp_true_samples": 1655
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0001_pt/episode.json",
+        "initial_d3": 1.4218432903289795,
+        "min_d3": 0.9699552059173584,
+        "max_d3": 1.505165696144104,
+        "control_samples": 3903,
+        "grasp_true_samples": 2076
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0002/episode.json",
+        "initial_d3": 1.301432490348816,
+        "min_d3": 0.8773422241210938,
+        "max_d3": 1.4882442951202393,
+        "control_samples": 6062,
+        "grasp_true_samples": 2997
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0003/episode.json",
+        "initial_d3": 1.2702378034591675,
+        "min_d3": 0.931613564491272,
+        "max_d3": 1.5001705884933472,
+        "control_samples": 3949,
+        "grasp_true_samples": 1956
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0004/episode.json",
+        "initial_d3": 1.3227119445800781,
+        "min_d3": 0.9471146464347839,
+        "max_d3": 1.5156006813049316,
+        "control_samples": 4261,
+        "grasp_true_samples": 2278
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0005_F/episode.json",
+        "initial_d3": 1.1977136135101318,
+        "min_d3": 1.1977136135101318,
+        "max_d3": 1.5422950983047485,
+        "control_samples": 1067,
+        "grasp_true_samples": 37
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0006_F/episode.json",
+        "initial_d3": 1.1778157949447632,
+        "min_d3": 0.8549010753631592,
+        "max_d3": 1.5432626008987427,
+        "control_samples": 5024,
+        "grasp_true_samples": 1901
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0007/episode.json",
+        "initial_d3": 1.3838027715682983,
+        "min_d3": 0.9416472315788269,
+        "max_d3": 1.4657093286514282,
+        "control_samples": 3960,
+        "grasp_true_samples": 1967
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0008/episode.json",
+        "initial_d3": 1.1926875114440918,
+        "min_d3": 0.8554367423057556,
+        "max_d3": 1.4622185230255127,
+        "control_samples": 4343,
+        "grasp_true_samples": 2571
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0009_F/episode.json",
+        "initial_d3": 1.2607367038726807,
+        "min_d3": 0.8939324617385864,
+        "max_d3": 1.7108533382415771,
+        "control_samples": 3410,
+        "grasp_true_samples": 949
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0010_F/episode.json",
+        "initial_d3": 1.1588292121887207,
+        "min_d3": 0.8809342384338379,
+        "max_d3": 1.7306417226791382,
+        "control_samples": 3681,
+        "grasp_true_samples": 1083
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0011_F/episode.json",
+        "initial_d3": 1.19209885597229,
+        "min_d3": 0.9055145382881165,
+        "max_d3": 1.6379907131195068,
+        "control_samples": 2979,
+        "grasp_true_samples": 909
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0012_F/episode.json",
+        "initial_d3": 1.1204091310501099,
+        "min_d3": 0.9560319781303406,
+        "max_d3": 1.583174705505371,
+        "control_samples": 2719,
+        "grasp_true_samples": 834
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0013?/episode.json",
+        "initial_d3": 1.1557778120040894,
+        "min_d3": 0.9034091234207153,
+        "max_d3": 1.582228660583496,
+        "control_samples": 2684,
+        "grasp_true_samples": 891
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0014/episode.json",
+        "initial_d3": 1.2237465381622314,
+        "min_d3": 0.926971971988678,
+        "max_d3": 1.5556012392044067,
+        "control_samples": 4456,
+        "grasp_true_samples": 2219
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0015_F/episode.json",
+        "initial_d3": 1.3162325620651245,
+        "min_d3": 0.9265157580375671,
+        "max_d3": 1.6075897216796875,
+        "control_samples": 3053,
+        "grasp_true_samples": 988
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0016/episode.json",
+        "initial_d3": 1.2171143293380737,
+        "min_d3": 0.9042384028434753,
+        "max_d3": 1.4524251222610474,
+        "control_samples": 2000,
+        "grasp_true_samples": 813
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0017/episode.json",
+        "initial_d3": 1.4524251222610474,
+        "min_d3": 0.9460839629173279,
+        "max_d3": 1.521524429321289,
+        "control_samples": 2122,
+        "grasp_true_samples": 956
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0018_F/episode.json",
+        "initial_d3": 1.265247106552124,
+        "min_d3": 0.8765302896499634,
+        "max_d3": 1.577294111251831,
+        "control_samples": 2708,
+        "grasp_true_samples": 857
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_60in_redo/episodes/episode_0019_F/episode.json",
+        "initial_d3": 1.1337698698043823,
+        "min_d3": 0.9245254397392273,
+        "max_d3": 1.5788841247558594,
+        "control_samples": 5602,
+        "grasp_true_samples": 2381
+      }
+    ]
+  },
+  "cable_stringing_joint_angles_80in": {
+    "config": {
+      "checkpoint": "checkpoints/nautilus-cable-stringing-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/cable_stringing.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-195827",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.5564470291137695,
+      1.8337998390197754
+    ],
+    "d3_range": [
+      1.1414624452590942,
+      2.120737314224243
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0000/episode.json",
+        "initial_d3": 1.6430156230926514,
+        "min_d3": 1.221448540687561,
+        "max_d3": 1.9639644622802734,
+        "control_samples": 2761,
+        "grasp_true_samples": 1491
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0001/episode.json",
+        "initial_d3": 1.5791583061218262,
+        "min_d3": 1.199384093284607,
+        "max_d3": 2.120737314224243,
+        "control_samples": 3185,
+        "grasp_true_samples": 1365
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0002/episode.json",
+        "initial_d3": 1.6738405227661133,
+        "min_d3": 1.210397481918335,
+        "max_d3": 2.11784029006958,
+        "control_samples": 2970,
+        "grasp_true_samples": 1188
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0003_F/episode.json",
+        "initial_d3": 1.6381078958511353,
+        "min_d3": 1.343705177307129,
+        "max_d3": 2.0141208171844482,
+        "control_samples": 5571,
+        "grasp_true_samples": 3008
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0004/episode.json",
+        "initial_d3": 1.7123337984085083,
+        "min_d3": 1.2460986375808716,
+        "max_d3": 1.8892064094543457,
+        "control_samples": 2541,
+        "grasp_true_samples": 1376
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0005/episode.json",
+        "initial_d3": 1.8337998390197754,
+        "min_d3": 1.2839399576187134,
+        "max_d3": 2.108531951904297,
+        "control_samples": 2870,
+        "grasp_true_samples": 1239
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0006/episode.json",
+        "initial_d3": 1.674673318862915,
+        "min_d3": 1.2313439846038818,
+        "max_d3": 2.105083703994751,
+        "control_samples": 2849,
+        "grasp_true_samples": 1168
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0007/episode.json",
+        "initial_d3": 1.7146499156951904,
+        "min_d3": 1.2558633089065552,
+        "max_d3": 1.923769235610962,
+        "control_samples": 2793,
+        "grasp_true_samples": 1156
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.5786067247390747,
+        "min_d3": 1.2666569948196411,
+        "max_d3": 2.011870861053467,
+        "control_samples": 2871,
+        "grasp_true_samples": 1232
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0009/episode.json",
+        "initial_d3": 1.7281299829483032,
+        "min_d3": 1.1414624452590942,
+        "max_d3": 1.9094352722167969,
+        "control_samples": 2765,
+        "grasp_true_samples": 1230
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0010/episode.json",
+        "initial_d3": 1.5941773653030396,
+        "min_d3": 1.2386891841888428,
+        "max_d3": 1.9822313785552979,
+        "control_samples": 2956,
+        "grasp_true_samples": 1300
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0011/episode.json",
+        "initial_d3": 1.6897817850112915,
+        "min_d3": 1.4138706922531128,
+        "max_d3": 2.0633809566497803,
+        "control_samples": 3424,
+        "grasp_true_samples": 1959
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0012/episode.json",
+        "initial_d3": 1.5726821422576904,
+        "min_d3": 1.3500304222106934,
+        "max_d3": 2.086867570877075,
+        "control_samples": 3021,
+        "grasp_true_samples": 1214
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0013/episode.json",
+        "initial_d3": 1.6941920518875122,
+        "min_d3": 1.3010389804840088,
+        "max_d3": 1.9067496061325073,
+        "control_samples": 2166,
+        "grasp_true_samples": 1055
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0014_F/episode.json",
+        "initial_d3": 1.6250073909759521,
+        "min_d3": 1.6250073909759521,
+        "max_d3": 2.120737314224243,
+        "control_samples": 1582,
+        "grasp_true_samples": 23
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0015_F/episode.json",
+        "initial_d3": 1.6597505807876587,
+        "min_d3": 1.6597505807876587,
+        "max_d3": 2.120737314224243,
+        "control_samples": 1595,
+        "grasp_true_samples": 70
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0016/episode.json",
+        "initial_d3": 1.6897920370101929,
+        "min_d3": 1.2121869325637817,
+        "max_d3": 1.9298195838928223,
+        "control_samples": 2388,
+        "grasp_true_samples": 1189
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0017/episode.json",
+        "initial_d3": 1.6065195798873901,
+        "min_d3": 1.2142393589019775,
+        "max_d3": 1.9622669219970703,
+        "control_samples": 2515,
+        "grasp_true_samples": 1236
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0018/episode.json",
+        "initial_d3": 1.5564470291137695,
+        "min_d3": 1.2874057292938232,
+        "max_d3": 1.9676395654678345,
+        "control_samples": 2669,
+        "grasp_true_samples": 1327
+      },
+      {
+        "path": "deployment_runs/cable_stringing_joint_angles_80in/episodes/episode_0019/episode.json",
+        "initial_d3": 1.6394262313842773,
+        "min_d3": 1.2853209972381592,
+        "max_d3": 2.0339391231536865,
+        "control_samples": 2978,
+        "grasp_true_samples": 1194
+      }
+    ]
+  },
+  "ring_over_peg_baseline_40in": {
+    "config": {
+      "checkpoint": "checkpoints/ring_over_peg_redo/nautilus-boom-40in-baseline/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-161519",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      0.703655481338501,
+      0.777168869972229
+    ],
+    "d3_range": [
+      0.6973159909248352,
+      1.1862704753875732
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0000/episode.json",
+        "initial_d3": 0.7285289168357849,
+        "min_d3": 0.7285289168357849,
+        "max_d3": 1.0090373754501343,
+        "control_samples": 2316,
+        "grasp_true_samples": 903
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0001/episode.json",
+        "initial_d3": 0.7299156188964844,
+        "min_d3": 0.7299156188964844,
+        "max_d3": 1.084975242614746,
+        "control_samples": 2866,
+        "grasp_true_samples": 1272
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0002/episode.json",
+        "initial_d3": 0.7503484487533569,
+        "min_d3": 0.703655481338501,
+        "max_d3": 0.8759714365005493,
+        "control_samples": 2994,
+        "grasp_true_samples": 827
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0003/episode.json",
+        "initial_d3": 0.703655481338501,
+        "min_d3": 0.703655481338501,
+        "max_d3": 1.028229832649231,
+        "control_samples": 3285,
+        "grasp_true_samples": 859
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0004/episode.json",
+        "initial_d3": 0.7357710003852844,
+        "min_d3": 0.7357710003852844,
+        "max_d3": 1.0396435260772705,
+        "control_samples": 2452,
+        "grasp_true_samples": 1060
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0005/episode.json",
+        "initial_d3": 0.7554001808166504,
+        "min_d3": 0.7129992842674255,
+        "max_d3": 0.977276623249054,
+        "control_samples": 3258,
+        "grasp_true_samples": 1211
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0006/episode.json",
+        "initial_d3": 0.7129992842674255,
+        "min_d3": 0.7129992842674255,
+        "max_d3": 1.0337878465652466,
+        "control_samples": 2183,
+        "grasp_true_samples": 927
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0007/episode.json",
+        "initial_d3": 0.7534185647964478,
+        "min_d3": 0.6973159909248352,
+        "max_d3": 1.0039185285568237,
+        "control_samples": 5306,
+        "grasp_true_samples": 2042
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0008/episode.json",
+        "initial_d3": 0.727996289730072,
+        "min_d3": 0.7271959185600281,
+        "max_d3": 1.0358659029006958,
+        "control_samples": 3047,
+        "grasp_true_samples": 1199
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0009/episode.json",
+        "initial_d3": 0.7271959185600281,
+        "min_d3": 0.7237451672554016,
+        "max_d3": 0.968478798866272,
+        "control_samples": 2435,
+        "grasp_true_samples": 908
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0010/episode.json",
+        "initial_d3": 0.7237451672554016,
+        "min_d3": 0.7237451672554016,
+        "max_d3": 1.0033384561538696,
+        "control_samples": 2474,
+        "grasp_true_samples": 1354
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0011/episode.json",
+        "initial_d3": 0.7360053062438965,
+        "min_d3": 0.732045590877533,
+        "max_d3": 0.9885550141334534,
+        "control_samples": 2319,
+        "grasp_true_samples": 795
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0012/episode.json",
+        "initial_d3": 0.732045590877533,
+        "min_d3": 0.713681161403656,
+        "max_d3": 0.9488520622253418,
+        "control_samples": 2204,
+        "grasp_true_samples": 842
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0013/episode.json",
+        "initial_d3": 0.713681161403656,
+        "min_d3": 0.7126938700675964,
+        "max_d3": 0.9883341789245605,
+        "control_samples": 2319,
+        "grasp_true_samples": 1037
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0014/episode.json",
+        "initial_d3": 0.7497669458389282,
+        "min_d3": 0.7304704785346985,
+        "max_d3": 1.007809042930603,
+        "control_samples": 2793,
+        "grasp_true_samples": 1088
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0015_F/episode.json",
+        "initial_d3": 0.7304704785346985,
+        "min_d3": 0.7246073484420776,
+        "max_d3": 1.1862704753875732,
+        "control_samples": 4452,
+        "grasp_true_samples": 3920
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0016/episode.json",
+        "initial_d3": 0.777168869972229,
+        "min_d3": 0.7378973960876465,
+        "max_d3": 1.0715492963790894,
+        "control_samples": 2359,
+        "grasp_true_samples": 1017
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0018/episode.json",
+        "initial_d3": 0.7197896242141724,
+        "min_d3": 0.7001261711120605,
+        "max_d3": 1.072006106376648,
+        "control_samples": 3236,
+        "grasp_true_samples": 1053
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0019/episode.json",
+        "initial_d3": 0.7472487688064575,
+        "min_d3": 0.7434734106063843,
+        "max_d3": 1.0304235219955444,
+        "control_samples": 2317,
+        "grasp_true_samples": 1178
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_40in/episodes/episode_0020/episode.json",
+        "initial_d3": 0.7675129175186157,
+        "min_d3": 0.7485601902008057,
+        "max_d3": 1.0651956796646118,
+        "control_samples": 2560,
+        "grasp_true_samples": 1007
+      }
+    ]
+  },
+  "ring_over_peg_baseline_60in": {
+    "config": {
+      "checkpoint": "checkpoints/ring_over_peg_redo/nautilus-boom-40in-baseline/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-163653",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      0.9755860567092896,
+      1.2014429569244385
+    ],
+    "d3_range": [
+      0.9660429954528809,
+      1.3583612442016602
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0000/episode.json",
+        "initial_d3": 1.1551048755645752,
+        "min_d3": 1.1551048755645752,
+        "max_d3": 1.2641527652740479,
+        "control_samples": 3627,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0002/episode.json",
+        "initial_d3": 1.1617239713668823,
+        "min_d3": 1.1617239713668823,
+        "max_d3": 1.2852036952972412,
+        "control_samples": 4875,
+        "grasp_true_samples": 57
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0003/episode.json",
+        "initial_d3": 1.185647964477539,
+        "min_d3": 1.0258896350860596,
+        "max_d3": 1.3062822818756104,
+        "control_samples": 2215,
+        "grasp_true_samples": 50
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0004/episode.json",
+        "initial_d3": 1.1633191108703613,
+        "min_d3": 1.1633191108703613,
+        "max_d3": 1.352984070777893,
+        "control_samples": 2407,
+        "grasp_true_samples": 2148
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0005/episode.json",
+        "initial_d3": 1.1976755857467651,
+        "min_d3": 1.1294090747833252,
+        "max_d3": 1.2803832292556763,
+        "control_samples": 1747,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0006/episode.json",
+        "initial_d3": 1.08640718460083,
+        "min_d3": 1.08640718460083,
+        "max_d3": 1.274163007736206,
+        "control_samples": 2733,
+        "grasp_true_samples": 30
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.057104468345642,
+        "min_d3": 1.057104468345642,
+        "max_d3": 1.2343429327011108,
+        "control_samples": 2144,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0009/episode.json",
+        "initial_d3": 1.1177256107330322,
+        "min_d3": 1.1177256107330322,
+        "max_d3": 1.270632266998291,
+        "control_samples": 2974,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0010/episode.json",
+        "initial_d3": 1.2014429569244385,
+        "min_d3": 1.0808480978012085,
+        "max_d3": 1.2155102491378784,
+        "control_samples": 2008,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0011/episode.json",
+        "initial_d3": 1.092646837234497,
+        "min_d3": 1.0606398582458496,
+        "max_d3": 1.227340579032898,
+        "control_samples": 1665,
+        "grasp_true_samples": 594
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0012/episode.json",
+        "initial_d3": 0.9755860567092896,
+        "min_d3": 0.9755860567092896,
+        "max_d3": 1.3583612442016602,
+        "control_samples": 3844,
+        "grasp_true_samples": 3652
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0013/episode.json",
+        "initial_d3": 1.1088287830352783,
+        "min_d3": 1.1088287830352783,
+        "max_d3": 1.2554495334625244,
+        "control_samples": 2397,
+        "grasp_true_samples": 20
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0014/episode.json",
+        "initial_d3": 1.1758438348770142,
+        "min_d3": 1.0608036518096924,
+        "max_d3": 1.2348783016204834,
+        "control_samples": 1360,
+        "grasp_true_samples": 453
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0015/episode.json",
+        "initial_d3": 1.1247280836105347,
+        "min_d3": 1.0004122257232666,
+        "max_d3": 1.2593967914581299,
+        "control_samples": 1648,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0016/episode.json",
+        "initial_d3": 1.1385984420776367,
+        "min_d3": 1.0551716089248657,
+        "max_d3": 1.3015882968902588,
+        "control_samples": 2108,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0017/episode.json",
+        "initial_d3": 1.1411175727844238,
+        "min_d3": 1.0407938957214355,
+        "max_d3": 1.2961963415145874,
+        "control_samples": 2762,
+        "grasp_true_samples": 31
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0018/episode.json",
+        "initial_d3": 1.1476677656173706,
+        "min_d3": 1.1476677656173706,
+        "max_d3": 1.2880033254623413,
+        "control_samples": 3179,
+        "grasp_true_samples": 2711
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0019/episode.json",
+        "initial_d3": 1.1533846855163574,
+        "min_d3": 1.026140809059143,
+        "max_d3": 1.245249629020691,
+        "control_samples": 1716,
+        "grasp_true_samples": 0
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0020/episode.json",
+        "initial_d3": 1.1373473405838013,
+        "min_d3": 0.9743590354919434,
+        "max_d3": 1.28786301612854,
+        "control_samples": 2347,
+        "grasp_true_samples": 50
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_baseline_60in/episodes/episode_0021/episode.json",
+        "initial_d3": 1.0732229948043823,
+        "min_d3": 0.9660429954528809,
+        "max_d3": 1.2594449520111084,
+        "control_samples": 2035,
+        "grasp_true_samples": 9
+      }
+    ]
+  },
+  "ring_over_peg_joint_angles_40in": {
+    "config": {
+      "checkpoint": "checkpoints/ring_over_peg_redo/nautilus-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-191959",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      0.6585140228271484,
+      0.7616397738456726
+    ],
+    "d3_range": [
+      0.6585140228271484,
+      1.098827838897705
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0000/episode.json",
+        "initial_d3": 0.7039665579795837,
+        "min_d3": 0.7039665579795837,
+        "max_d3": 0.991920530796051,
+        "control_samples": 2024,
+        "grasp_true_samples": 759
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0001/episode.json",
+        "initial_d3": 0.7463735342025757,
+        "min_d3": 0.7463735342025757,
+        "max_d3": 1.0194629430770874,
+        "control_samples": 2420,
+        "grasp_true_samples": 978
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0002/episode.json",
+        "initial_d3": 0.7616397738456726,
+        "min_d3": 0.7528544068336487,
+        "max_d3": 1.0156081914901733,
+        "control_samples": 2201,
+        "grasp_true_samples": 1051
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0003/episode.json",
+        "initial_d3": 0.7528544068336487,
+        "min_d3": 0.7048912048339844,
+        "max_d3": 0.8944705128669739,
+        "control_samples": 2196,
+        "grasp_true_samples": 777
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0004/episode.json",
+        "initial_d3": 0.7048912048339844,
+        "min_d3": 0.703469455242157,
+        "max_d3": 0.9239615797996521,
+        "control_samples": 2940,
+        "grasp_true_samples": 1003
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0005/episode.json",
+        "initial_d3": 0.7090266346931458,
+        "min_d3": 0.7090266346931458,
+        "max_d3": 1.074086308479309,
+        "control_samples": 2600,
+        "grasp_true_samples": 1224
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0006/episode.json",
+        "initial_d3": 0.755173921585083,
+        "min_d3": 0.7255184650421143,
+        "max_d3": 1.0179555416107178,
+        "control_samples": 2552,
+        "grasp_true_samples": 1179
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0009/episode.json",
+        "initial_d3": 0.6690167188644409,
+        "min_d3": 0.6690167188644409,
+        "max_d3": 1.0154529809951782,
+        "control_samples": 2538,
+        "grasp_true_samples": 1073
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0010/episode.json",
+        "initial_d3": 0.7290387153625488,
+        "min_d3": 0.7142927646636963,
+        "max_d3": 1.0330160856246948,
+        "control_samples": 2626,
+        "grasp_true_samples": 1331
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0011/episode.json",
+        "initial_d3": 0.7562100291252136,
+        "min_d3": 0.7314844131469727,
+        "max_d3": 1.01627516746521,
+        "control_samples": 2598,
+        "grasp_true_samples": 1079
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0012_F/episode.json",
+        "initial_d3": 0.7314844131469727,
+        "min_d3": 0.730150043964386,
+        "max_d3": 1.0854628086090088,
+        "control_samples": 1935,
+        "grasp_true_samples": 1381
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0013/episode.json",
+        "initial_d3": 0.6585140228271484,
+        "min_d3": 0.6585140228271484,
+        "max_d3": 0.987606406211853,
+        "control_samples": 2290,
+        "grasp_true_samples": 1116
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0014/episode.json",
+        "initial_d3": 0.7290834188461304,
+        "min_d3": 0.7290834188461304,
+        "max_d3": 0.9990037679672241,
+        "control_samples": 2136,
+        "grasp_true_samples": 801
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0015/episode.json",
+        "initial_d3": 0.7385215759277344,
+        "min_d3": 0.7314842939376831,
+        "max_d3": 1.056795597076416,
+        "control_samples": 3043,
+        "grasp_true_samples": 997
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0016/episode.json",
+        "initial_d3": 0.7314842939376831,
+        "min_d3": 0.7314842939376831,
+        "max_d3": 1.0090103149414062,
+        "control_samples": 2571,
+        "grasp_true_samples": 906
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0017/episode.json",
+        "initial_d3": 0.7388786673545837,
+        "min_d3": 0.7388231754302979,
+        "max_d3": 1.0774874687194824,
+        "control_samples": 2604,
+        "grasp_true_samples": 1300
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0018/episode.json",
+        "initial_d3": 0.760185182094574,
+        "min_d3": 0.760185182094574,
+        "max_d3": 1.098827838897705,
+        "control_samples": 2846,
+        "grasp_true_samples": 934
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0019/episode.json",
+        "initial_d3": 0.7611081004142761,
+        "min_d3": 0.7537204623222351,
+        "max_d3": 1.0834689140319824,
+        "control_samples": 2497,
+        "grasp_true_samples": 995
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0020/episode.json",
+        "initial_d3": 0.7537204623222351,
+        "min_d3": 0.7321531772613525,
+        "max_d3": 1.0009310245513916,
+        "control_samples": 2298,
+        "grasp_true_samples": 1036
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_40in/episodes/episode_0021/episode.json",
+        "initial_d3": 0.7321531772613525,
+        "min_d3": 0.7321531772613525,
+        "max_d3": 1.0946719646453857,
+        "control_samples": 3372,
+        "grasp_true_samples": 970
+      }
+    ]
+  },
+  "ring_over_peg_joint_angles_60in": {
+    "config": {
+      "checkpoint": "checkpoints/ring_over_peg_redo/nautilus-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-170219",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.0835171937942505,
+      1.2153557538986206
+    ],
+    "d3_range": [
+      1.0835171937942505,
+      1.5840785503387451
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/additional_episodes/episodes/episode_0000/episode.json",
+        "initial_d3": 1.0905752182006836,
+        "min_d3": 1.0905752182006836,
+        "max_d3": 1.5450751781463623,
+        "control_samples": 3253,
+        "grasp_true_samples": 1568
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/additional_episodes/episodes/episode_0001/episode.json",
+        "initial_d3": 1.1918885707855225,
+        "min_d3": 1.1918885707855225,
+        "max_d3": 1.4703432321548462,
+        "control_samples": 3891,
+        "grasp_true_samples": 1494
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/additional_episodes/episodes/episode_0002/episode.json",
+        "initial_d3": 1.2147938013076782,
+        "min_d3": 1.211959719657898,
+        "max_d3": 1.5021772384643555,
+        "control_samples": 3010,
+        "grasp_true_samples": 1627
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0000/episode.json",
+        "initial_d3": 1.2009304761886597,
+        "min_d3": 1.2009304761886597,
+        "max_d3": 1.5219448804855347,
+        "control_samples": 3152,
+        "grasp_true_samples": 1134
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0001/episode.json",
+        "initial_d3": 1.1916115283966064,
+        "min_d3": 1.1907415390014648,
+        "max_d3": 1.509653091430664,
+        "control_samples": 3615,
+        "grasp_true_samples": 1584
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0002/episode.json",
+        "initial_d3": 1.2153557538986206,
+        "min_d3": 1.148921012878418,
+        "max_d3": 1.3668136596679688,
+        "control_samples": 2946,
+        "grasp_true_samples": 987
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0003/episode.json",
+        "initial_d3": 1.148921012878418,
+        "min_d3": 1.148921012878418,
+        "max_d3": 1.4554049968719482,
+        "control_samples": 3418,
+        "grasp_true_samples": 1583
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0004/episode.json",
+        "initial_d3": 1.171128273010254,
+        "min_d3": 1.171128273010254,
+        "max_d3": 1.3990181684494019,
+        "control_samples": 2990,
+        "grasp_true_samples": 1386
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0005/episode.json",
+        "initial_d3": 1.1805957555770874,
+        "min_d3": 1.1771293878555298,
+        "max_d3": 1.434949278831482,
+        "control_samples": 2972,
+        "grasp_true_samples": 1494
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0006_F/episode.json",
+        "initial_d3": 1.1771293878555298,
+        "min_d3": 1.1771293878555298,
+        "max_d3": 1.4990450143814087,
+        "control_samples": 3871,
+        "grasp_true_samples": 2825
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0007/episode.json",
+        "initial_d3": 1.0835171937942505,
+        "min_d3": 1.0835171937942505,
+        "max_d3": 1.4134448766708374,
+        "control_samples": 3247,
+        "grasp_true_samples": 1653
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.1769931316375732,
+        "min_d3": 1.1769931316375732,
+        "max_d3": 1.4809839725494385,
+        "control_samples": 3126,
+        "grasp_true_samples": 1472
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0009_F/episode.json",
+        "initial_d3": 1.2135411500930786,
+        "min_d3": 1.2135411500930786,
+        "max_d3": 1.5840785503387451,
+        "control_samples": 3847,
+        "grasp_true_samples": 3103
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0010/episode.json",
+        "initial_d3": 1.151930809020996,
+        "min_d3": 1.151930809020996,
+        "max_d3": 1.502997875213623,
+        "control_samples": 2902,
+        "grasp_true_samples": 1356
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0011/episode.json",
+        "initial_d3": 1.2113099098205566,
+        "min_d3": 1.1873902082443237,
+        "max_d3": 1.4951685667037964,
+        "control_samples": 2738,
+        "grasp_true_samples": 1191
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0012/episode.json",
+        "initial_d3": 1.1873902082443237,
+        "min_d3": 1.1806374788284302,
+        "max_d3": 1.4291576147079468,
+        "control_samples": 2935,
+        "grasp_true_samples": 1026
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0013/episode.json",
+        "initial_d3": 1.1806374788284302,
+        "min_d3": 1.1749091148376465,
+        "max_d3": 1.439308524131775,
+        "control_samples": 4033,
+        "grasp_true_samples": 2381
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0014/episode.json",
+        "initial_d3": 1.1749091148376465,
+        "min_d3": 1.1747323274612427,
+        "max_d3": 1.4453200101852417,
+        "control_samples": 3144,
+        "grasp_true_samples": 1294
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0015/episode.json",
+        "initial_d3": 1.2049130201339722,
+        "min_d3": 1.191477656364441,
+        "max_d3": 1.4673254489898682,
+        "control_samples": 3673,
+        "grasp_true_samples": 1622
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_60in/episodes/episode_0016_F/episode.json",
+        "initial_d3": 1.191477656364441,
+        "min_d3": 1.1910547018051147,
+        "max_d3": 1.5530915260314941,
+        "control_samples": 3972,
+        "grasp_true_samples": 3047
+      }
+    ]
+  },
+  "ring_over_peg_joint_angles_80in": {
+    "config": {
+      "checkpoint": "checkpoints/ring_over_peg_redo/nautilus-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/ring_over_peg.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260912-182954",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.5688303709030151,
+      1.7731088399887085
+    ],
+    "d3_range": [
+      1.5688303709030151,
+      2.120737314224243
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/additional_episode/episodes/episode_0000_F/episode.json",
+        "initial_d3": 1.5688303709030151,
+        "min_d3": 1.5688303709030151,
+        "max_d3": 1.9586886167526245,
+        "control_samples": 4452,
+        "grasp_true_samples": 3473
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0001_F/episode.json",
+        "initial_d3": 1.6514052152633667,
+        "min_d3": 1.6514052152633667,
+        "max_d3": 2.093191146850586,
+        "control_samples": 3964,
+        "grasp_true_samples": 2564
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0002/episode.json",
+        "initial_d3": 1.7027157545089722,
+        "min_d3": 1.6207993030548096,
+        "max_d3": 1.8015726804733276,
+        "control_samples": 2770,
+        "grasp_true_samples": 962
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0003/episode.json",
+        "initial_d3": 1.6208174228668213,
+        "min_d3": 1.6208174228668213,
+        "max_d3": 1.8687962293624878,
+        "control_samples": 2808,
+        "grasp_true_samples": 1351
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0004/episode.json",
+        "initial_d3": 1.625482439994812,
+        "min_d3": 1.625482439994812,
+        "max_d3": 2.0126121044158936,
+        "control_samples": 3261,
+        "grasp_true_samples": 1535
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0005_F/episode.json",
+        "initial_d3": 1.636980652809143,
+        "min_d3": 1.636980652809143,
+        "max_d3": 1.886955976486206,
+        "control_samples": 4553,
+        "grasp_true_samples": 3262
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0006/episode.json",
+        "initial_d3": 1.6056103706359863,
+        "min_d3": 1.6056103706359863,
+        "max_d3": 1.8632855415344238,
+        "control_samples": 2641,
+        "grasp_true_samples": 1129
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0007/episode.json",
+        "initial_d3": 1.6430171728134155,
+        "min_d3": 1.6410223245620728,
+        "max_d3": 1.8764666318893433,
+        "control_samples": 3026,
+        "grasp_true_samples": 1157
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.6444103717803955,
+        "min_d3": 1.6444103717803955,
+        "max_d3": 1.9067562818527222,
+        "control_samples": 2682,
+        "grasp_true_samples": 1141
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0009/episode.json",
+        "initial_d3": 1.6090341806411743,
+        "min_d3": 1.6090341806411743,
+        "max_d3": 2.0077736377716064,
+        "control_samples": 3607,
+        "grasp_true_samples": 1436
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0010_F/episode.json",
+        "initial_d3": 1.7731088399887085,
+        "min_d3": 1.7596279382705688,
+        "max_d3": 2.120737314224243,
+        "control_samples": 3339,
+        "grasp_true_samples": 2232
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0011/episode.json",
+        "initial_d3": 1.6031943559646606,
+        "min_d3": 1.6031943559646606,
+        "max_d3": 1.8745898008346558,
+        "control_samples": 3027,
+        "grasp_true_samples": 1443
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0012_F/episode.json",
+        "initial_d3": 1.6485595703125,
+        "min_d3": 1.6485595703125,
+        "max_d3": 2.091113805770874,
+        "control_samples": 2689,
+        "grasp_true_samples": 1731
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0013/episode.json",
+        "initial_d3": 1.6138076782226562,
+        "min_d3": 1.6138076782226562,
+        "max_d3": 1.8890471458435059,
+        "control_samples": 2359,
+        "grasp_true_samples": 1123
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0014/episode.json",
+        "initial_d3": 1.686453104019165,
+        "min_d3": 1.5901877880096436,
+        "max_d3": 1.8330481052398682,
+        "control_samples": 2800,
+        "grasp_true_samples": 1259
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0015_F/episode.json",
+        "initial_d3": 1.5901877880096436,
+        "min_d3": 1.5900689363479614,
+        "max_d3": 2.0863049030303955,
+        "control_samples": 3401,
+        "grasp_true_samples": 2522
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0016/episode.json",
+        "initial_d3": 1.6163491010665894,
+        "min_d3": 1.615538477897644,
+        "max_d3": 1.8542262315750122,
+        "control_samples": 3020,
+        "grasp_true_samples": 1544
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0017/episode.json",
+        "initial_d3": 1.6496106386184692,
+        "min_d3": 1.6496106386184692,
+        "max_d3": 1.8872345685958862,
+        "control_samples": 2864,
+        "grasp_true_samples": 1510
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0018/episode.json",
+        "initial_d3": 1.602411150932312,
+        "min_d3": 1.598301649093628,
+        "max_d3": 1.827445387840271,
+        "control_samples": 2939,
+        "grasp_true_samples": 1748
+      },
+      {
+        "path": "deployment_runs/ring_over_peg_joint_angles_80in/episodes/episode_0019/episode.json",
+        "initial_d3": 1.633204460144043,
+        "min_d3": 1.633204460144043,
+        "max_d3": 1.8949618339538574,
+        "control_samples": 2922,
+        "grasp_true_samples": 1493
+      }
+    ]
+  },
+  "whiteboard_joint_angles_40in": {
+    "config": {
+      "checkpoint": "checkpoints/src-whiteboard-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/whiteboard_checkmark.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-133936",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      0.8087031245231628,
+      0.9804273843765259
+    ],
+    "d3_range": [
+      0.808615505695343,
+      1.10749089717865
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0000/episode.json",
+        "initial_d3": 0.9031634330749512,
+        "min_d3": 0.8981029391288757,
+        "max_d3": 0.9910721778869629,
+        "control_samples": 1822,
+        "grasp_true_samples": 1822
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0001/episode.json",
+        "initial_d3": 0.8981029391288757,
+        "min_d3": 0.8981029391288757,
+        "max_d3": 1.0036152601242065,
+        "control_samples": 1430,
+        "grasp_true_samples": 1430
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0002_F/episode.json",
+        "initial_d3": 0.9107058048248291,
+        "min_d3": 0.9101400971412659,
+        "max_d3": 1.0806814432144165,
+        "control_samples": 3780,
+        "grasp_true_samples": 3780
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0004/episode.json",
+        "initial_d3": 0.9804273843765259,
+        "min_d3": 0.9046458005905151,
+        "max_d3": 1.0491355657577515,
+        "control_samples": 2337,
+        "grasp_true_samples": 2337
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0006/episode.json",
+        "initial_d3": 0.9079955816268921,
+        "min_d3": 0.8776150941848755,
+        "max_d3": 0.9611325263977051,
+        "control_samples": 2170,
+        "grasp_true_samples": 2170
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0007/episode.json",
+        "initial_d3": 0.8880834579467773,
+        "min_d3": 0.8880834579467773,
+        "max_d3": 1.0925178527832031,
+        "control_samples": 2521,
+        "grasp_true_samples": 2521
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0008/episode.json",
+        "initial_d3": 0.9589020609855652,
+        "min_d3": 0.922066867351532,
+        "max_d3": 0.9967875480651855,
+        "control_samples": 1730,
+        "grasp_true_samples": 1730
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0009/episode.json",
+        "initial_d3": 0.9285633563995361,
+        "min_d3": 0.808615505695343,
+        "max_d3": 0.9534659385681152,
+        "control_samples": 4057,
+        "grasp_true_samples": 4057
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0010/episode.json",
+        "initial_d3": 0.8087031245231628,
+        "min_d3": 0.8087031245231628,
+        "max_d3": 0.9498953223228455,
+        "control_samples": 3662,
+        "grasp_true_samples": 3662
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0011/episode.json",
+        "initial_d3": 0.8498201370239258,
+        "min_d3": 0.8498201370239258,
+        "max_d3": 0.9992684721946716,
+        "control_samples": 2802,
+        "grasp_true_samples": 2802
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0012/episode.json",
+        "initial_d3": 0.9414805173873901,
+        "min_d3": 0.8471363186836243,
+        "max_d3": 1.101920247077942,
+        "control_samples": 4031,
+        "grasp_true_samples": 4031
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0013/episode.json",
+        "initial_d3": 0.8471363186836243,
+        "min_d3": 0.8114728331565857,
+        "max_d3": 0.955518364906311,
+        "control_samples": 1718,
+        "grasp_true_samples": 1718
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0014/episode.json",
+        "initial_d3": 0.9001204371452332,
+        "min_d3": 0.9001204371452332,
+        "max_d3": 1.096643090248108,
+        "control_samples": 2256,
+        "grasp_true_samples": 2256
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0015/episode.json",
+        "initial_d3": 0.9651870131492615,
+        "min_d3": 0.8759828805923462,
+        "max_d3": 0.9949249029159546,
+        "control_samples": 2340,
+        "grasp_true_samples": 2340
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0016/episode.json",
+        "initial_d3": 0.8759828805923462,
+        "min_d3": 0.8365346789360046,
+        "max_d3": 0.9470233917236328,
+        "control_samples": 2914,
+        "grasp_true_samples": 2914
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0017/episode.json",
+        "initial_d3": 0.8365346789360046,
+        "min_d3": 0.8365346789360046,
+        "max_d3": 1.0100548267364502,
+        "control_samples": 2766,
+        "grasp_true_samples": 2766
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0018/episode.json",
+        "initial_d3": 0.9249924421310425,
+        "min_d3": 0.8877867460250854,
+        "max_d3": 0.9999919533729553,
+        "control_samples": 2675,
+        "grasp_true_samples": 2675
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0019/episode.json",
+        "initial_d3": 0.9431962966918945,
+        "min_d3": 0.8600324392318726,
+        "max_d3": 0.9872922301292419,
+        "control_samples": 3538,
+        "grasp_true_samples": 3538
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0020/episode.json",
+        "initial_d3": 0.9366737008094788,
+        "min_d3": 0.9366737008094788,
+        "max_d3": 1.10749089717865,
+        "control_samples": 2114,
+        "grasp_true_samples": 2114
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_40in/episodes/episode_0021/episode.json",
+        "initial_d3": 0.947319746017456,
+        "min_d3": 0.836113691329956,
+        "max_d3": 0.9724276661872864,
+        "control_samples": 2506,
+        "grasp_true_samples": 2506
+      }
+    ]
+  },
+  "whiteboard_joint_angles_60in": {
+    "config": {
+      "checkpoint": "checkpoints/src-whiteboard-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/whiteboard_checkmark.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-142755",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.3076632022857666,
+      1.5469297170639038
+    ],
+    "d3_range": [
+      1.3076632022857666,
+      1.683690071105957
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0000_F/episode.json",
+        "initial_d3": 1.3886117935180664,
+        "min_d3": 1.3886117935180664,
+        "max_d3": 1.6628520488739014,
+        "control_samples": 2770,
+        "grasp_true_samples": 2770
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0001/episode.json",
+        "initial_d3": 1.3188499212265015,
+        "min_d3": 1.3188499212265015,
+        "max_d3": 1.4790740013122559,
+        "control_samples": 2316,
+        "grasp_true_samples": 2316
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0002/episode.json",
+        "initial_d3": 1.3959228992462158,
+        "min_d3": 1.3959228992462158,
+        "max_d3": 1.5356234312057495,
+        "control_samples": 2583,
+        "grasp_true_samples": 2583
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0003/episode.json",
+        "initial_d3": 1.4485112428665161,
+        "min_d3": 1.4485112428665161,
+        "max_d3": 1.516433596611023,
+        "control_samples": 2804,
+        "grasp_true_samples": 2804
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0004_F/episode.json",
+        "initial_d3": 1.422756314277649,
+        "min_d3": 1.422756314277649,
+        "max_d3": 1.6236608028411865,
+        "control_samples": 4346,
+        "grasp_true_samples": 4346
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0005_F/episode.json",
+        "initial_d3": 1.4966216087341309,
+        "min_d3": 1.4966216087341309,
+        "max_d3": 1.683690071105957,
+        "control_samples": 2459,
+        "grasp_true_samples": 2459
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0006/episode.json",
+        "initial_d3": 1.3076632022857666,
+        "min_d3": 1.3076632022857666,
+        "max_d3": 1.5952121019363403,
+        "control_samples": 5430,
+        "grasp_true_samples": 5430
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0007/episode.json",
+        "initial_d3": 1.5469297170639038,
+        "min_d3": 1.5272399187088013,
+        "max_d3": 1.572587013244629,
+        "control_samples": 1831,
+        "grasp_true_samples": 1831
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.528296947479248,
+        "min_d3": 1.5033377408981323,
+        "max_d3": 1.619759202003479,
+        "control_samples": 3798,
+        "grasp_true_samples": 3798
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0009/episode.json",
+        "initial_d3": 1.5237712860107422,
+        "min_d3": 1.4728004932403564,
+        "max_d3": 1.5460443496704102,
+        "control_samples": 1992,
+        "grasp_true_samples": 1992
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0010/episode.json",
+        "initial_d3": 1.4770766496658325,
+        "min_d3": 1.4081997871398926,
+        "max_d3": 1.513716697692871,
+        "control_samples": 2216,
+        "grasp_true_samples": 2216
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0012_F/episode.json",
+        "initial_d3": 1.4204065799713135,
+        "min_d3": 1.4073090553283691,
+        "max_d3": 1.5727077722549438,
+        "control_samples": 5413,
+        "grasp_true_samples": 5413
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0013/episode.json",
+        "initial_d3": 1.3386387825012207,
+        "min_d3": 1.3386387825012207,
+        "max_d3": 1.508425235748291,
+        "control_samples": 4239,
+        "grasp_true_samples": 4239
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0014/episode.json",
+        "initial_d3": 1.3838156461715698,
+        "min_d3": 1.3422658443450928,
+        "max_d3": 1.4971705675125122,
+        "control_samples": 6629,
+        "grasp_true_samples": 6629
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0015/episode.json",
+        "initial_d3": 1.3575540781021118,
+        "min_d3": 1.3575540781021118,
+        "max_d3": 1.5275919437408447,
+        "control_samples": 2869,
+        "grasp_true_samples": 2869
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0016/episode.json",
+        "initial_d3": 1.4433355331420898,
+        "min_d3": 1.3806475400924683,
+        "max_d3": 1.500994324684143,
+        "control_samples": 2726,
+        "grasp_true_samples": 2726
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0017/episode.json",
+        "initial_d3": 1.3848577737808228,
+        "min_d3": 1.3848243951797485,
+        "max_d3": 1.5632836818695068,
+        "control_samples": 4792,
+        "grasp_true_samples": 4792
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0018/episode.json",
+        "initial_d3": 1.442731499671936,
+        "min_d3": 1.442731499671936,
+        "max_d3": 1.5393558740615845,
+        "control_samples": 2934,
+        "grasp_true_samples": 2934
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0019/episode.json",
+        "initial_d3": 1.4456313848495483,
+        "min_d3": 1.3899257183074951,
+        "max_d3": 1.4775363206863403,
+        "control_samples": 1939,
+        "grasp_true_samples": 1939
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_60in/episodes/episode_0021/episode.json",
+        "initial_d3": 1.413832426071167,
+        "min_d3": 1.375599980354309,
+        "max_d3": 1.5243253707885742,
+        "control_samples": 3953,
+        "grasp_true_samples": 3953
+      }
+    ]
+  },
+  "whiteboard_joint_angles_80in": {
+    "config": {
+      "checkpoint": "checkpoints/src-whiteboard-boom-40in-joint-angles/policy_epoch_0500.pt",
+      "collector_config": "config/whiteboard_checkmark.yaml",
+      "mode": "hardware",
+      "device": "cuda",
+      "action_scale": 1.0,
+      "inference_steps": 20,
+      "server_ip": "172.24.68.77",
+      "client_ip": null,
+      "rigid_id": 40,
+      "action_timeout_s": 0.5,
+      "max_frame_age_s": 0.15,
+      "state_margin_fraction": 0.05,
+      "enforce_training_bounds": false,
+      "allow_grasp": true,
+      "seed": 0,
+      "log_dir": "deployment_runs/20260913-171738",
+      "save_video": true,
+      "hardware_confirmed": true
+    },
+    "n_inventoried_episodes": 20,
+    "initial_d3_range": [
+      1.835719108581543,
+      2.043071746826172
+    ],
+    "d3_range": [
+      1.835719108581543,
+      2.120737314224243
+    ],
+    "episodes": [
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/additional_episodes/episodes/episode_0000/episode.json",
+        "initial_d3": 1.9331892728805542,
+        "min_d3": 1.9331892728805542,
+        "max_d3": 2.030056953430176,
+        "control_samples": 1905,
+        "grasp_true_samples": 1905
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/additional_episodes/episodes/episode_0001_F/episode.json",
+        "initial_d3": 1.983091950416565,
+        "min_d3": 1.9705578088760376,
+        "max_d3": 2.0649149417877197,
+        "control_samples": 4973,
+        "grasp_true_samples": 4973
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0000_F/episode.json",
+        "initial_d3": 1.856889009475708,
+        "min_d3": 1.8538678884506226,
+        "max_d3": 2.082902193069458,
+        "control_samples": 2126,
+        "grasp_true_samples": 2126
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0001_F/episode.json",
+        "initial_d3": 1.8494248390197754,
+        "min_d3": 1.8483307361602783,
+        "max_d3": 2.0752193927764893,
+        "control_samples": 3132,
+        "grasp_true_samples": 3132
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0002_F/episode.json",
+        "initial_d3": 1.8973056077957153,
+        "min_d3": 1.8973056077957153,
+        "max_d3": 2.1204593181610107,
+        "control_samples": 2433,
+        "grasp_true_samples": 2433
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0003/episode.json",
+        "initial_d3": 2.01654314994812,
+        "min_d3": 1.9639170169830322,
+        "max_d3": 2.120737314224243,
+        "control_samples": 2393,
+        "grasp_true_samples": 2393
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0005/episode.json",
+        "initial_d3": 2.011496067047119,
+        "min_d3": 1.9723029136657715,
+        "max_d3": 2.120737314224243,
+        "control_samples": 2287,
+        "grasp_true_samples": 2287
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0006/episode.json",
+        "initial_d3": 1.9723029136657715,
+        "min_d3": 1.9150443077087402,
+        "max_d3": 2.079204559326172,
+        "control_samples": 2548,
+        "grasp_true_samples": 2548
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0007/episode.json",
+        "initial_d3": 1.9667658805847168,
+        "min_d3": 1.9170305728912354,
+        "max_d3": 2.056405544281006,
+        "control_samples": 2584,
+        "grasp_true_samples": 2584
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0008/episode.json",
+        "initial_d3": 1.9520361423492432,
+        "min_d3": 1.9253652095794678,
+        "max_d3": 2.089050054550171,
+        "control_samples": 2016,
+        "grasp_true_samples": 2016
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0010/episode.json",
+        "initial_d3": 2.043071746826172,
+        "min_d3": 1.9697682857513428,
+        "max_d3": 2.120737314224243,
+        "control_samples": 3505,
+        "grasp_true_samples": 3505
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0011/episode.json",
+        "initial_d3": 1.9549154043197632,
+        "min_d3": 1.9549154043197632,
+        "max_d3": 2.120737314224243,
+        "control_samples": 2520,
+        "grasp_true_samples": 2520
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0012_F/episode.json",
+        "initial_d3": 1.9013433456420898,
+        "min_d3": 1.9013433456420898,
+        "max_d3": 2.115936279296875,
+        "control_samples": 2481,
+        "grasp_true_samples": 2481
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0013_F/episode.json",
+        "initial_d3": 1.835719108581543,
+        "min_d3": 1.835719108581543,
+        "max_d3": 2.120737314224243,
+        "control_samples": 3278,
+        "grasp_true_samples": 3278
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0014_F/episode.json",
+        "initial_d3": 2.0092620849609375,
+        "min_d3": 1.9893324375152588,
+        "max_d3": 2.1189091205596924,
+        "control_samples": 5699,
+        "grasp_true_samples": 5699
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0016/episode.json",
+        "initial_d3": 1.984613299369812,
+        "min_d3": 1.9583109617233276,
+        "max_d3": 2.111406087875366,
+        "control_samples": 2996,
+        "grasp_true_samples": 2996
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0017/episode.json",
+        "initial_d3": 1.9673975706100464,
+        "min_d3": 1.967140793800354,
+        "max_d3": 2.0538828372955322,
+        "control_samples": 2363,
+        "grasp_true_samples": 2363
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0018/episode.json",
+        "initial_d3": 1.967140793800354,
+        "min_d3": 1.967140793800354,
+        "max_d3": 2.069502592086792,
+        "control_samples": 2135,
+        "grasp_true_samples": 2135
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0019/episode.json",
+        "initial_d3": 1.9917080402374268,
+        "min_d3": 1.946753978729248,
+        "max_d3": 2.0875964164733887,
+        "control_samples": 3999,
+        "grasp_true_samples": 3999
+      },
+      {
+        "path": "deployment_runs/whiteboard_joint_angles_80in/episodes/episode_0020/episode.json",
+        "initial_d3": 1.947494387626648,
+        "min_d3": 1.947494387626648,
+        "max_d3": 2.0823090076446533,
+        "control_samples": 2407,
+        "grasp_true_samples": 2407
+      }
+    ]
+  }
+}
